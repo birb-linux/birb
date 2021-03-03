@@ -1,0 +1,172 @@
+#!/bin/bash
+
+# Package manager for BirbOS
+# Binaries are installed to ~/.local/birb/packages and source files to ~/.local/birb/files. To keep account of installed packages, files are created for each of them to ~/.local/birb/database
+installPath="$HOME/.local/birb/packages"
+filePath="$HOME/.local/birb/files"
+databasePath="$HOME/.local/birb/database"
+
+# cmake install prefix command: "cmake -DCMAKE_INSTALL_PREFIX=/usr .."
+
+# Functions
+_Help()
+{
+	echo "Birb Package manager"
+	echo "Usage: birb [options]"
+	echo ""
+	echo "Options:"
+	echo -e "\t-S <package>\t\tInstalls selected package to /usr/"
+	echo -e "\t-Sd <deb file>\t\tInstalls selected debian package to /usr/"
+	echo -e "\t-R <package>\t\tRemoves selected package"
+	echo -e "\t-L \t\t\tLists all packages"
+}
+
+_InstallPackage()
+{
+	echo "Installing package $package..."
+	target=$installPath/$package
+
+	if [ ! -d $target ]
+	then
+		echo "Package '$package' not found in $target"
+		exit 1
+	fi
+
+	stow -Sn --verbose=2 -t "/usr" -d $installPath $package && echo "Installation successful!" || echo "Something went wrong..."
+}
+
+_ExtractDebPackage()
+{
+	packageName=$(echo $package | cut -d'_' -f1 | xargs basename)
+	echo " > Package name: $packageName"
+
+	# Create new directory for extracted files
+	extractTarget=$filePath/$packageName
+	mkdir $extractTarget > /dev/null
+	cd $extractTarget
+
+	# Extract deb package
+	echo " > Extracting files..."
+	ar -x $package
+
+	# Extract tarballs
+	tar -xf control.tar.xz
+	tar -xf data.tar.xz
+
+
+	# Check md5sums
+	md5sum -c ./md5sums > /dev/null && echo " > MD5 Checksums completed without problems!" || " > Some of the files seem to be corrupted!"
+
+	# Move files to the birb installation dir to be installed as package
+	target=$installPath/$packageName
+	mkdir -v $target
+	mv -v ./usr/* $target/
+
+	echo " > Cleaning up..."
+	rm ./control.tar.xz
+	rm ./data.tar.xz
+
+	rm -r ./usr
+	rm -r ./md5sums
+	rm -r ./debian-binary
+
+	# Oneliner to get deps
+	# cat control | awk '/^Depends/' | tr , '\n' | sed 's/Depends://g; s/^ //g'
+
+	# Deps without versions
+	# cat control | awk '/^Depends/' | tr , '\n' | sed 's/Depends://g; s/^ //g; s/ .*//g'
+
+	echo " > Reading control file"
+	deps=$(cat control | awk '/^Depends/' | tr , '\n' | sed 's/Depends://g; s/^ //g; s/ .*//g')
+	version=$(cat control | awk '/^Version/ {print $2}')
+	
+	echo " > Adding package to database"
+	databaseTarget=$databasePath/$packageName
+	touch $databaseTarget
+
+	echo "Name:$packageName" >> $databaseTarget
+	echo "Version:$version" >> $databaseTarget
+}
+
+_RemovePackage()
+{
+	echo "Removing package $package..."
+
+	target=$installPath/$package
+
+	if [ ! -d $target ]
+	then
+		echo "Package '$package' not found in $target"
+		exit 1
+	fi
+
+	stow -Dn --verbose=2 -t "/usr" -d $installPath $package && echo "Package removed successfully!" || echo "Something went wrong..."
+}
+
+_ListPackages()
+{
+	ls -1 $installPath
+}
+# End of functions
+
+
+
+# Handle argument flags
+while test $# -gt 0; do
+	case $1 in
+		-h | --h | -help | --help)
+			_Help
+			exit 0
+			;;
+	
+		-S)
+			shift
+			if [ $# -gt 0 ]
+			then
+				package=$1
+				_InstallPackage
+			else
+				echo "No package specified"
+				exit 1
+			fi
+			shift
+			;;
+
+		-Sd)
+			shift
+			if [ $# -gt 0 ]
+			then
+				package=$1
+				_ExtractDebPackage
+			else
+				echo "No package specified"
+				exit 1
+			fi
+			shift
+			;;
+
+		-R)
+			shift
+			if [ $# -gt 0 ]
+			then
+				package=$1
+				_RemovePackage
+			else
+				echo "No package specified"
+				exit 1
+			fi
+			shift
+			;;
+
+		-L)
+			shift
+			_ListPackages
+			exit 0
+			;;
+
+		*)
+			echo "Unknown option $1. --help for help :)"
+			exit 1
+			;;
+	esac
+done
