@@ -3,8 +3,13 @@
 # Package manager for BirbOS
 # Binaries are installed to ~/.local/birb/packages and source files to ~/.local/birb/files. To keep account of installed packages, files are created for each of them to ~/.local/birb/database
 installPath="$HOME/.local/birb/packages"
-filePath="$HOME/.local/birb/files"
+filePath="/tmp/birb"
 databasePath="$HOME/.local/birb/database"
+
+# Create main directories
+[ -d $installPath ] 	|| mkdir -pv $installPath
+[ -d $filePath ] 		|| mkdir -pv $filePath
+[ -d $databasePath ] 	|| mkdir -pv $databasePath
 
 # cmake install prefix command: "cmake -DCMAKE_INSTALL_PREFIX=/usr .."
 
@@ -35,10 +40,32 @@ _InstallPackage()
 	stow -Sn --verbose=2 -t "/usr" -d $installPath $package && echo "Installation successful!" || echo "Something went wrong..."
 }
 
+_OverwritePackage()
+{
+	echo -n "This package already exists. Overwrite it? [y/n]: "
+	read answer
+
+	case $answer in
+		y|Y) ans=y ;;
+		n|N) ans=n ;;
+	esac
+
+	if [[ "$ans" == "y" ]]
+	then
+		echo "Overwriting the package $packageName"	
+		rm -r $target
+	else
+		exit 0
+	fi
+}
+
 _ExtractDebPackage()
 {
 	packageName=$(echo $package | cut -d'_' -f1 | xargs basename)
 	echo " > Package name: $packageName"
+
+	target=$installPath/$packageName
+	[ -d $target ] && _OverwritePackage
 
 	# Create new directory for extracted files
 	extractTarget=$filePath/$packageName
@@ -58,34 +85,35 @@ _ExtractDebPackage()
 	md5sum -c ./md5sums > /dev/null && echo " > MD5 Checksums completed without problems!" || " > Some of the files seem to be corrupted!"
 
 	# Move files to the birb installation dir to be installed as package
-	target=$installPath/$packageName
 	mkdir -v $target
 	mv -v ./usr/* $target/
 
-	echo " > Cleaning up..."
-	rm ./control.tar.xz
-	rm ./data.tar.xz
 
-	rm -r ./usr
-	rm -r ./md5sums
-	rm -r ./debian-binary
-
-	# Oneliner to get deps
+	# Oneliner to get deps in list
 	# cat control | awk '/^Depends/' | tr , '\n' | sed 's/Depends://g; s/^ //g'
 
 	# Deps without versions
 	# cat control | awk '/^Depends/' | tr , '\n' | sed 's/Depends://g; s/^ //g; s/ .*//g'
 
 	echo " > Reading control file"
-	deps=$(cat control | awk '/^Depends/' | tr , '\n' | sed 's/Depends://g; s/^ //g; s/ .*//g')
+	deps=$(cat control | awk '/^Depends/' | sed 's/Depends: //g; s/, /;/g')
+	recommended=$(cat control | awk '/^Recommends/' | sed 's/Recommends: //g; s/, /;/g')
 	version=$(cat control | awk '/^Version/ {print $2}')
 	
 	echo " > Adding package to database"
 	databaseTarget=$databasePath/$packageName
 	touch $databaseTarget
 
-	echo "Name:$packageName" >> $databaseTarget
-	echo "Version:$version" >> $databaseTarget
+	echo "Name:$packageName" 		> $databaseTarget
+	echo "Version:$version"  		>> $databaseTarget
+	echo "Deps:$deps" 		 		>> $databaseTarget
+	echo "Recommended:$recommended" >> $databaseTarget
+
+	# Clean up
+	echo " > Cleaning up..."
+	rm ./control.tar.xz ./data.tar.xz
+	rm -r ./usr ./md5sums ./debian-binary
+	rm -r $extractTarget
 }
 
 _RemovePackage()
