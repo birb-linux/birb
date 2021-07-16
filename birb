@@ -19,16 +19,22 @@ _Help()
 	echo "Birb Package manager"
 	echo "Usage: birb [options]"
 	echo ""
-	echo "Options:"
-	echo -e "\t-S <package>\t\tInstalls selected package to /usr/"
-	echo -e "\t-Sd <deb file>\t\tInstalls selected debian package to /usr/"
-	echo -e "\t-R <package>\t\tRemoves selected package"
-	echo -e "\t-L \t\t\tLists all packages"
+	echo -e "\e[1mOptions:\e[0m"
+	echo -e "\t-S <package>\tInstalls selected package to /usr/"
+	echo -e "\t-Sd <deb file>\tInstalls selected debian package to /usr/"
+	echo -e "\t-R <package>\tRemoves selected package"
+	echo -e "\t-L \t\tLists all packages"
+	echo -e "\t-Lf \t\tLists all packages in fzf"
+	echo -e "\t-I <package>\tGet information about the selected package"
+
+	echo -e "\n\e[1mAuto compiling:\e[0m"
+	echo -e "\tinstall \tTries to configure, make and install the package from source."
+	echo -e "\t\t\tYou have to be in the source directory while running this command!"
 }
 
 _InstallPackage()
 {
-	echo "Installing package $package..."
+	echo -e "Installing package \e[31m$package\e[0m..."
 	target=$installPath/$package
 
 	if [ ! -d $target ]
@@ -37,7 +43,7 @@ _InstallPackage()
 		exit 1
 	fi
 
-	stow -Sn --verbose=2 -t "/usr" -d $installPath $package && echo "Installation successful!" || echo "Something went wrong..."
+	sudo /usr/local/bin/stow -S --verbose=1 -t "/usr" -d $installPath $package && echo "Installation successful!" || echo "Something went wrong..."
 }
 
 _OverwritePackage()
@@ -120,7 +126,7 @@ _RemovePackage()
 {
 	echo "Removing package $package..."
 
-	target=$installPath/$package
+	local target=$installPath/$package
 
 	if [ ! -d $target ]
 	then
@@ -128,12 +134,46 @@ _RemovePackage()
 		exit 1
 	fi
 
-	stow -Dn --verbose=2 -t "/usr" -d $installPath $package && echo "Package removed successfully!" || echo "Something went wrong..."
+	sudo /usr/local/bin/stow -D --verbose=1 -t "/usr" -d $installPath $package && echo "Package removed successfully!" || echo "Something went wrong..."
 }
+
 
 _ListPackages()
 {
-	ls -1 $installPath
+	[ "$fuzzyList" == "false" ] && ls -1 $installPath || ls -1 $installPath | fzf --preview="[ -f $databasePath/{} ] && cat $databasePath/{}"
+}
+
+_GetPackageInfo()
+{
+	stow -R --simulate -t /usr "$package" &> /dev/null
+	local installStatus=$?
+	local packageSize=$(du -sh $installPath/$package | awk '{print $1}')
+
+	echo -e "Package name: \t\t${package}"
+	echo -e "Install status: \t$([ $installStatus -eq 0 ] && echo "Installed" || echo "Not installed")"
+	echo -e "Size: \t\t\t${packageSize}"
+}
+
+
+_ConfigureSource()
+{
+	local pkgName=$(basename $(pwd))
+	echo -e "Configuring with package name '\e[31m$pkgName\e[0m'"
+	echo -e "Target prefix: [$installPath/$pkgName]"
+	echo -n "Continue? (y/N): "
+	read answer
+
+	case $answer in
+		y|Y) 
+			[ -f ./configure.ac ] && autoreconf -i
+			[ -f ./configure ] || echo "'configure' file not found in the current directory." || exit 0
+			./configure --prefix=$installPath/$pkgName && make -j6 && make install
+			;;
+		*) 
+			echo "Cancelled"
+			exit 0
+			;;
+	esac
 }
 # End of functions
 
@@ -188,8 +228,38 @@ while test $# -gt 0; do
 
 		-L)
 			shift
+			fuzzyList=false
 			_ListPackages
 			exit 0
+			;;
+
+		-Lf)
+			shift
+			[ -n $(which fzf) ] || echo "fzf not installed!" || exit 1
+			fuzzyList=true
+			_ListPackages
+			exit 0
+			;;
+
+		-I)
+			shift
+			# Get package info
+			if [ $# -gt 0 ]
+			then
+				package=$1
+				_GetPackageInfo
+			else
+				echo "No package specified"
+				exit 1
+			fi
+			exit 0
+			;;
+
+		install)
+				shift
+				# Configure package in the working directory
+				_ConfigureSource
+				exit 0
 			;;
 
 		*)
