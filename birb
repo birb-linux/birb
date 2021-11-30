@@ -5,6 +5,7 @@
 installPath="$HOME/.local/birb/packages"
 filePath="/tmp/birb"
 databasePath="$HOME/.local/birb/database"
+debianRepo="$HOME/.local/birb/debian_repo"
 
 # Create main directories
 [ -d $installPath ] 	|| mkdir -pv $installPath
@@ -26,6 +27,11 @@ _Help()
 	echo -e "\t-L \t\tLists all packages"
 	echo -e "\t-Lf \t\tLists all packages in fzf"
 	echo -e "\t-I <package>\tGet information about the selected package"
+
+	echo -e "\n\e[1mDebian repositories:\e[0m"
+	echo -e "\t-Sy \t\tUpdates debian repository database"
+	echo -e "\t-Qd \t\tQuery debian repository database"
+	echo -e "\t-Qdd \t\tQuery debian repository database and also fetch download links online"
 
 	echo -e "\n\e[1mAuto compiling:\e[0m"
 	echo -e "\tinstall \tTries to configure, make and install the package from source."
@@ -175,6 +181,55 @@ _ConfigureSource()
 			;;
 	esac
 }
+
+_NoDebianRepoFound()
+{
+	echo "Debian repository database not found in [$debianRepo]"
+	echo "Please download/update it with the following command:"
+	echo -e "$ birb -Sy"
+	exit 1
+}
+
+_GetDebianSourceLinks()
+{
+	local url="$2"
+	downloads=$(curl -s $url | awk '/.tar.[gx]z/' | sed '/tar\.gz\.asc/d; s/^.*a href="//g; s/">.*//g')
+	downloads=$(sed "s|^|$url|g" <<< $downloads)
+
+	echo -e "## Downloads ##\n$downloads"
+}
+
+_QueryDebianDB()
+{
+	local query=$1
+	[ -f $debianRepo ] || _NoDebianRepoFound
+	echo "Searching for [$query]..."
+	pkgQuery=$(grep "Package: $query" $debianRepo)
+	if [[ $? -ne 0 ]]
+	then
+		echo "No results. Package [$query] might no exist in debian repositories"
+		exit 1
+	fi
+
+	pkgName=$(sed 's/Package: //g' <<< $pkgQuery | fzf --height=20% -1)
+	if [[ $? -ne 0 ]]
+	then
+		# Result not found or cancelled
+		exit 0
+	fi
+
+	result=$(sed -n "/^Package: $pkgName/,\${p;/^Section:/q}" $debianRepo)
+
+	if [[ "$queryDL" == "true" ]]
+	then
+		downloadURL="http://ftp.debian.org/debian/$(awk '/Directory/ {print $2}' <<< $result)/"
+		echo -e "$result\n"
+		_GetDebianSourceLinks "$pkgName" "$downloadURL"
+	else
+		echo -e "$result\n"
+	fi
+
+}
 # End of functions
 
 
@@ -253,6 +308,44 @@ while test $# -gt 0; do
 				exit 1
 			fi
 			exit 0
+			;;
+
+		-Sy)
+			shift
+			echo "Updating debian repository..."
+			rm -v $debianRepo
+			wget "http://ftp.uk.debian.org/debian/dists/bullseye/main/source/Sources.gz" -O ${debianRepo}.gz
+			echo "Unzipping ${debianRepo}.gz"
+			gunzip ${debianRepo}.gz
+			;;
+
+		-Qd)
+			shift
+			# Query debian repository database
+			if [ $# -gt 0 ]
+			then
+				_QueryDebianDB "$1"
+				shift
+			else
+				echo "No package specified"
+				exit 1
+			fi
+			;;
+
+		-Qdd)
+			shift
+			# Query debian repository database
+			# and also fetch download links from debian
+			# ftp server
+			if [ $# -gt 0 ]
+			then
+				queryDL=true
+				_QueryDebianDB "$1"
+				shift
+			else
+				echo "No package specified"
+				exit 1
+			fi
 			;;
 
 		install)
