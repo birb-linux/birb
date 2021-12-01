@@ -5,6 +5,8 @@
 installPath="$HOME/.local/birb/packages"
 filePath="/tmp/birb"
 databasePath="$HOME/.local/birb/database"
+packageDB="$HOME/.local/birb/db.json"
+tmpPackageDB="/tmp/temp_birbdb"
 debianRepo="$HOME/.local/birb/debian_repo"
 
 # Create main directories
@@ -28,8 +30,15 @@ _Help()
 	echo -e "\t-Lf \t\tLists all packages in fzf"
 	echo -e "\t-I <package>\tGet information about the selected package"
 
+
+	echo -e "\n\e[1mPackage database:\e[0m"
+	echo -e "\t-Da \t\tAdd package manually to the database interactively"
+	echo -e "\t-Da <name|version|dependencies>\tAdd package manually to the database"
+	echo -e "\t-De \t\tEdit value in the package database manually"
+
 	echo -e "\n\e[1mDebian repositories:\e[0m"
 	echo -e "\t-Sy \t\tUpdates debian repository database"
+	echo -e "\t-Qu \t\tCheck what packages in /sources might need updating"
 	echo -e "\t-Qd \t\tQuery debian repository database"
 	echo -e "\t-Qdd \t\tQuery debian repository database and also fetch download links online"
 
@@ -205,13 +214,24 @@ _QueryDebianDB()
 	[ -f $debianRepo ] || _NoDebianRepoFound
 	echo "Searching for [$query]..."
 	pkgQuery=$(grep "Package: $query" $debianRepo)
+
 	if [[ $? -ne 0 ]]
 	then
-		echo "No results. Package [$query] might no exist in debian repositories"
+		if [[ "$updateCheck" != "true" ]]
+		then
+			echo "No results. Package [$query] might no exist in debian repositories"
+		fi
 		exit 1
 	fi
 
-	pkgName=$(sed 's/Package: //g' <<< $pkgQuery | fzf --height=20% -1)
+
+	if [[ "$updateCheck" == "true" ]]
+	then
+		pkgName=$(sed 's/Package: //g' <<< $pkgQuery | head -n1)
+	else
+		pkgName=$(sed 's/Package: //g' <<< $pkgQuery | fzf --height=20% -1)
+	fi
+
 	if [[ $? -ne 0 ]]
 	then
 		# Result not found or cancelled
@@ -229,6 +249,106 @@ _QueryDebianDB()
 		echo -e "$result\n"
 	fi
 
+}
+_CheckDebianUpdates()
+{
+	sources=$(ls /sources)
+	let counter=1
+
+	for i in $sources
+	do
+		case $i in
+			*patch*) continue ;;
+			*)
+				packageName=$(echo "$i" | sed 's/-[0-9].*//g; s/[0-9]\..*//g; s/\.tar\.gz//g')
+				packageWithoutFileExt=$(sed 's/\.tar\.[xg]z//g; s/\.zip//g; s/\.tar\.bz2//g; s/\.tgz//g' <<< $i)
+				updateCheck=true
+				result=$(_QueryDebianDB "$packageName")
+				[[ $? -ne 0 ]] && continue
+				debianVersion=$(awk '/^Version: /' <<< $result | sed 's/[0-9]://g; s/Version: //g')
+				debianPackage=$(awk '/^Package: /' <<< $result | sed 's/Package: //g')
+
+				comparison=$(echo -e "$packageWithoutFileExt - Local\n${debianPackage}-${debianVersion} - Debian")
+				comparisonResult=$(sort -g <<< $comparison)
+				winner="$(tail -n1 <<< $comparisonResult)"
+
+				if [[ $(grep "Debian" <<< "$winner") ]]
+				then
+					let counter=$counter+1
+					echo "--------------"
+					echo "$comparisonResult"
+					echo "--------------"
+				fi
+
+				;;
+		esac
+	done
+
+	echo "Packages with possible available updates found: $counter"
+}
+
+_CreateDefaultDB()
+{
+	echo '
+{
+	"updated": "",
+	"packages": [
+
+	]
+}
+	' > $packageDB
+}
+
+_AddPackageToDB()
+{
+	# Create the database file if it doesn't exist already
+	[ -f $packageDB ] || _CreateDefaultDB
+
+	if [ $# -gt 0 ]
+	then
+		packageName=$(cut -d'|' -f1 <<< $1)
+		packageVersion=$(cut -d'|' -f2 <<< $1)
+		packageDeps=$(cut -d'|' -f3 <<< $1)
+		echo "Package name: $packageName"
+		echo "Version: $packageVersion"
+		echo "Dependencies: $packageDeps"
+	else
+		echo -n "Package name: "
+		read packageName
+
+		echo -n "Version: "
+		read packageVersion
+
+		echo -n "Dependencies: "
+		read packageDeps
+	fi
+
+	jq ".packages += [{\"name\": \"$packageName\", \"version\": \"$packageVersion\", \"dependencies\": \"$packageDeps\"}]" $packageDB > $tmpPackageDB && mv $tmpPackageDB $packageDB
+}
+
+_UpdatePackageDB()
+{
+	if [ $# -gt 0 ]
+	then
+		packageName=$(cut -d'|' -f1 <<< $1)
+		packageVersion=$(cut -d'|' -f2 <<< $1)
+		packageDeps=$(cut -d'|' -f3 <<< $1)
+		echo "Package name: $packageName"
+		echo "Version: $packageVersion"
+		echo "Dependencies: $packageDeps"
+	else
+		echo -n "Package name: "
+		read packageName
+
+		echo -n "Version: "
+		read packageVersion
+
+		echo -n "Dependencies: "
+		read packageDeps
+	fi
+
+	time=$(date "+%d.%m.%Y %H.%M.%S")
+	jq "(.packages[] | select(.name == \"$packageName\") | .version) |= \"$packageVersion\" | (.updated |= \"$time\")" $packageDB > $tmpPackageDB && mv $tmpPackageDB $packageDB
 }
 # End of functions
 
@@ -319,6 +439,12 @@ while test $# -gt 0; do
 			gunzip ${debianRepo}.gz
 			;;
 
+		-Qu)
+			shift
+			echo "Checking what packages might need updating..."
+			_CheckDebianUpdates
+			;;
+
 		-Qd)
 			shift
 			# Query debian repository database
@@ -345,6 +471,32 @@ while test $# -gt 0; do
 			else
 				echo "No package specified"
 				exit 1
+			fi
+			;;
+
+		-Da)
+			shift
+			# Database Add
+			# Manually add an application to the database interactively
+			if [ $# -gt 0 ]
+			then
+				_AddPackageToDB "$1"
+				shift
+			else
+				_AddPackageToDB
+			fi
+			;;
+
+		-De)
+			shift
+			# Database Edit
+			# Edits already added entry in the package database
+			if [ $# -gt 0 ]
+			then
+				_UpdatePackageDB "$1"
+				shift
+			else
+				_UpdatePackageDB
 			fi
 			;;
 
