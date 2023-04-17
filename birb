@@ -1,0 +1,63 @@
+#!/bin/bash
+
+DISTFILES="/var/cache/distfiles"
+REPO_DIR="/var/db/pkg"
+
+print_help()
+{
+	echo "Usage: birb [OPTIONS...] [ARGUMENTS...]"
+	echo ""
+	echo "      --help                 display this help page and exit"
+	echo "      --download PACKAGE     download the source tarball for the given package"
+}
+
+if [ -z $1 ]
+then
+	print_help
+	exit 0
+fi
+
+# Download a tarball for the given package using wget
+# The tarball will be stored to /var/cache/distfiles
+download_src()
+{
+	# Source the package variables
+	source $REPO_DIR/$1/seed.sh
+
+	# Download the source tarball
+	wget --directory-prefix=$DISTFILES $SOURCE
+
+	# Get the tarball name from the download URL
+	TARBALL="$(basename $SOURCE)"
+
+	# Check the MD5 checksum
+	DOWNLOAD_SUM="$(md5sum $DISTFILES/$TARBALL | cut -d' ' -f1)"
+	if [ "$DOWNLOAD_SUM" != "$CHECKSUM" ]
+	then
+		echo "WARNING! There was a checksum mismatch. The downloaded archive will be removed to prevent installing a possibly corrupt package. Please re-try downloading it"
+		rm -v $DISTFILES/$TARBALL
+		exit 1
+	fi
+}
+
+while test $# -gt 0; do
+	case $1 in
+		--help)
+			shift
+			print_help
+			exit 0
+			;;
+
+		--download)
+			shift
+			download_src $1
+
+			exit 0
+			;;
+
+		*)
+			echo "Invalid argument! Run 'birb --help' for help"
+			exit 1
+		;;
+	esac
+done
