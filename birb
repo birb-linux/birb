@@ -24,6 +24,20 @@ then
 	exit 0
 fi
 
+# Args: [file path] [checksum]
+# Return values:
+# 0 = Checksums match
+# 1 = Checksums didn't match
+checksum_check()
+{
+	FILE_PATH="$1"
+	GOAL_CHECKSUM="$2"
+
+	FILE_CHECKSUM="$(md5sum $DISTFILES/$TARBALL | cut -d' ' -f1)"
+
+	[ "$GOAL_CHECKSUM" == "$FILE_CHECKSUM" ] && exit 0 || exit 1
+}
+
 # Download a tarball for the given package using wget
 # The tarball will be stored to /var/cache/distfiles
 download_src()
@@ -31,15 +45,24 @@ download_src()
 	# Source the package variables
 	source $REPO_DIR/$1/seed.sh
 
-	# Download the source tarball
-	wget --directory-prefix=$DISTFILES $SOURCE
-
 	# Get the tarball name from the download URL
 	TARBALL="$(basename $SOURCE)"
 
+	# Check if the package tarball has already been downloaded
+	# and the checksum matches
+	if [ $(checksum_check "$DISTFILES/$TARBALL" "$CHECKSUM") ]
+	then
+		# The tarball has already been downloaded and the download can
+		# be skipped without any issues
+		exit 0
+	fi
+
+	# Download the source tarball
+	wget --directory-prefix=$DISTFILES $SOURCE
+
+
 	# Check the MD5 checksum
-	DOWNLOAD_SUM="$(md5sum $DISTFILES/$TARBALL | cut -d' ' -f1)"
-	if [ "$DOWNLOAD_SUM" != "$CHECKSUM" ]
+	if [ $(checksum_check "$DISTFILES/$TARBALL" "$CHECKSUM") ]
 	then
 		echo "WARNING! There was a checksum mismatch. The downloaded archive will be removed to prevent installing a possibly corrupt package. Please re-try downloading it"
 		rm -v $DISTFILES/$TARBALL
