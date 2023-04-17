@@ -122,6 +122,7 @@ install_package()
 	_cleanup
 
 	# Stow the fakeroot directory to the root directory
+	cd $FAKEROOT
 	stow -S -t / -d $FAKEROOT $PACKAGE_NAME
 
 	# Add the package into the nest file if the installation was successful
