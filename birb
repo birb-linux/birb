@@ -62,7 +62,7 @@ download_src()
 			# The tarball has already been downloaded and the download can
 			# be skipped without any issues
 			echo "Skipping [$1] as its already downloaded"
-			exit 0
+			return 0
 		fi
 	fi
 
@@ -74,7 +74,7 @@ download_src()
 	then
 		echo "WARNING! There was a checksum mismatch. The downloaded archive will be removed to prevent installing a possibly corrupt package. Please re-try downloading it"
 		rm -v $DISTFILES/$TARBALL
-		exit 1
+		return 1
 	fi
 }
 
