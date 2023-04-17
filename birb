@@ -36,10 +36,10 @@ checksum_check()
 	FILE_CHECKSUM="$(md5sum $DISTFILES/$TARBALL | cut -d' ' -f1)"
 
 	# Make sure that either of the checksums aren't empty
-	[ -z $GOAL_CHECKSUM ] && exit 1
-	[ -z $FILE_CHECKSUM ] && exit 1
+	[ -z $GOAL_CHECKSUM ] && echo "1"
+	[ -z $FILE_CHECKSUM ] && echo "1"
 
-	[ "$GOAL_CHECKSUM" == "$FILE_CHECKSUM" ] && exit 0 || exit 1
+	[ "$GOAL_CHECKSUM" == "$FILE_CHECKSUM" ] && echo "0" || echo "1"
 }
 
 # Download a tarball for the given package using wget
@@ -57,7 +57,7 @@ download_src()
 	if [ -f "$DISTFILES/$TARBALL" ]
 	then
 		echo "Found [$TARBALL] in distcache. Comparing checksums..."
-		if [ $(checksum_check "$DISTFILES/$TARBALL" "$CHECKSUM") ]
+		if [ "$(checksum_check "$DISTFILES/$TARBALL" "$CHECKSUM")" == "0" ]
 		then
 			# The tarball has already been downloaded and the download can
 			# be skipped without any issues
@@ -69,9 +69,8 @@ download_src()
 	# Download the source tarball
 	wget --directory-prefix=$DISTFILES $SOURCE
 
-
 	# Check the MD5 checksum
-	if [ $(checksum_check "$DISTFILES/$TARBALL" "$CHECKSUM") ]
+	if [ "$(checksum_check "$DISTFILES/$TARBALL" "$CHECKSUM")" == "1" ]
 	then
 		echo "WARNING! There was a checksum mismatch. The downloaded archive will be removed to prevent installing a possibly corrupt package. Please re-try downloading it"
 		rm -v $DISTFILES/$TARBALL
