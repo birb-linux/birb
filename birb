@@ -15,7 +15,7 @@ print_help()
 	echo "Usage: birb [OPTIONS...] [ARGUMENTS...]"
 	echo ""
 	echo "      --help                 display this help page and exit"
-	echo "      --download PACKAGE     download the source tarball for the given package"
+	echo "      --download PACKAGE(s)  download the source tarball for the given package"
 }
 
 if [ -z $1 ]
@@ -57,7 +57,11 @@ while test $# -gt 0; do
 
 		--download)
 			shift
-			download_src $1
+
+			while test $# -gt 0; do
+				download_src $1
+				shift
+			done
 
 			exit 0
 			;;
