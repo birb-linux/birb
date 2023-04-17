@@ -7,15 +7,19 @@
 # up into the correct directory
 INSTALL_PREFIX="$LFS"
 
-DISTFILES="$INSTALL_PREFIX/var/cache/distfiles"
 REPO_DIR="$INSTALL_PREFIX/var/db/pkg"
+export DISTFILES="$INSTALL_PREFIX/var/cache/distfiles"
+export FAKEROOT="$INSTALL_PREFIX/var/db/fakeroot"
 
 print_help()
 {
-	echo "Usage: birb [OPTIONS...] [ARGUMENTS...]"
+	echo "Usage: birb [OPTIONS...] [ARGUMENTS...] [PACKAGE(s)...]"
 	echo ""
 	echo "      --help                 display this help page and exit"
 	echo "      --download PACKAGE(s)  download the source tarball for the given package"
+	echo ""
+	echo "If a valid package names are given as the only arguments, birb will attempt"
+	echo "downloading and installing them"
 }
 
 if [ -z $1 ]
@@ -42,15 +46,22 @@ checksum_check()
 	[ "$GOAL_CHECKSUM" == "$FILE_CHECKSUM" ] && echo "0" || echo "1"
 }
 
+source_pkg_seed()
+{
+	source $REPO_DIR/$1/seed.sh
+}
+
 # Download a tarball for the given package using wget
 # The tarball will be stored to /var/cache/distfiles
 download_src()
 {
 	# Source the package variables
-	source $REPO_DIR/$1/seed.sh
+	source_pkg_seed $1
 
 	# Get the tarball name from the download URL
 	TARBALL="$(basename $SOURCE)"
+
+	echo "Fetching $TARBALL..."
 
 	# Check if the package tarball has already been downloaded
 	# and the checksum matches
@@ -78,6 +89,47 @@ download_src()
 	fi
 }
 
+install_package()
+{
+	PACKAGE_NAME="$1"
+
+	# Attempt to download the package
+	[ $(download_src $PACKAGE_NAME) -eq 1 ] && echo "Error during downloading [$PACKAGE_NAME]. Aborting the mission..." && exit 1
+
+	# Source the package variables and functions
+	source_pkg_seed $PACKAGE_NAME
+
+	# Extract the package sources and do any required setup
+	_setup
+
+	# Build the package
+	_build
+
+	# Install the package into fakeroot directory
+	_install
+
+	# Clean things up
+	_cleanup
+
+	# Stow the fakeroot directory to /
+	echo "Installing the package is not yet implemented :("
+
+	# Add the package into the nest file if the installation was successful
+	# echo PACKAGE_NAME >> NESTFILE
+}
+
+# Check if the first argument is a valid package name
+if [ -d "$REPO_DIR/$1" ]
+then
+	# Process the arguments as package names and install
+	# all of them
+	while test $# -gt 0; do
+		install_package "$1"
+		shift
+	done
+fi
+
+# Go through all of the arguments
 while test $# -gt 0; do
 	case $1 in
 		--help)
