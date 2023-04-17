@@ -1,7 +1,14 @@
 #!/bin/bash
 
-DISTFILES="/var/cache/distfiles"
-REPO_DIR="/var/db/pkg"
+# Check if the LFS variable is set
+# If it isn't empty, it means that we are installing
+# BirbOS and the LFS variable should be used as the
+# installation prefix, so that all of the files end
+# up into the correct directory
+INSTALL_PREFIX="$LFS"
+
+DISTFILES="$INSTALL_PREFIX/var/cache/distfiles"
+REPO_DIR="$INSTALL_PREFIX/var/db/pkg"
 
 print_help()
 {
