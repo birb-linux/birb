@@ -54,11 +54,16 @@ download_src()
 
 	# Check if the package tarball has already been downloaded
 	# and the checksum matches
-	if [ $(checksum_check "$DISTFILES/$TARBALL" "$CHECKSUM") ]
+	if [ -f "$DISTFILES/$TARBALL" ]
 	then
-		# The tarball has already been downloaded and the download can
-		# be skipped without any issues
-		exit 0
+		echo "Found [$TARBALL] in distcache. Comparing checksums..."
+		if [ $(checksum_check "$DISTFILES/$TARBALL" "$CHECKSUM") ]
+		then
+			# The tarball has already been downloaded and the download can
+			# be skipped without any issues
+			echo "Skipping [$1] as its already downloaded"
+			exit 0
+		fi
 	fi
 
 	# Download the source tarball
