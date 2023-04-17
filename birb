@@ -8,6 +8,7 @@
 INSTALL_PREFIX="$LFS"
 
 REPO_DIR="$INSTALL_PREFIX/var/db/pkg"
+NEST="/var/lib/birb/nest"
 export DISTFILES="$INSTALL_PREFIX/var/cache/distfiles"
 export FAKEROOT="$INSTALL_PREFIX/var/db/fakeroot"
 
@@ -93,12 +94,20 @@ install_package()
 {
 	PACKAGE_NAME="$1"
 
+	# Check if the package is already installed
+	if [ -n "$(grep -x $PACKAGE_NAME $NEST)" ]
+	then
+		echo "$PACKAGE_NAME is already installed! Skipping..."
+		exit 1
+	fi
+
 	# Attempt to download the package
 	[ $(download_src $PACKAGE_NAME) -eq 1 ] && echo "Error during downloading [$PACKAGE_NAME]. Aborting the mission..." && exit 1
 
 	# Source the package variables and functions
 	source_pkg_seed $PACKAGE_NAME
 
+	# TODO: Extract the files to /tmp instead of distfiles
 	# Extract the package sources and do any required setup
 	cd $DISTFILES
 	_setup
@@ -112,11 +121,11 @@ install_package()
 	# Clean things up
 	_cleanup
 
-	# Stow the fakeroot directory to /
-	echo "Installing the package is not yet implemented :("
+	# Stow the fakeroot directory to the root directory
+	stow -S -t / -d $FAKEROOT $PACKAGE_NAME
 
 	# Add the package into the nest file if the installation was successful
-	# echo PACKAGE_NAME >> NESTFILE
+	echo "$PACKAGE_NAME" >> $NEST
 }
 
 # Check if the first argument is a valid package name
