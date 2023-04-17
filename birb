@@ -35,6 +35,10 @@ checksum_check()
 
 	FILE_CHECKSUM="$(md5sum $DISTFILES/$TARBALL | cut -d' ' -f1)"
 
+	# Make sure that either of the checksums aren't empty
+	[ -z $GOAL_CHECKSUM ] && exit 1
+	[ -z $FILE_CHECKSUM ] && exit 1
+
 	[ "$GOAL_CHECKSUM" == "$FILE_CHECKSUM" ] && exit 0 || exit 1
 }
 
