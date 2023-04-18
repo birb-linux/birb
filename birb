@@ -71,7 +71,7 @@ download_src()
 	# Get the tarball name from the download URL
 	TARBALL="$(basename $SOURCE)"
 
-	echo "Fetching $TARBALL..."
+	echo "=> Fetching $TARBALL..."
 
 	# Check if the package tarball has already been downloaded
 	# and the checksum matches
@@ -110,6 +110,13 @@ install_package()
 {
 	PACKAGE_NAME="$1"
 	export PKG_PATH="$INSTALL_PREFIX/var/db/pkg/$PACKAGE_NAME"
+
+	# Check if a package with this name is in the repositories
+	if [ ! -d $PKG_PATH ]
+	then
+		echo "ERROR: There's no package with the name [$PACKAGE_NAME]"
+		exit 1
+	fi
 
 	# Check if the package is already installed
 	if [ -n "$(grep -x $PACKAGE_NAME $NEST)" ]
