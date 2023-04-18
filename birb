@@ -17,6 +17,7 @@ export FAKEROOT="$INSTALL_PREFIX/var/db/fakeroot"
 IMPORTANT_PACKAGES="
 xz
 file
+gcc
 "
 
 print_help()
