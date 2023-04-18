@@ -90,6 +90,14 @@ download_src()
 	fi
 }
 
+# Create some basic directories for the fakeroot
+# in case the package isn't going to create those directories
+# and gets confused
+prepare_fakeroot()
+{
+	mkdir -p $1/{usr,etc}
+}
+
 install_package()
 {
 	PACKAGE_NAME="$1"
@@ -121,6 +129,7 @@ install_package()
 
 	# Install the package into fakeroot directory
 	echo "=> Installing the package"
+	prepare_fakeroot $FAKEROOT/$PACKAGE_NAME
 	_install
 
 	# Clean things up
