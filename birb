@@ -118,10 +118,6 @@ install_package()
 		return 1
 	fi
 
-	# Attempt to download the package
-	download_src $PACKAGE_NAME
-	[ $? -eq 1 ] && echo "Error during downloading [$PACKAGE_NAME]. Aborting the mission..." && exit 1
-
 	# Reset all package variables in-case some package has omitted
 	# a variable or two
 	NAME=""
@@ -134,6 +130,49 @@ install_package()
 
 	# Source the package variables and functions
 	source_pkg_seed $PACKAGE_NAME
+
+	# Check if the dependency requirements are met
+	echo "=> Checking dependencies"
+	HAD_MISSING_DEP=""
+	for i in $DEPS
+	do
+		# Check if the dependency is installed
+		if [ -z "$(grep -x $i $NEST)" ]
+		then
+			HAD_MISSING_DEP="yes"
+			echo "$i missing"
+			continue
+		else
+			echo "$i found"
+		fi
+	done
+
+	if [ "$HAD_MISSING_DEP" == "yes" ]
+	then
+		echo "Missing dependencies were found. Would you like to attempt installing them?"
+		read -p "[Y/n]: " AGREE_INSTALL_DEPS
+		case $AGREE_INSTALL_DEPS in
+			n|N|n*|N*)
+				echo "Cancelled"
+				exit 1
+				;;
+
+			""|y|Y|y*|Y*) ;;
+
+			*)
+				echo "Cancelled"
+				exit 1
+				;;
+		esac
+
+		echo "=> Attempting to install the following packages: [$DEPS]"
+		birb $DEPS || { echo "Something went wrong while trying to install dependencies. Cancelling the mission..."; exit 1; }
+	fi
+
+	# Attempt to download the package
+	download_src $PACKAGE_NAME
+	[ $? -eq 1 ] && echo "Error during downloading [$PACKAGE_NAME]. Aborting the mission..." && exit 1
+
 
 	# Make sure that the package has set all of the required variables
 	[ -z "$NAME" ] 		&& echo "Encountered a package with a missing name! Aborting the mission..." && exit 1
