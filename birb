@@ -153,7 +153,7 @@ install_package()
 	# First, create a backup of the fakeroot
 	TEMP_FAKEROOT="$INSTALL_PREFIX/var/tmp/birb_temp_fakeroot/$PACKAGE_NAME"
 	mkdir -p $TEMP_FAKEROOT
-	cp $FAKEROOT/$PACKAGE_NAME $TEMP_FAKEROOT
+	cp -r $FAKEROOT/$PACKAGE_NAME $TEMP_FAKEROOT
 
 	# Do the first run of stow and "absorb" any existing packages with the
 	# --adopt flag. This is to get around any stow conflicts
