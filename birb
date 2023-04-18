@@ -103,7 +103,7 @@ download_src()
 # and gets confused
 prepare_fakeroot()
 {
-	mkdir -p $1/{usr/{lib32,libx32},etc}
+	mkdir -p $1/{usr/{lib,lib32,libx32},etc}
 }
 
 install_package()
