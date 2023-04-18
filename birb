@@ -143,14 +143,26 @@ install_package()
 	rm -r $TEMPORARY_BUILD_DIR
 
 	# Find all files in the fakeroot and delete them from the system root
-	echo "=> Removing any existing files"
-	FILES_TO_REMOVE="$(find $FAKEROOT/$PACKAGE_NAME -type f | sed "s|$FAKEROOT/$PACKAGE_NAME||")"
-	rm -rvf $FILES_TO_REMOVE
+	#echo "=> Removing any existing files"
+	#FILES_TO_REMOVE="$(find $FAKEROOT/$PACKAGE_NAME -type f | sed "s|$FAKEROOT/$PACKAGE_NAME||")"
+	#rm -rvf $FILES_TO_REMOVE
 
 	# Stow the fakeroot directory to the root directory
 	echo "=> Symlinking the package fakeroot to the system root"
+
+	# First, create a backup of the fakeroot
+	TEMP_FAKEROOT="$INSTALL_PREFIX/var/tmp/birb_temp_fakeroot/$PACKAGE_NAME"
+	mkdir -p $TEMP_FAKEROOT
+	cp $FAKEROOT/$PACKAGE_NAME $TEMP_FAKEROOT
+
+	# Do the first run of stow and "absorb" any existing packages with the
+	# --adopt flag. This is to get around any stow conflicts
 	cd $FAKEROOT
-	stow -S -t / -d $FAKEROOT $PACKAGE_NAME
+	stow -S --adopt -t / -d $FAKEROOT $PACKAGE_NAME
+
+	# Now restore the fakeroot backup and restow
+	mv $TEMP_FAKEROOT $PACKAGE_NAME
+	stow -R -t / -d $FAKEROOT $PACKAGE_NAME
 
 	# Add the package into the nest file if the installation was successful
 	echo "$PACKAGE_NAME" >> $NEST
