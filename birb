@@ -18,6 +18,7 @@ print_help()
 	echo ""
 	echo "      --help                 display this help page and exit"
 	echo "      --download PACKAGE(s)  download the source tarball for the given package"
+	echo "      --uninstall PACKAGE(s) uninstall given package(s) from the filesystem"
 	echo ""
 	echo "If a valid package names are given as the only arguments, birb will attempt"
 	echo "downloading and installing them"
@@ -148,6 +149,25 @@ install_package()
 	set +e
 }
 
+uninstall_package()
+{
+	PACKAGE_NAME="$1"
+	echo "=> Checking if the package $PACKAGE_NAME is in the nest"
+	if [ -z "$(grep -x $PACKAGE_NAME $NEST)" ]
+	then
+		echo "$PACKAGE_NAME is not installed"
+		return 1
+	fi
+
+	set -e
+	echo "=> Unlinking $PACKAGE_NAME..."
+	stow -D -t / -d $FAKEROOT $PACKAGE_NAME
+
+	sed -i "/$PACKAGE_NAME/d" $NEST
+	echo "$PACKAGE_NAME uninstalled"
+	set +e
+}
+
 # Check if the first argument is a valid package name
 if [ -d "$REPO_DIR/$1" ]
 then
@@ -173,6 +193,17 @@ while test $# -gt 0; do
 
 			while test $# -gt 0; do
 				download_src $1
+				shift
+			done
+
+			exit 0
+			;;
+
+		--uninstall)
+			shift
+
+			while test $# -gt 0; do
+				uninstall_package $1
 				shift
 			done
 
