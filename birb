@@ -74,7 +74,6 @@ download_src()
 		then
 			# The tarball has already been downloaded and the download can
 			# be skipped without any issues
-			echo "Skipping [$1] as its already downloaded"
 			return 0
 		fi
 	fi
