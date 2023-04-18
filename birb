@@ -102,6 +102,7 @@ prepare_fakeroot()
 install_package()
 {
 	PACKAGE_NAME="$1"
+	export PKG_PATH="$INSTALL_PREFIX/var/db/pkg/$PACKAGE_NAME"
 
 	# Check if the package is already installed
 	if [ -n "$(grep -x $PACKAGE_NAME $NEST)" ]
