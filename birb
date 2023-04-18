@@ -141,6 +141,10 @@ install_package()
 	echo "=> Cleaning up"
 	rm -r $TEMPORARY_BUILD_DIR
 
+	# Find all files in the fakeroot and delete them from the system root
+	echo "=> Removing any existing files"
+	find $FAKEROOT/$PACKAGE_NAME -type f | sed "s|$FAKEROOT/$PACKAGE_NAME||"
+
 	# Stow the fakeroot directory to the root directory
 	echo "=> Symlinking the package fakeroot to the system root"
 	cd $FAKEROOT
