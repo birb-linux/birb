@@ -98,7 +98,7 @@ install_package()
 	if [ -n "$(grep -x $PACKAGE_NAME $NEST)" ]
 	then
 		echo "$PACKAGE_NAME is already installed! Skipping..."
-		exit 1
+		return 1
 	fi
 
 	# Attempt to download the package
