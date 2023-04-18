@@ -111,7 +111,8 @@ install_package()
 	fi
 
 	# Attempt to download the package
-	[ $(download_src "$PACKAGE_NAME") -eq 1 ] && echo "Error during downloading [$PACKAGE_NAME]. Aborting the mission..." && exit 1
+	download_src $PACKAGE_NAME
+	[ $? -eq 1 ] && echo "Error during downloading [$PACKAGE_NAME]. Aborting the mission..." && exit 1
 
 	set -e
 
