@@ -302,7 +302,7 @@ while test $# -gt 0; do
 			;;
 
 		*)
-			echo "Invalid argument! Run 'birb --help' for help"
+			echo "Package $1 does not exist"
 			exit 1
 		;;
 	esac
