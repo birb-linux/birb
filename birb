@@ -12,6 +12,13 @@ NEST="/var/lib/birb/nest"
 export DISTFILES="$INSTALL_PREFIX/var/cache/distfiles"
 export FAKEROOT="$INSTALL_PREFIX/var/db/fakeroot"
 
+# Important packages that should prompt for confirmation when uninstalling
+# to protect the system from becoming unusable
+IMPORTANT_PACKAGES="
+xz
+file
+"
+
 print_help()
 {
 	echo "Usage: birb [OPTIONS...] [ARGUMENTS...] [PACKAGE(s)...]"
@@ -211,6 +218,32 @@ uninstall_package()
 	then
 		echo "$PACKAGE_NAME is not installed"
 		return 1
+	fi
+
+	# Protect the user from destroying their installation
+	IS_PROTECTED="$(echo "$IMPORTANT_PACKAGES" | grep -x "$PACKAGE_NAME")"
+	if [ -n "$IS_PROTECTED" ]
+	then
+		echo "!! WARNING !!"
+		echo "Removing this package might cause some serious harm to your system"
+		echo "and render it partially unusable."
+		echo ""
+		echo "Please make sure you have a way to restore this package afterwards"
+		echo "without the use of a package manager (and possibly other tools"
+		echo "that aren't available)"
+		echo ""
+		read -p "Continue? [y/N]: " UNINSTALL_PROTECTED_PACKAGE
+
+		case $UNINSTALL_PROTECTED_PACKAGE in
+			y|Y|yes|Yes)
+				echo "I hope you know what you are doing..."
+				;;
+
+			*)
+				echo "Cancelled"
+				return 1;
+				;;
+		esac
 	fi
 
 	set -e
