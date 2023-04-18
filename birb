@@ -121,7 +121,7 @@ install_package()
 	# Check if the package is already installed
 	if [ -n "$(grep -x $PACKAGE_NAME $NEST)" ]
 	then
-		echo "$PACKAGE_NAME is already installed! Skipping..."
+		echo "$PACKAGE_NAME is already installed"
 		return 1
 	fi
 
