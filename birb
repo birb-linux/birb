@@ -114,8 +114,6 @@ install_package()
 	download_src $PACKAGE_NAME
 	[ $? -eq 1 ] && echo "Error during downloading [$PACKAGE_NAME]. Aborting the mission..." && exit 1
 
-	set -e
-
 	# Reset all package variables in-case some package has omitted
 	# a variable or two
 	NAME=""
@@ -136,6 +134,8 @@ install_package()
 
 	# Check if the package wants to also build 32bit libraries
 	ENABLE_32BIT="$(echo "$FLAGS" | grep -o "32bit")"
+
+	set -e
 
 	# Extract the package sources and do any required setup
 	TEMPORARY_BUILD_DIR="/tmp/birb_package_build"
