@@ -140,10 +140,10 @@ install_package()
 		if [ -z "$(grep -x $i $NEST)" ]
 		then
 			HAD_MISSING_DEP="yes"
-			echo "$i missing"
+			echo "[ ] $i"
 			continue
 		else
-			echo "$i found"
+			echo "[✓] $i"
 		fi
 	done
 
