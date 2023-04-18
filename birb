@@ -120,7 +120,9 @@ install_package()
 
 	# TODO: Extract the files to /tmp instead of distfiles
 	# Extract the package sources and do any required setup
-	cd $DISTFILES
+	TEMPORARY_BUILD_DIR="/tmp/birb_package_build"
+	mkdir -p $TEMPORARY_BUILD_DIR
+	cd $TEMPORARY_BUILD_DIR
 	echo "=> Setting things up for compiling"
 	_setup
 
@@ -135,7 +137,7 @@ install_package()
 
 	# Clean things up
 	echo "=> Cleaning up"
-	_cleanup
+	rm -r $TEMPORARY_BUILD_DIR
 
 	# Stow the fakeroot directory to the root directory
 	echo "=> Symlinking the package fakeroot to the system root"
