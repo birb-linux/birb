@@ -110,23 +110,30 @@ install_package()
 	# TODO: Extract the files to /tmp instead of distfiles
 	# Extract the package sources and do any required setup
 	cd $DISTFILES
+	echo "=> Setting things up for compiling"
 	_setup
 
 	# Build the package
+	echo "=> Building the package"
 	_build
 
 	# Install the package into fakeroot directory
+	echo "=> Installing the package"
 	_install
 
 	# Clean things up
+	echo "=> Cleaning up"
 	_cleanup
 
 	# Stow the fakeroot directory to the root directory
+	echo "=> Symlinking the package fakeroot to the system root"
 	cd $FAKEROOT
 	stow -S -t / -d $FAKEROOT $PACKAGE_NAME
 
 	# Add the package into the nest file if the installation was successful
 	echo "$PACKAGE_NAME" >> $NEST
+
+	echo "$PACKAGE_NAME installation finished"
 }
 
 # Check if the first argument is a valid package name
