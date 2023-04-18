@@ -10,6 +10,8 @@ all:
 
 install:
 	cp ./birb ${BUILD_DIR}/birb_dep_solver /usr/bin/
+	mkdir -p /usr/share/birb
+	cp -r ./empty-package /usr/share/birb/
 
 clean:
 	rm -rf ${BUILD_DIR}
