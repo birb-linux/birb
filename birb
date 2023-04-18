@@ -218,6 +218,9 @@ uninstall_package()
 	echo "=> Unlinking $PACKAGE_NAME..."
 	stow -D -t / -d $FAKEROOT $PACKAGE_NAME
 
+	echo "=> Removing fakeroot"
+	rm -r $FAKEROOT/$PACKAGE_NAME
+
 	sed -i "/$PACKAGE_NAME/d" $NEST
 	echo "$PACKAGE_NAME uninstalled"
 	set +e
