@@ -61,6 +61,15 @@ source_pkg_seed()
 	source $REPO_DIR/$1/seed.sh
 }
 
+println()
+{
+	case $1 in
+		""|LOG) echo -e "\e[32m=> \e[0m$2" ;;
+		ERROR) echo -e "\e[31mERROR: $2\e[0m" ;;
+		WARNING) echo -e "\e[35mWARNING: $2\e[0m" ;;
+	esac
+}
+
 # Download a tarball for the given package using wget
 # The tarball will be stored to /var/cache/distfiles
 download_src()
@@ -69,12 +78,12 @@ download_src()
 	source_pkg_seed $1
 
 	# Make sure that the package has a checksum
-	[ -z "$CHECKSUM" ] && echo "ERROR: Package [$NAME] doesn't define a checksum! The package won't be downloaded." && return 1
+	[ -z "$CHECKSUM" ] && println ERROR "Package [$NAME] doesn't define a checksum! The package won't be downloaded." && return 1
 
 	# Get the tarball name from the download URL
 	TARBALL="$(basename $SOURCE)"
 
-	echo "=> Fetching $TARBALL..."
+	println "Fetching $TARBALL..."
 
 	# Check if the package tarball has already been downloaded
 	# and the checksum matches
@@ -95,7 +104,7 @@ download_src()
 	# Check the MD5 checksum
 	if [ "$(checksum_check "$DISTFILES/$TARBALL" "$CHECKSUM")" == "1" ]
 	then
-		echo "WARNING! There was a checksum mismatch. The downloaded archive will be removed to prevent installing a possibly corrupt package. Please re-try downloading it"
+		println WARNING "There was a checksum mismatch. The downloaded archive will be removed to prevent installing a possibly corrupt package. Please re-try downloading it"
 		rm -v $DISTFILES/$TARBALL
 		return 1
 	fi
@@ -142,7 +151,7 @@ install_package()
 	source_pkg_seed $PACKAGE_NAME
 
 	# Check if the dependency requirements are met
-	echo "=> Checking dependencies"
+	println "Checking dependencies"
 	HAD_MISSING_DEP=""
 	for i in $DEPS
 	do
@@ -175,7 +184,7 @@ install_package()
 				;;
 		esac
 
-		echo "=> Attempting to install the following packages: [$DEPS]"
+		println "Attempting to install the following packages: [$DEPS]"
 		birb $DEPS || { echo "Something went wrong while trying to install dependencies. Cancelling the mission..."; exit 1; }
 	fi
 
@@ -199,38 +208,33 @@ install_package()
 	rm -rf $TEMPORARY_BUILD_DIR
 	mkdir -p $TEMPORARY_BUILD_DIR
 	cd $TEMPORARY_BUILD_DIR
-	echo "=> Setting things up for compiling"
+	println "Setting things up for compiling"
 	_setup
 
 	# Build the package
-	echo "=> Building the package"
+	println "Building the package"
 	_build
 
 	# Install the package into fakeroot directory
-	echo "=> Installing the package"
+	println "Installing the package"
 	prepare_fakeroot $FAKEROOT/$PACKAGE_NAME
 	_install
 
 	if [ -n "$ENABLE_32BIT" ]
 	then
-		echo "=> Building the package with 32-bit libraries"
+		println "Building the package with 32-bit libraries"
 		_build32
 
-		echo "=> Installing 32-bit libraries"
+		println "Installing 32-bit libraries"
 		_install32
 	fi
 
 	# Clean things up
-	echo "=> Cleaning up"
+	println "Cleaning up"
 	rm -r $TEMPORARY_BUILD_DIR
 
-	# Find all files in the fakeroot and delete them from the system root
-	#echo "=> Removing any existing files"
-	#FILES_TO_REMOVE="$(find $FAKEROOT/$PACKAGE_NAME -type f | sed "s|$FAKEROOT/$PACKAGE_NAME||")"
-	#rm -rvf $FILES_TO_REMOVE
-
 	# Stow the fakeroot directory to the root directory
-	echo "=> Finding and deleting conflicting files"
+	println "Finding and deleting conflicting files"
 	cd $FAKEROOT
 	set +e
 	FILES_TO_DELETE="$(stow -S -t / -d $FAKEROOT $PACKAGE_NAME &>/dev/stdout | grep "existing target is not owned by stow" | awk -F' ' '{print "/" $9}')"
@@ -248,7 +252,7 @@ install_package()
 	rm -f $FAKEROOT/$PACKAGE_NAME/usr/share/info/dir
 
 
-	echo "=> Symlinking the package fakeroot to the system root"
+	println "Symlinking the package fakeroot to the system root"
 	stow -S -t / -d $FAKEROOT $PACKAGE_NAME
 
 	# Add the package into the nest file if the installation was successful
@@ -261,7 +265,7 @@ install_package()
 uninstall_package()
 {
 	PACKAGE_NAME="$1"
-	echo "=> Checking if the package $PACKAGE_NAME is in the nest"
+	println "Checking if the package $PACKAGE_NAME is in the nest"
 	if [ -z "$(grep -x $PACKAGE_NAME $NEST)" ]
 	then
 		echo "$PACKAGE_NAME is not installed"
@@ -272,7 +276,7 @@ uninstall_package()
 	IS_PROTECTED="$(echo "$IMPORTANT_PACKAGES" | grep -x "$PACKAGE_NAME")"
 	if [ -n "$IS_PROTECTED" ]
 	then
-		echo "!! WARNING !!"
+		echo -e "\e[31m!! WARNING !!\e[0m"
 		echo "Removing this package might cause some serious harm to your system"
 		echo "and render it partially unusable."
 		echo ""
@@ -295,10 +299,10 @@ uninstall_package()
 	fi
 
 	set -e
-	echo "=> Unlinking $PACKAGE_NAME..."
+	println "Unlinking $PACKAGE_NAME..."
 	stow -D -t / -d $FAKEROOT $PACKAGE_NAME
 
-	echo "=> Removing fakeroot"
+	println "Removing fakeroot"
 	rm -r $FAKEROOT/$PACKAGE_NAME
 
 	sed -i "/$PACKAGE_NAME/d" $NEST
