@@ -75,10 +75,12 @@ source_pkg_seed()
 # The tarball will be stored to /var/cache/distfiles
 download_src()
 {
+	PKG_PATH="$INSTALL_PREFIX/var/db/pkg/$1"
+
 	# Check if a package with this name is in the repositories
 	if [ ! -d $PKG_PATH ]
 	then
-		echo "ERROR: There's no package with the name [$PACKAGE_NAME]"
+		echo "ERROR: There's no package with the name [$1]"
 		exit 1
 	fi
 
