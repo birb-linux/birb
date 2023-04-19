@@ -89,7 +89,7 @@ download_src()
 	# and the checksum matches
 	if [ -f "$DISTFILES/$TARBALL" ]
 	then
-		echo "Found [$TARBALL] in distcache. Comparing checksums..."
+		echo "Found [$TARBALL] in distcache"
 		if [ "$(checksum_check "$DISTFILES/$TARBALL" "$CHECKSUM")" == "0" ]
 		then
 			# The tarball has already been downloaded and the download can
