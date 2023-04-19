@@ -216,11 +216,11 @@ install_package()
 		echo "=> Installing 32-bit libraries"
 		_install32
 
-		echo "=> Building the package with x32-bit libraries"
-		_buildx32
+		#echo "=> Building the package with x32-bit libraries"
+		#_buildx32
 
-		echo "=> Installing x32-bit libraries"
-		_installx32
+		#echo "=> Installing x32-bit libraries"
+		#_installx32
 	fi
 
 	# Clean things up
