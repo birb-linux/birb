@@ -177,7 +177,7 @@ install_package()
 			echo "[ ] $i"
 			continue
 		else
-			echo -e "[\e[32✓\e[0m] $i"
+			echo -e "[✓] $i"
 		fi
 	done
 
