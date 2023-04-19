@@ -313,6 +313,38 @@ uninstall_package()
 		esac
 	fi
 
+	# Check if the package would possibly break any dependencies
+	println "Checking dependencies"
+	while read PACKAGE_TO_CHECK
+	do
+		source $INSTALL_PREFIX/var/db/pkg/$PACKAGE_TO_CHECK/seed.sh
+		DEPENDENCY_FOUND="$(echo "$DEPS" | grep -x "$PACKAGE_NAME")"
+		if [ -n "$DEPENDENCY_FOUND" ]
+		then
+			DEPENDENT_PACKAGES="${DEPENDENT_PACKAGES}${PACKAGE_TO_CHECK}\n"
+		fi
+	done < "${NEST}"
+
+	if [ -n "$DEPENDENT_PACKAGES" ]
+	then
+		echo "The follow packages depend on [$PACKAGE_NAME]:"
+		echo -e "$DEPENDENT_PACKAGES" | sed '/^$/d; s/^/ - /'
+		println WARNING "Removing this package might cause trouble"
+
+		read -p "Continue? [y/N]: " UNINSTALL_DEPENDENCY_BREAKING_PACKAGE
+
+		case $UNINSTALL_DEPENDENCY_BREAKING_PACKAGE in
+			y|Y|yes|Yes)
+				echo "I hope you *really* know what you are doing... ¯\(°_o)/¯"
+				;;
+
+			*)
+				echo "Cancelled"
+				return 1;
+				;;
+		esac
+	fi
+
 	set -e
 	println "Unlinking $PACKAGE_NAME..."
 	stow -D -t / -d $FAKEROOT $PACKAGE_NAME
