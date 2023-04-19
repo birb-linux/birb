@@ -110,6 +110,9 @@ download_src()
 		fi
 	fi
 
+	# Make sure that wget is installed on the system
+	[ ! -f /usr/bin/wget ] && println ERROR "wget isn't installed! Birb cannot download anything without it (╯°□°)╯︵ ┻━┻" && exit 1
+
 	# Download the source tarball
 	wget --directory-prefix=$DISTFILES $SOURCE
 
