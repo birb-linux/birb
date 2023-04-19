@@ -105,6 +105,8 @@ download_src()
 			# The tarball has already been downloaded and the download can
 			# be skipped without any issues
 			return 0
+		else
+			echo "[$TARBALL] checksum doesn't match the package checksum! The package needs to be re-downloaded"
 		fi
 	fi
 
