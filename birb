@@ -246,6 +246,10 @@ install_package()
 	set -e
 	rm -f $FILES_TO_DELETE
 
+	# Make sure the package doesn't attempt to install the /usr/share/info/dir file
+	# because lots of packages want to write into it and that causes conflicts with stow
+	rm -f $FAKEROOT/$PACKAGE_NAME/usr/share/info/dir
+
 
 	echo "=> Symlinking the package fakeroot to the system root"
 	stow -S -t / -d $FAKEROOT $PACKAGE_NAME
