@@ -68,7 +68,6 @@ checksum_check()
 
 source_pkg_seed()
 {
-	[ ! -f $REPO_DIR/$1/seed.sh ] && println ERROR "The package [$1] is possibly corrupted. Resyncing packages might fix this" && return 1
 	source $REPO_DIR/$1/seed.sh
 }
 
@@ -76,8 +75,15 @@ source_pkg_seed()
 # The tarball will be stored to /var/cache/distfiles
 download_src()
 {
+	# Check if a package with this name is in the repositories
+	if [ ! -d $PKG_PATH ]
+	then
+		echo "ERROR: There's no package with the name [$PACKAGE_NAME]"
+		exit 1
+	fi
+
 	# Source the package variables
-	source_pkg_seed $1 || return 1
+	source_pkg_seed $1
 
 	# Make sure that the package has a checksum
 	[ -z "$CHECKSUM" ] && println ERROR "Package [$NAME] doesn't define a checksum! The package won't be downloaded." && return 1
