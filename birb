@@ -68,6 +68,9 @@ download_src()
 	# Source the package variables
 	source_pkg_seed $1
 
+	# Make sure that the package has a checksum
+	[ -z "$CHECKSUM" ] && echo "ERROR: Package [$NAME] doesn't define a checksum! The package won't be downloaded." && return 1
+
 	# Get the tarball name from the download URL
 	TARBALL="$(basename $SOURCE)"
 
@@ -103,7 +106,7 @@ download_src()
 # and gets confused
 prepare_fakeroot()
 {
-	mkdir -p $1/{usr/{lib,lib32,libx32,share/doc},etc}
+	mkdir -p $1/{usr/{lib,lib32,share/doc},etc}
 }
 
 install_package()
@@ -215,12 +218,6 @@ install_package()
 
 		echo "=> Installing 32-bit libraries"
 		_install32
-
-		#echo "=> Building the package with x32-bit libraries"
-		#_buildx32
-
-		#echo "=> Installing x32-bit libraries"
-		#_installx32
 	fi
 
 	# Clean things up
