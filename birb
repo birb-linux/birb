@@ -12,19 +12,6 @@ NEST="/var/lib/birb/nest"
 export DISTFILES="$INSTALL_PREFIX/var/cache/distfiles"
 export FAKEROOT="$INSTALL_PREFIX/var/db/fakeroot"
 
-# Important packages that should prompt for confirmation when uninstalling
-# to protect the system from becoming unusable
-IMPORTANT_PACKAGES="
-bash
-file
-gcc
-grep
-ncurses
-sed
-shadow
-xz
-"
-
 println()
 {
 	case $1 in
@@ -312,8 +299,11 @@ uninstall_package()
 		return 1
 	fi
 
+	# Source the package
+	source_pkg_seed "$PACKAGE_NAME"
+
 	# Protect the user from destroying their installation
-	IS_PROTECTED="$(echo "$IMPORTANT_PACKAGES" | grep -x "$PACKAGE_NAME")"
+	IS_PROTECTED="$(echo "$FLAGS" | grep -o "important")"
 	if [ -n "$IS_PROTECTED" ]
 	then
 		echo -e "\e[31m!! WARNING !!\e[0m"
