@@ -17,6 +17,7 @@ export FAKEROOT="$INSTALL_PREFIX/var/db/fakeroot"
 IMPORTANT_PACKAGES="
 file
 gcc
+grep
 ncurses
 sed
 shadow
