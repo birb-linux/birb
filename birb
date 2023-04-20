@@ -34,9 +34,10 @@ print_help()
 {
 	echo "Usage: birb [OPTIONS...] [ARGUMENTS...] [PACKAGE(s)...]"
 	echo ""
-	echo "      --help                 display this help page and exit"
-	echo "      --download PACKAGE(s)  download the source tarball for the given package"
-	echo "      --uninstall PACKAGE(s) uninstall given package(s) from the filesystem"
+	echo "      --help                         display this help page and exit"
+	echo "      --download PACKAGE(s)          download the source tarball for the given package"
+	echo "      --install [--test] PACKAGE(s)  install given package(s) from the filesystem"
+	echo "      --uninstall PACKAGE(s)         uninstall given package(s) from the filesystem"
 	echo ""
 	echo "If a valid package names are given as the only arguments, birb will attempt"
 	echo "downloading and installing them"
@@ -216,6 +217,9 @@ install_package()
 	# Check if the package wants to also build 32bit libraries
 	ENABLE_32BIT="$(echo "$FLAGS" | grep -o "32bit")"
 
+	# Check if there are tests in the package
+	PACKAGE_HAS_TESTS="$(echo "$FLAGS" | grep -o "test")"
+
 	set -e
 
 	# Extract the package sources and do any required setup
@@ -229,6 +233,14 @@ install_package()
 	# Build the package
 	println "Building the package"
 	_build
+
+	# Run tests if the package has them and the user
+	# has enabled test running
+	if [ -n "$PACKAGE_HAS_TESTS" ] && [ -n "$ENABLE_TESTS" ]
+	then
+		println "Running tests"
+		_test
+	fi
 
 	# Install the package into fakeroot directory
 	println "Installing the package"
@@ -386,6 +398,23 @@ while test $# -gt 0; do
 			done
 
 			exit 0
+			;;
+
+		--install)
+			shift
+
+			case $1 in
+				--test)
+					shift
+					ENABLE_TESTS="yes"
+					;;
+			esac
+
+			# Install all listed packages
+			while test $# -gt 0; do
+				install_package "$1"
+				shift
+			done
 			;;
 
 		--uninstall)
