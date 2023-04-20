@@ -15,6 +15,7 @@ export FAKEROOT="$INSTALL_PREFIX/var/db/fakeroot"
 # Important packages that should prompt for confirmation when uninstalling
 # to protect the system from becoming unusable
 IMPORTANT_PACKAGES="
+bash
 file
 gcc
 grep
