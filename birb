@@ -18,6 +18,7 @@ IMPORTANT_PACKAGES="
 xz
 file
 gcc
+shadow
 "
 
 println()
