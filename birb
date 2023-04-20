@@ -18,6 +18,7 @@ IMPORTANT_PACKAGES="
 file
 gcc
 ncurses
+sed
 shadow
 xz
 "
