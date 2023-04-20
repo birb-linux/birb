@@ -219,6 +219,7 @@ install_package()
 
 	# Check if there are tests in the package
 	PACKAGE_HAS_TESTS="$(echo "$FLAGS" | grep -o "test")"
+	PACKAGE_HAS_32BIT_TESTS="$(echo "$FLAGS" | grep -o "test32")"
 
 	set -e
 
@@ -251,6 +252,13 @@ install_package()
 	then
 		println "Building the package with 32-bit libraries"
 		_build32
+
+		# Run 32-bit tests if the test32 flag is specified
+		if [ -n "$PACKAGE_HAS_32BIT_TESTS" ] && [ -n "$ENABLE_TESTS" ]
+		then
+			println "Running 32-bit tests"
+			_test32
+		fi
 
 		println "Installing 32-bit libraries"
 		_install32
