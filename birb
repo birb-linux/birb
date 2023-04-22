@@ -146,19 +146,14 @@ install_package()
 	then
 		echo "$PACKAGE_NAME is already installed"
 		read -p "Force a reinstall? [y/N]: " AGREE_FORCE_REINSTALL
-		case $AGREE_INSTALL_DEPS in
-			n|N|n*|N*)
-				echo "Cancelled"
-				return 1
-				;;
-
-			""|y|Y|y*|Y*)
+		case $AGREE_FORCE_REINSTALL in
+			y|Y|yes|Yes)
 				FORCE_REINSTALL="yes"
 				;;
 
 			*)
 				echo "Cancelled"
-				return 1
+				return 1;
 				;;
 		esac
 	fi
