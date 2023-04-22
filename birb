@@ -380,7 +380,7 @@ uninstall_package()
 		println "Unlinking $PACKAGE_NAME..."
 		stow -D -t / -d $FAKEROOT $PACKAGE_NAME
 	else
-		pip3 uninstall $PACKAGE_NAME
+		yes | pip3 uninstall $PACKAGE_NAME
 	fi
 
 	println "Removing fakeroot"
