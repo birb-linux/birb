@@ -12,7 +12,6 @@ NEST="/var/lib/birb/nest"
 export DISTFILES="$INSTALL_PREFIX/var/cache/distfiles"
 export FAKEROOT="$INSTALL_PREFIX/var/db/fakeroot"
 export PYTHON_DIST="usr/python_dist"
-mkdir -p "/$PYTHON_DIST"
 
 println()
 {
