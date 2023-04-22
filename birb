@@ -369,13 +369,13 @@ uninstall_package()
 
 	# Python packages need to be uninstall by using pip3
 	# so they need some special treatment
-	if [ -z "$IS_PYTHON_PACKAGE" ]
+	if [ -n "$IS_PYTHON_PACKAGE" ]
 	then
-		println "Unlinking $PACKAGE_NAME..."
-		stow -D -t / -d $FAKEROOT $PACKAGE_NAME
-	else
 		yes | pip3 uninstall $PACKAGE_NAME
 	fi
+
+	println "Unlinking $PACKAGE_NAME..."
+	stow -D -t / -d $FAKEROOT $PACKAGE_NAME
 
 	println "Removing fakeroot"
 	rm -r $FAKEROOT/$PACKAGE_NAME
