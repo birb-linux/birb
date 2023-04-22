@@ -12,7 +12,7 @@ NEST="/var/lib/birb/nest"
 export DISTFILES="$INSTALL_PREFIX/var/cache/distfiles"
 export FAKEROOT="$INSTALL_PREFIX/var/db/fakeroot"
 export PYTHON_DIST="usr/python_dist"
-export PATH="/usr/bin:/usr/sbin:/usr/local/bin"
+export PATH="/usr/bin:/usr/sbin:/usr/local/bin:/usr/python_bin"
 
 println()
 {
