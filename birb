@@ -302,6 +302,7 @@ install_package()
 		stow -S -t / -d $FAKEROOT $PACKAGE_NAME
 	else
 		println "Re-Symlinking the package fakeroot to the system root"
+		cd $FAKEROOT
 		stow -R -t / -d $FAKEROOT $PACKAGE_NAME
 	fi
 
