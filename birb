@@ -210,6 +210,9 @@ install_package()
 	# Check if the package wants to also build 32bit libraries
 	ENABLE_32BIT="$(echo "$FLAGS" | grep -o "32bit")"
 
+	# Check if the package is a python package
+	IS_PYTHON_PACKAGE="$(echo "$FLAGS" | grep -o "python")"
+
 	# Check if there are tests in the package
 	PACKAGE_HAS_TESTS="$(echo "$FLAGS" | grep -o "test")"
 	PACKAGE_HAS_32BIT_TESTS="$(echo "$FLAGS" | grep -o "test32")"
@@ -262,26 +265,30 @@ install_package()
 	rm -r $TEMPORARY_BUILD_DIR
 
 	# Stow the fakeroot directory to the root directory
-	println "Finding and deleting conflicting files"
-	cd $FAKEROOT
-	set +e
-	FILES_TO_DELETE="$(stow -S -t / -d $FAKEROOT $PACKAGE_NAME &>/dev/stdout | grep "existing target is not owned by stow" | awk -F' ' '{print "/" $9}')"
-	set -e
-	rm -f $FILES_TO_DELETE
+	# Skip this part though if the package is a python package
+	if [ -z "$IS_PYTHON_PACKAGE" ]
+	then
+		println "Finding and deleting conflicting files"
+		cd $FAKEROOT
+		set +e
+		FILES_TO_DELETE="$(stow -S -t / -d $FAKEROOT $PACKAGE_NAME &>/dev/stdout | grep "existing target is not owned by stow" | awk -F' ' '{print "/" $9}')"
+		set -e
+		rm -f $FILES_TO_DELETE
 
-	# Do another round of deletions in case there's some other error
-	set +e
-	FILES_TO_DELETE="$(stow -S -t / -d $FAKEROOT $PACKAGE_NAME &>/dev/stdout | grep "existing target is neither a link nor a directory" | awk -F' ' '{print "/" $11}')"
-	set -e
-	rm -f $FILES_TO_DELETE
+		# Do another round of deletions in case there's some other error
+		set +e
+		FILES_TO_DELETE="$(stow -S -t / -d $FAKEROOT $PACKAGE_NAME &>/dev/stdout | grep "existing target is neither a link nor a directory" | awk -F' ' '{print "/" $11}')"
+		set -e
+		rm -f $FILES_TO_DELETE
 
-	# Make sure the package doesn't attempt to install the /usr/share/info/dir file
-	# because lots of packages want to write into it and that causes conflicts with stow
-	rm -f $FAKEROOT/$PACKAGE_NAME/usr/share/info/dir
+		# Make sure the package doesn't attempt to install the /usr/share/info/dir file
+		# because lots of packages want to write into it and that causes conflicts with stow
+		rm -f $FAKEROOT/$PACKAGE_NAME/usr/share/info/dir
 
 
-	println "Symlinking the package fakeroot to the system root"
-	stow -S -t / -d $FAKEROOT $PACKAGE_NAME
+		println "Symlinking the package fakeroot to the system root"
+		stow -S -t / -d $FAKEROOT $PACKAGE_NAME
+	fi
 
 	# Add the package into the nest file if the installation was successful
 	echo "$PACKAGE_NAME" >> $NEST
@@ -302,6 +309,9 @@ uninstall_package()
 
 	# Source the package
 	source_pkg_seed "$PACKAGE_NAME"
+
+	# Check if the package is a python package
+	IS_PYTHON_PACKAGE="$(echo "$FLAGS" | grep -o "python")"
 
 	# Protect the user from destroying their installation
 	IS_PROTECTED="$(echo "$FLAGS" | grep -o "important")"
@@ -362,8 +372,16 @@ uninstall_package()
 	fi
 
 	set -e
-	println "Unlinking $PACKAGE_NAME..."
-	stow -D -t / -d $FAKEROOT $PACKAGE_NAME
+
+	# Python packages need to be uninstall by using pip3
+	# so they need some special treatment
+	if [ -z "$IS_PYTHON_PACKAGE" ]
+	then
+		println "Unlinking $PACKAGE_NAME..."
+		stow -D -t / -d $FAKEROOT $PACKAGE_NAME
+	else
+		pip3 uninstall $PACKAGE_NAME
+	fi
 
 	println "Removing fakeroot"
 	rm -r $FAKEROOT/$PACKAGE_NAME
