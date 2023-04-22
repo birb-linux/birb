@@ -145,7 +145,22 @@ install_package()
 	if [ -n "$(grep -x $PACKAGE_NAME $NEST)" ]
 	then
 		echo "$PACKAGE_NAME is already installed"
-		return 1
+		read -p "Force a reinstall? [y/N]: " AGREE_FORCE_REINSTALL
+		case $AGREE_INSTALL_DEPS in
+			n|N|n*|N*)
+				echo "Cancelled"
+				return 1
+				;;
+
+			""|y|Y|y*|Y*)
+				FORCE_REINSTALL="yes"
+				;;
+
+			*)
+				echo "Cancelled"
+				return 1
+				;;
+		esac
 	fi
 
 	# Reset all package variables in-case some package has omitted
@@ -263,27 +278,37 @@ install_package()
 	println "Cleaning up"
 	rm -r $TEMPORARY_BUILD_DIR
 
-	# Stow the fakeroot directory to the root directory
-	println "Finding and deleting conflicting files"
-	cd $FAKEROOT
-	set +e
-	FILES_TO_DELETE="$(stow -S -t / -d $FAKEROOT $PACKAGE_NAME &>/dev/stdout | grep "existing target is not owned by stow" | awk -F' ' '{print "/" $9}')"
-	set -e
-	rm -f $FILES_TO_DELETE
+	# Skip the file deletion part when reinstalling
+	if [ -z "$FORCE_REINSTALL" ]
+	then
+		# Stow the fakeroot directory to the root directory
+		println "Finding and deleting conflicting files"
+		cd $FAKEROOT
+		set +e
+		FILES_TO_DELETE="$(stow -S -t / -d $FAKEROOT $PACKAGE_NAME &>/dev/stdout | grep "existing target is not owned by stow" | awk -F' ' '{print "/" $9}')"
+		set -e
+		rm -f $FILES_TO_DELETE
 
-	# Do another round of deletions in case there's some other error
-	set +e
-	FILES_TO_DELETE="$(stow -S -t / -d $FAKEROOT $PACKAGE_NAME &>/dev/stdout | grep "existing target is neither a link nor a directory" | awk -F' ' '{print "/" $11}')"
-	set -e
-	rm -f $FILES_TO_DELETE
+		# Do another round of deletions in case there's some other error
+		set +e
+		FILES_TO_DELETE="$(stow -S -t / -d $FAKEROOT $PACKAGE_NAME &>/dev/stdout | grep "existing target is neither a link nor a directory" | awk -F' ' '{print "/" $11}')"
+		set -e
+		rm -f $FILES_TO_DELETE
+	fi
 
 	# Make sure the package doesn't attempt to install the /usr/share/info/dir file
 	# because lots of packages want to write into it and that causes conflicts with stow
 	rm -f $FAKEROOT/$PACKAGE_NAME/usr/share/info/dir
 
 
-	println "Symlinking the package fakeroot to the system root"
-	stow -S -t / -d $FAKEROOT $PACKAGE_NAME
+	if [ -z "$FORCE_REINSTALL" ]
+	then
+		println "Symlinking the package fakeroot to the system root"
+		stow -S -t / -d $FAKEROOT $PACKAGE_NAME
+	else
+		println "Re-Symlinking the package fakeroot to the system root"
+		stow -R -t / -d $FAKEROOT $PACKAGE_NAME
+	fi
 
 	# Add the package into the nest file if the installation was successful
 	echo "$PACKAGE_NAME" >> $NEST
