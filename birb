@@ -273,6 +273,9 @@ install_package()
 	println "Cleaning up"
 	rm -r $TEMPORARY_BUILD_DIR
 
+	# Remove all empty directories from the fakeroot
+	find $FAKEROOT/$PACKAGE_NAME -type d -empty -delete
+
 	# Skip the file deletion part when reinstalling
 	if [ -z "$FORCE_REINSTALL" ]
 	then
