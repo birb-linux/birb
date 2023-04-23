@@ -159,7 +159,7 @@ install_package()
 	else
 		# If the package isn't already installed, but a fakeroot for it exists,
 		# delete the fakeroot to avoid any dangling / corrupt files
-		[ -d "$FAKEROOT/$PACKAGE_NAME" ] && rm -r "$FAKEROOT/$PACKAGE_NAME"
+		[ -d "$FAKEROOT/$PACKAGE_NAME" ] && println "Deleting an existing fakeroot" && rm -r "$FAKEROOT/$PACKAGE_NAME"
 	fi
 
 	# Reset all package variables in-case some package has omitted
