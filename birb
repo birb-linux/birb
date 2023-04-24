@@ -280,6 +280,24 @@ install_package()
 	# Remove all empty directories from the fakeroot
 	find $FAKEROOT/$PACKAGE_NAME -type d -empty -delete
 
+	# If removing all of the empty directories got rid of the entire
+	# fakeroot, we can assume the following things:
+	# A) The package installation did nothing and just printed text on the screen
+	# B) The package didn't install anything
+	# C) The package "absorbed" itself into the system and didn't have anything to install to the fakeroot
+	# D) The package was misconfigured and the files went to the wrong place
+	#
+	# We'll assume here that this is a C case
+	if [ ! -d $FAKEROOT/$PACKAGE_NAME ]
+	then
+		println "Hmh... It looks like the package got absorbed into the system with no fakeroot left"
+		echo "Since there's no fakeroot, there's nothing else to install. Also the package cannot be tracked and/or uninstalled, so good luck with that"
+		echo "This could be an intended 'feature' and not a bug, but if you are unsure, please report this message to the package maintainer"
+		println "Marking the package as 'installed'"
+		echo "$PACKAGE_NAME" >> $NEST
+		return 0;
+	fi
+
 	# Skip the file deletion part when reinstalling
 	if [ -z "$FORCE_REINSTALL" ]
 	then
