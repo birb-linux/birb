@@ -32,6 +32,7 @@ print_help()
 	echo "      --download PACKAGE(s)          download the source tarball for the given package"
 	echo "      --install [--test] PACKAGE(s)  install given package(s) from the filesystem"
 	echo "      --uninstall PACKAGE(s)         uninstall given package(s) from the filesystem"
+	echo "      --sync                         sync package repositories"
 	echo ""
 	echo "If a valid package names are given as the only arguments, birb will attempt"
 	echo "downloading and installing them"
@@ -432,6 +433,14 @@ uninstall_package()
 	set +e
 }
 
+sync_packages()
+{
+	println "Syncing package repositories"
+	cd $REPO_DIR
+	git fetch ; git pull
+}
+
+
 # Check if the first argument is a valid package name
 if [ -d "$REPO_DIR/$1" ]
 then
@@ -489,6 +498,11 @@ while test $# -gt 0; do
 			done
 
 			exit 0
+			;;
+
+		--sync)
+			shift
+			sync_packages
 			;;
 
 		*)
