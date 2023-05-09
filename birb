@@ -467,7 +467,7 @@ birb_upgrade()
 
 	println "Fetching updates"
 	cd $BIRB_DIST
-	git fetct
+	git fetch
 	PULL_RESULT="$(git pull | tee /dev/stdout)"
 
 	# Only "install" updates if we weren't up-to-date
