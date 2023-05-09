@@ -33,6 +33,7 @@ print_help()
 	echo "      --install [--test] PACKAGE(s)  install given package(s) from the filesystem"
 	echo "      --uninstall PACKAGE(s)         uninstall given package(s) from the filesystem"
 	echo "      --sync                         sync package repositories"
+	echo "      --list-installed               list all currently installed packages"
 	echo ""
 	echo "If a valid package names are given as the only arguments, birb will attempt"
 	echo "downloading and installing them"
@@ -440,6 +441,11 @@ sync_packages()
 	git fetch ; git pull
 }
 
+list_installed()
+{
+	cat $NEST
+}
+
 
 # Check if the first argument is a valid package name
 if [ -d "$REPO_DIR/$1" ]
@@ -503,6 +509,11 @@ while test $# -gt 0; do
 		--sync)
 			shift
 			sync_packages
+			;;
+
+		--list-installed)
+			shift
+			list_installed
 			;;
 
 		*)
