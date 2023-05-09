@@ -34,6 +34,7 @@ print_help()
 	echo "      --uninstall PACKAGE(s)         uninstall given package(s) from the filesystem"
 	echo "      --sync                         sync package repositories"
 	echo "      --list-installed               list all currently installed packages"
+	echo "      --upgrade                      update the birb package manager"
 	echo ""
 	echo "If a valid package names are given as the only arguments, birb will attempt"
 	echo "downloading and installing them"
@@ -446,6 +447,28 @@ list_installed()
 	cat $NEST
 }
 
+birb_upgrade()
+{
+	println "Upgrading birb └(^o^)┐"
+
+	BIRB_DIST="$DISTFILES/birb"
+
+	# Check if birb is in the distfile cache
+	# If it doesn't, clone it with git
+	if [ ! -d "$BIRB_DIST" ]
+	then
+		cd $DISTFILES
+		println "Cloning birb sources"
+		git clone https://github.com/Toasterbirb/birb
+	fi
+
+	println "Fetching updates"
+	cd $BIRB_DIST
+	git fetch && git pull
+
+	println "Installing updates"
+	cp -v $BIRB_DIST/birb /usr/bin/birb
+}
 
 # Check if the first argument is a valid package name
 if [ -d "$REPO_DIR/$1" ]
@@ -514,6 +537,11 @@ while test $# -gt 0; do
 		--list-installed)
 			shift
 			list_installed
+			;;
+
+		--upgrade)
+			shift
+			birb_upgrade
 			;;
 
 		*)
