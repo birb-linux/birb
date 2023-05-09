@@ -465,18 +465,13 @@ birb_upgrade()
 	# Avoid breaking the package manager
 	set -e
 
-	println "Fetching updates"
 	cd $BIRB_DIST
 	git fetch
-	PULL_RESULT="$(git pull | tee /dev/stdout)"
+	git pull
 
-	# Only "install" updates if we weren't up-to-date
-	if [ "$PULL_RESULT" != "Already up to date." ]
-	then
-		println "Installing updates"
-		cp -v $BIRB_DIST/birb /usr/bin/birb
-	fi
+	cp -v $BIRB_DIST/birb /usr/bin/birb
 
+	println "Upgrade finished successfully"
 	set +e
 }
 
