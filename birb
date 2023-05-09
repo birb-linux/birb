@@ -462,12 +462,22 @@ birb_upgrade()
 		git clone https://github.com/Toasterbirb/birb
 	fi
 
+	# Avoid breaking the package manager
+	set -e
+
 	println "Fetching updates"
 	cd $BIRB_DIST
-	git fetch && git pull
+	git fetct
+	PULL_RESULT="$(git pull | tee /dev/stdout)"
 
-	println "Installing updates"
-	cp -v $BIRB_DIST/birb /usr/bin/birb
+	# Only "install" updates if we weren't up-to-date
+	if [ "$PULL_RESULT" != "Already up to date." ]
+	then
+		println "Installing updates"
+		cp -v $BIRB_DIST/birb /usr/bin/birb
+	fi
+
+	set +e
 }
 
 # Check if the first argument is a valid package name
