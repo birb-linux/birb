@@ -184,6 +184,11 @@ install_package()
 	# Source the package variables and functions
 	source_pkg_seed $PACKAGE_NAME
 
+	# Export env variables used for installing Xorg related packages
+	export XORG_PREFIX="$FAKEROOT/$NAME/usr"
+	export XORG_CONFIG="--prefix=$XORG_PREFIX --sysconfdir=/etc \
+		--localstatedir=/var --disable-static"
+
 	# Check if the dependency requirements are met
 	println "Checking dependencies"
 	HAD_MISSING_DEP=""
