@@ -444,6 +444,7 @@ search_package()
 	RESULT_TABLE=""
 	for i in $RESULTS
 	do
+		[ ! -d $REPO_DIR/$i ] && continue
 		source $REPO_DIR/$i/seed.sh
 		RESULT_TABLE+="$(echo "$i;$DESC")"
 
