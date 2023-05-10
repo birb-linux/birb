@@ -493,7 +493,7 @@ birb_upgrade()
 	git pull
 
 	cp -v $BIRB_DIST/birb /usr/bin/birb
-	cp -v $BIRB_DIST/birb-completion.bash /etc/bash_completion.d/birb-completion.bash
+	#cp -v $BIRB_DIST/birb-completion.bash /etc/bash_completion.d/birb-completion.bash
 
 	println "Upgrade finished successfully"
 	exit 0
