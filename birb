@@ -297,7 +297,7 @@ install_package()
 		echo "Since there's no fakeroot, there's nothing else to install. Also the package cannot be tracked and/or uninstalled, so good luck with that"
 		echo "This could be an intended 'feature' and not a bug, but if you are unsure, please report this message to the package maintainer"
 		println "Marking the package as 'installed'"
-		[ $(grep "$PACKAGE_NAME" "$NEST") ] || echo "$PACKAGE_NAME" >> $NEST
+		[ -z $(grep "$PACKAGE_NAME" "$NEST") ] && echo "$PACKAGE_NAME" >> $NEST
 		return 0;
 	fi
 
