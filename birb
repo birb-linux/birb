@@ -37,7 +37,7 @@ print_help()
 	echo "      --install [--test] PACKAGE(s)  install given package(s) to the filesystem"
 	echo "      --uninstall PACKAGE(s)         uninstall given package(s) from the filesystem"
 	echo "  -s  --search                       search for packages by name"
-	echo "      --sync                         sync package repositories"
+	echo "      --sync [--force]               sync package repositories"
 	echo "      --list-installed               list all currently installed packages"
 	echo "      --upgrade                      update the birb package manager"
 	echo ""
@@ -467,6 +467,13 @@ sync_packages()
 {
 	println "Syncing package repositories"
 	cd $REPO_DIR
+
+	if [ "$1" == "force" ]
+	then
+		println "Hard resetting repositories"
+		git reset --hard
+	fi
+
 	git fetch ; git pull
 }
 
@@ -572,7 +579,16 @@ while test $# -gt 0; do
 
 		--sync)
 			shift
-			sync_packages
+			case $1 in
+				--force)
+					sync_packages force
+					;;
+
+				*)
+					sync_packages
+					;;
+			esac
+			shift
 			;;
 
 		--list-installed)
