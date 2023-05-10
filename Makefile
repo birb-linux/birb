@@ -10,6 +10,7 @@ all:
 
 install:
 	cp ./birb ${BUILD_DIR}/birb_dep_solver /usr/bin/
+	cp ./birb.1 /usr/share/man/man1/birb.1
 	[ -f /etc/birb.conf ] || cp ./birb.conf /etc/birb.conf
 
 clean:

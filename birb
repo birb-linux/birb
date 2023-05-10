@@ -34,7 +34,7 @@ print_help()
 	echo ""
 	echo "      --help                         display this help page and exit"
 	echo "      --download PACKAGE(s)          download the source tarball for the given package"
-	echo "      --install [--test] PACKAGE(s)  install given package(s) from the filesystem"
+	echo "      --install [--test] PACKAGE(s)  install given package(s) to the filesystem"
 	echo "      --uninstall PACKAGE(s)         uninstall given package(s) from the filesystem"
 	echo "  -s  --search                       search for packages by name"
 	echo "      --sync                         sync package repositories"

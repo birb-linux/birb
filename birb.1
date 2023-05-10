@@ -1,0 +1,42 @@
+.TH birb 1 "10.5.2023"
+.SH NAME
+birb \- CLI package manager for BirbOS
+.SH SYNOPSIS
+\fBbirb\fP [OPTIONS...] [ARGUMENTS...] [PACKAGE(s)...]
+.SH DESCRIPTION
+\fBbirb\fP is a package manager specifically written to be used in BirbOS. It installs packages into separate fakeroots and then uses GNU stow to install those fakeroots to the system root. \fBbirb\fP packages are simple shell scripts called seeds.
+.SH OPTIONS
+.TP
+All non-matching arguments are interpreted as package names. This means that running `\fBbirb \fIpackage\fP` would attempt to install the given package.
+.TP
+\fB--help\fP
+Output a usage message and exit
+.TP
+\fB--download \fIPACKAGE(s)\fP
+Download the source tarball for the given package
+.TP
+\fB--install [--test] \fIPACKAGE(s)\fP
+Install given package(s) to the filesystem
+.TP
+\fB--uninstall \fIPACKAGE(s)\fP
+Uninstall given package(s) from the filesystem
+.TP
+\fB-s, --search\fP
+Search for packages by name
+.TP
+\fB--sync\fP
+Sync package repositories
+.TP
+\fB--list-installed\fP
+List all currently installed packages
+.TP
+\fB--upgrade\fP
+Update the birb package manager
+.SH FILES
+.TP
+\fC/etc/birb.conf\fR
+The main configuration file for \fBbirb\fP. The file is in shell script form and gets sourced when \fBbirb\fP is run.
+.SH "SEE ALSO"
+stow(8)
+.SH BUGS
+Please report any bug findings here https://github.com/Toasterbirb/birb/issues
