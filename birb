@@ -445,7 +445,15 @@ search_package()
 	for i in $RESULTS
 	do
 		source $REPO_DIR/$i/seed.sh
-		RESULT_TABLE+="$(echo "$i;$DESC")\n"
+		RESULT_TABLE+="$(echo "$i;$DESC")"
+
+		# Check if the package is installed
+		if [ -n "$(grep $i $NEST)" ]
+		then
+			RESULT_TABLE+=" [installed]"
+		fi
+
+		RESULT_TABLE+="\n"
 	done
 	echo -e "$RESULT_TABLE" | column -s ";" -t
 }
