@@ -493,8 +493,9 @@ birb_upgrade()
 	git fetch
 	git pull
 
-	cp -v $BIRB_DIST/birb /usr/bin/birb
-	#cp -v $BIRB_DIST/birb-completion.bash /etc/bash_completion.d/birb-completion.bash
+	make clean
+	make
+	make install
 
 	println "Upgrade finished successfully"
 	exit 0
