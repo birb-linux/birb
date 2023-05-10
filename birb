@@ -129,7 +129,7 @@ download_src()
 # and gets confused
 prepare_fakeroot()
 {
-	mkdir -p $1/{usr/{lib/bfd-plugins,lib32,share/{doc,man/man{1..8}},bin,sbin},etc,sbin}
+	mkdir -p $1/{usr/{lib/bfd-plugins,lib32,share/{doc,man/man{1..8}},bin,sbin,include},etc,sbin}
 }
 
 install_package()
