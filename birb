@@ -32,6 +32,7 @@ print_help()
 	echo "      --download PACKAGE(s)          download the source tarball for the given package"
 	echo "      --install [--test] PACKAGE(s)  install given package(s) from the filesystem"
 	echo "      --uninstall PACKAGE(s)         uninstall given package(s) from the filesystem"
+	echo "  -s  --search                       search for packages by name"
 	echo "      --sync                         sync package repositories"
 	echo "      --list-installed               list all currently installed packages"
 	echo "      --upgrade                      update the birb package manager"
@@ -435,6 +436,20 @@ uninstall_package()
 	set +e
 }
 
+search_package()
+{
+	RESULTS="$(find /var/db/pkg -maxdepth 1 -iname "*$1*" -not -path '*/[@.]*' -type d -printf "%f\n")"
+
+	# Print result names with their descriptions
+	RESULT_TABLE=""
+	for i in $RESULTS
+	do
+		source $REPO_DIR/$i/seed.sh
+		RESULT_TABLE+="$(echo "$i;$DESC")\n"
+	done
+	echo -e "$RESULT_TABLE" | column -s ";" -t
+}
+
 sync_packages()
 {
 	println "Syncing package repositories"
@@ -533,6 +548,12 @@ while test $# -gt 0; do
 			done
 
 			exit 0
+			;;
+
+		-s|--search)
+			shift
+			search_package $1
+			shift
 			;;
 
 		--sync)
