@@ -449,7 +449,7 @@ list_installed()
 
 birb_upgrade()
 {
-	println "Upgrading birb └(^o^)┐"
+	println "Upgrading birb ^-^"
 
 	BIRB_DIST="$DISTFILES/birb"
 
