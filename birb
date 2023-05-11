@@ -82,6 +82,8 @@ root_check()
 # Check if the kernel has certain settings enabled
 kernel_check()
 {
+	# There might be some errors, we can ignore them
+	set +e
 	REQUIRED_FLAGS="$1"
 
 	println "Checking kernel configuration"
@@ -102,6 +104,7 @@ kernel_check()
 			echo "$i"
 		fi
 	done
+	set -e
 
 	[ -n "$CONFIG_ERROR" ] && return 1
 }
