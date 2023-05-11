@@ -79,6 +79,33 @@ root_check()
 	fi
 }
 
+# Check if the kernel has certain settings enabled
+kernel_check()
+{
+	REQUIRED_FLAGS="$1"
+
+	println "Checking kernel configuration"
+	KERNEL_CONFIG_PATH="/usr/src/linux/.config"
+	[ ! -f "$KERNEL_CONFIG_PATH" ] && println ERROR "Can't find the kernel config! ($KERNEL_CONFIG_PATH)" && exit 1
+
+	CONFIG_ERROR=""
+	for i in $REQUIRED_FLAGS
+	do
+		if [ -z "$(grep -o "^${i}=[ym]" $KERNEL_CONFIG_PATH)" ]
+		then
+			if [ -z "$CONFIG_ERROR" ]
+			then
+				echo "Missing required kernel options: "
+			fi
+			CONFIG_ERROR="yes"
+
+			echo "$i"
+		fi
+	done
+
+	[ -n "$CONFIG_ERROR" ] && return 1
+}
+
 source_pkg_seed()
 {
 	source $REPO_DIR/$1/seed.sh
