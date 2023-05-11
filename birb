@@ -146,6 +146,25 @@ prepare_fakeroot()
 	mkdir -p $1/{usr/{lib/bfd-plugins,lib32,share/{doc,man/man{1..8}},bin,sbin,include},etc,sbin}
 }
 
+# If the use flag has been set in the config file, expand it into some command
+# This is useful for customizing how programs get compiled and can be used
+# to minimize dependencies
+expand_use()
+{
+	PKG_FLAG="$1"
+	OUTPUT="$2"
+
+	# Check if a useflag is set by using grep
+	HAS_FLAG="$(echo "$USE_FLAGS" | grep -wo "$PKG_FLAG")"
+
+	# If the flag had been specified, expand it into the OUTPUT
+	# text
+	if [ -n "$HAS_FLAG" ]
+	then
+		echo "$OUTPUT"
+	fi
+}
+
 install_package()
 {
 	root_check
