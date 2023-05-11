@@ -107,6 +107,7 @@ kernel_check()
 	set -e
 
 	[ -n "$CONFIG_ERROR" ] && return 1
+	return 0
 }
 
 source_pkg_seed()
