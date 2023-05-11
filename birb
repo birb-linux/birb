@@ -246,6 +246,7 @@ install_package()
 	set -e
 
 	# Extract the package sources and do any required setup
+	export PYTHON_PREFIX="$FAKEROOT/$NAME/$PYTHON_DIST"
 	export PKG_CONFIG_PATH="/usr/lib/pkgconfig:/usr/share/pkgconfig:/usr/lib32/pkgconfig"
 	TEMPORARY_BUILD_DIR="/tmp/birb_package_build"
 	rm -rf $TEMPORARY_BUILD_DIR
