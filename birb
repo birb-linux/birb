@@ -616,7 +616,7 @@ while test $# -gt 0; do
 			case $1 in
 				--test)
 					shift
-					ENABLE_TESTS="yes"
+					export ENABLE_TESTS="yes"
 					;;
 			esac
 
