@@ -257,6 +257,7 @@ install_package()
 		if [ -z "$(grep -x $i $NEST)" ]
 		then
 			HAD_MISSING_DEP="yes"
+			DEPS_TO_INSTALL="$DEPS_TO_INSTALL $i"
 			echo "[ ] $i"
 			continue
 		else
@@ -282,8 +283,8 @@ install_package()
 				;;
 		esac
 
-		println "Attempting to install the following packages: [$DEPS]"
-		birb $DEPS || { echo "Something went wrong while trying to install dependencies. Cancelling the mission..."; exit 1; }
+		println "Attempting to install the following packages: [$DEPS_TO_INSTALL]"
+		birb $DEPS_TO_INSTALL || { echo "Something went wrong while trying to install dependencies. Cancelling the mission..."; exit 1; }
 	fi
 
 	# Attempt to download the package
