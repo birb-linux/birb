@@ -604,11 +604,16 @@ install_meta_package()
 		echo "Packages that are already installed will be skipped"
 		read -p "Do you want to process? [Y/n]: " AGREE_INSTALL_META_PACKAGES
 		case $AGREE_INSTALL_META_PACKAGES in
-			y|Y|yes|Yes) ;;
+			n|N|n*|N*)
+				echo "Cancelled"
+				exit 1
+				;;
+
+			""|y|Y|y*|Y*) ;;
 
 			*)
 				echo "Cancelled"
-				return 1;
+				exit 1
 				;;
 		esac
 
