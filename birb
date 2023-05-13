@@ -212,6 +212,12 @@ install_package()
 	# Check if the package is already installed
 	if [ -n "$(grep -x $PACKAGE_NAME $NEST)" ]
 	then
+		# Skip this package is SKIP_INSTALLED_PACKAGES has been set
+		if [ -n "$SKIP_INSTALLED_PACKAGES" ]
+		then
+			return 0;
+		fi
+
 		echo "$PACKAGE_NAME is already installed"
 		read -p "Force a reinstall? [y/N]: " AGREE_FORCE_REINSTALL
 		case $AGREE_FORCE_REINSTALL in
@@ -617,6 +623,7 @@ install_meta_package()
 				;;
 		esac
 
+		SKIP_INSTALLED_PACKAGES="true"
 		for i in $PACKAGES_TO_INSTALL
 		do
 			install_package "$i"
