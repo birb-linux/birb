@@ -613,6 +613,7 @@ then
 	do
 		install_package "$i"
 	done
+	shift
 fi
 
 # Go through all of the arguments
