@@ -34,6 +34,7 @@ std::vector<std::string> get_dependencies(std::string pkg, std::string repo_path
 	else
 	{
 		std::cout << "File [" << pkg_path << "] can't be opened!\n";
+		exit(2);
 	}
 
 	/* Now that we have located the line that lists all of the dependencies,
