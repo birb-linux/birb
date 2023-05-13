@@ -684,7 +684,9 @@ while test $# -gt 0; do
 
 			# Install all listed packages
 			while test $# -gt 0; do
-				install_package "$1"
+				# First attempt to install the package as a meta package
+				# If one doesn't exist, try to install it as a normal package
+				install_meta_package $1 || install_package "$1"
 				shift
 			done
 			;;
