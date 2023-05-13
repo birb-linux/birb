@@ -251,6 +251,12 @@ install_package()
 	# Check if the dependency requirements are met
 	println "Checking dependencies"
 	RECURSIVE_DEPENDENCIES="$(birb_dep_solver $NAME)"
+	if [ $? -eq 2 ]
+	then
+		println ERROR "Something wen't wrong with dependency resolution..."
+		echo "Dependency solver output: $RECURSIVE_DEPENDENCIES"
+		exit 2
+	fi
 	HAD_MISSING_DEP=""
 	for i in $RECURSIVE_DEPENDENCIES
 	do
