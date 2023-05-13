@@ -476,7 +476,7 @@ uninstall_package()
 	while read PACKAGE_TO_CHECK
 	do
 		source $INSTALL_PREFIX/var/db/pkg/$PACKAGE_TO_CHECK/seed.sh
-		DEPENDENCY_FOUND="$(echo "$DEPS" | grep -x "$PACKAGE_NAME")"
+		DEPENDENCY_FOUND="$(echo "$DEPS" | grep -w "$PACKAGE_NAME")"
 		if [ -n "$DEPENDENCY_FOUND" ]
 		then
 			DEPENDENT_PACKAGES="${DEPENDENT_PACKAGES}${PACKAGE_TO_CHECK}\n"
