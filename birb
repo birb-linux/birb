@@ -602,6 +602,19 @@ then
 	done
 fi
 
+# Check if the first argument is a valid meta package
+META_PACKAGE_RESULT="$(awk "/^$1:/" $REPO_DIR/meta_packages)"
+if [ -n "$META_PACKAGE_RESULT" ]
+then
+	# If a result was found, expand the meta package into a list
+	# of packages to install
+	PACKAGES_TO_INSTALL="$(awk -F':' "/^$1/ {print \$2}" $REPO_DIR/meta_packages)"
+	for i in $PACKAGES_TO_INSTALL
+	do
+		install_package "$i"
+	done
+fi
+
 # Go through all of the arguments
 while test $# -gt 0; do
 	case $1 in
