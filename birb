@@ -8,7 +8,9 @@
 INSTALL_PREFIX="$LFS"
 
 REPO_DIR="$INSTALL_PREFIX/var/db/pkg"
-NEST="/var/lib/birb/nest"
+DB_DIR="/var/lib/birb"
+NEST="$DB_DIR/nest"
+PACKAGE_LIST="$DB_DIR/packages"
 export DISTFILES="$INSTALL_PREFIX/var/cache/distfiles"
 export FAKEROOT="$INSTALL_PREFIX/var/db/fakeroot"
 export PYTHON_DIST="usr/python_dist"
@@ -559,6 +561,10 @@ sync_packages()
 	fi
 
 	git fetch ; git pull
+
+	# Cache the package list
+	println "Caching the package lists"
+	find /var/db/pkg -maxdepth 1 -not -path '*/[@.]*' -type d -printf "%f\n" > $PACKAGE_LIST
 }
 
 list_installed()
