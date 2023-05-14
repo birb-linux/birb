@@ -29,7 +29,7 @@ int main(int argc, char** argv)
 		/* Check if the package is installed */
 		for (std::string package : installed_packages)
 			if (argv[i] == package)
-				std::cout << " [installed]";
+				std::cout << ";[installed]";
 
 		std::cout << "\n";
 	}
