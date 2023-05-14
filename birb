@@ -527,7 +527,7 @@ uninstall_package()
 
 search_package()
 {
-	RESULTS="$(find /var/db/pkg -maxdepth 1 -iname "*$1*" -not -path '*/[@.]*' -type d -printf "%f\n")"
+	RESULTS="$(grep "$1" $PACKAGE_LIST)"
 
 	# Print result names with their descriptions
 	RESULT_TABLE=""
