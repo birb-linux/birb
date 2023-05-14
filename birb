@@ -530,21 +530,8 @@ search_package()
 	RESULTS="$(grep "$1" $PACKAGE_LIST)"
 
 	# Print result names with their descriptions
-	RESULT_TABLE=""
-	for i in $RESULTS
-	do
-		[ ! -d $REPO_DIR/$i ] && continue
-		source $REPO_DIR/$i/seed.sh
-		RESULT_TABLE+="$(echo "$i;$DESC")"
+	RESULT_TABLE="$(birb_pkg_search $RESULTS)"
 
-		# Check if the package is installed
-		if [ -n "$(grep $i $NEST)" ]
-		then
-			RESULT_TABLE+=" [installed]"
-		fi
-
-		RESULT_TABLE+="\n"
-	done
 	echo -e "$RESULT_TABLE" | column -s ";" -t
 }
 

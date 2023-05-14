@@ -3,6 +3,28 @@
 #include <vector>
 #include <iostream>
 
+std::vector<std::string> birb::read_file(std::string file_path)
+{
+	std::ifstream file(file_path);
+
+	if (!file.is_open())
+	{
+		std::cout << "File [" << file_path << " can't be opened!\n";
+		exit(2);
+	}
+
+	std::string line;
+	std::vector<std::string> lines;
+
+	/* Read the file */
+	while (std::getline(file, line))
+		lines.push_back(line);
+
+	file.close();
+
+	return lines;
+}
+
 std::string birb::read_pkg_variable(std::string pkg_name, std::string var_name, std::string repo_path)
 {
    	/* Check if the result is already in the cache*/
