@@ -2,6 +2,7 @@
 /* Dependency solver for the birb package manager */
 /**************************************************/
 
+#include "Birb.hpp"
 #include <fstream>
 #include <iostream>
 #include <string.h>
@@ -10,39 +11,10 @@
 
 std::vector<std::string> get_dependencies(std::string pkg, std::string repo_path)
 {
-	std::string pkg_path = repo_path + "/" + pkg + "/seed.sh";
 	std::vector<std::string> deps;
 
 	/* Read data from the package file */
-	std::string dep_line;
-	std::ifstream pkg_file(pkg_path);
-	if (pkg_file.is_open())
-	{
-		while (std::getline(pkg_file, dep_line))
-		{
-			/* Check if we have located the dependency line */
-			if (dep_line.size() > 6 && dep_line.substr(0, 6) == "DEPS=\"")
-			{
-				/* We are done with the file, stop reading it */
-				pkg_file.close();
-
-				/* Break the file reading loop */
-				break;
-			}
-		}
-	}
-	else
-	{
-		std::cout << "File [" << pkg_path << "] can't be opened!\n";
-		exit(2);
-	}
-
-	/* Now that we have located the line that lists all of the dependencies,
-	 * we can list them by using whitespace as the delimiter */
-
-	/* First, remove the start and end of the string */
-	dep_line.erase(0, 6);
-	dep_line.erase(dep_line.size() - 1, 1);
+	std::string dep_line = birb::read_pkg_variable(pkg, "DEPS", repo_path);
 
 	/* Split the string */
 	size_t pos = 0;
