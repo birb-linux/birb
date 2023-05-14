@@ -564,7 +564,7 @@ sync_packages()
 
 	# Cache the package list
 	println "Caching the package lists"
-	find /var/db/pkg -maxdepth 1 -not -path '*/[@.]*' -type d -printf "%f\n" > $PACKAGE_LIST
+	find /var/db/pkg -maxdepth 1 -not -path '*/[@.]*' -type d -printf "%f\n" | sed '/^pkg$/d' > $PACKAGE_LIST
 }
 
 list_installed()
