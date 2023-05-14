@@ -42,6 +42,10 @@ std::vector<std::string> deduplicated_dep_list(std::vector<std::string> dependen
 {
 	std::vector<std::string> result;
 
+	/* Don't do anything if there are no dependencies */
+	if (dependencies.empty())
+		return result;
+
 	/* Start from the end of the list and add each package
 	 * to the list only once */
 	for (size_t i = dependencies.size() - 1; i > 0; --i)
