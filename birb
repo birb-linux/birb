@@ -518,7 +518,7 @@ uninstall_package()
 	println "Removing fakeroot"
 	rm -r $FAKEROOT/$PACKAGE_NAME
 
-	sed -i "/$PACKAGE_NAME/d" $NEST
+	sed -i "/^$PACKAGE_NAME$/d" $NEST
 	echo "$PACKAGE_NAME uninstalled"
 	set +e
 }
