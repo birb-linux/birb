@@ -321,6 +321,9 @@ install_package()
 	PACKAGE_HAS_TESTS="$(echo "$FLAGS" | grep -o "test")"
 	PACKAGE_HAS_32BIT_TESTS="$(echo "$FLAGS" | grep -o "test32")"
 
+	# Check if the package is a font
+	PACKAGE_IS_FONT="$(echo "$FLAGS" | grep -o "font")"
+
 	set -e
 
 	# Extract the package sources and do any required setup
@@ -426,7 +429,6 @@ install_package()
 	fi
 
 	# If the package is a font, run fc-cache
-	PACKAGE_IS_FONT="$(echo "$FLAGS" | grep -o "font")"
 	[ -n "$PACKAGE_IS_FONT" ] && fc-cache
 
 
@@ -453,6 +455,9 @@ uninstall_package()
 
 	# Check if the package is a python package
 	IS_PYTHON_PACKAGE="$(echo "$FLAGS" | grep -o "python")"
+
+	# Check if the package is a font
+	PACKAGE_IS_FONT="$(echo "$FLAGS" | grep -o "font")"
 
 	# Protect the user from destroying their installation
 	IS_PROTECTED="$(echo "$FLAGS" | grep -o "important")"
@@ -528,7 +533,6 @@ uninstall_package()
 	rm -r $FAKEROOT/$PACKAGE_NAME
 
 	# If the package is a font, run fc-cache
-	PACKAGE_IS_FONT="$(echo "$FLAGS" | grep -o "font")"
 	[ -n "$PACKAGE_IS_FONT" ] && fc-cache
 
 	sed -i "/^$PACKAGE_NAME$/d" $NEST
