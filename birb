@@ -178,6 +178,7 @@ prepare_fakeroot()
 {
 	mkdir -p $1/{usr/{lib/bfd-plugins,lib32,share/{doc,man/man{1..8}},bin,sbin,include},etc,sbin}
 	mkdir -p $1/usr/share/fonts/TTF
+	mkdir -p $1/usr/share/applications
 }
 
 # If the use flag has been set in the config file, expand it into some command
