@@ -563,6 +563,7 @@ birb_upgrade()
 {
 	root_check
 	println "Upgrading birb ^-^"
+	[ "$1" == "debug" ] && echo " --- Debug mode enabled ＿φ(°-°=) ---"
 
 	BIRB_DIST="$DISTFILES/birb"
 
