@@ -424,6 +424,11 @@ install_package()
 		stow -R -t / -d $FAKEROOT $PACKAGE_NAME
 	fi
 
+	# If the package is a font, run fc-cache
+	PACKAGE_IS_FONT="$(echo "$FLAGS" | grep -o "font")"
+	[ -n "$PACKAGE_IS_FONT" ] && fc-cache
+
+
 	# Add the package into the nest file if the installation was successful
 	[ -z "$(grep -x $PACKAGE_NAME $NEST)" ] && echo "$PACKAGE_NAME" >> $NEST
 
