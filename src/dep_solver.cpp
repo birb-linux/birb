@@ -10,7 +10,7 @@
 #include <string>
 #include <vector>
 
-std::vector<std::string> get_dependencies(std::string pkg, std::string repo_path)
+std::vector<std::string> get_dependencies(const std::string& pkg, const std::string& repo_path)
 {
 	std::vector<std::string> deps;
 
