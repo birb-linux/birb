@@ -552,6 +552,12 @@ search_package()
 	echo -e "$RESULT_TABLE" | column -s ";" -t
 }
 
+cache_package_list()
+{
+	println "Caching the package lists"
+	find /var/db/pkg -maxdepth 1 -not -path '*/[@.]*' -type d -printf "%f\n" | sed '/^pkg$/d' > $PACKAGE_LIST
+}
+
 sync_packages()
 {
 	root_check
@@ -567,8 +573,7 @@ sync_packages()
 	git fetch ; git pull
 
 	# Cache the package list
-	println "Caching the package lists"
-	find /var/db/pkg -maxdepth 1 -not -path '*/[@.]*' -type d -printf "%f\n" | sed '/^pkg$/d' > $PACKAGE_LIST
+	cache_package_list
 }
 
 list_installed()
@@ -592,6 +597,9 @@ birb_upgrade()
 		println "Cloning birb sources"
 		git clone https://github.com/Toasterbirb/birb
 	fi
+
+	# If the package list cache doesn't exist yet, create it
+	[ ! -f /var/lib/birb/packages ] && cache_package_list
 
 	# Avoid breaking the package manager
 	set -e
