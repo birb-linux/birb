@@ -526,6 +526,10 @@ uninstall_package()
 	println "Removing fakeroot"
 	rm -r $FAKEROOT/$PACKAGE_NAME
 
+	# If the package is a font, run fc-cache
+	PACKAGE_IS_FONT="$(echo "$FLAGS" | grep -o "font")"
+	[ -n "$PACKAGE_IS_FONT" ] && fc-cache
+
 	sed -i "/^$PACKAGE_NAME$/d" $NEST
 	echo "$PACKAGE_NAME uninstalled"
 	set +e
