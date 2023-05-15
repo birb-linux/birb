@@ -20,7 +20,7 @@ std::vector<std::string> get_dependencies(const std::string& pkg, const std::str
 
 	/* Don't do anything if this is a meta-package */
 	if (!meta_packages[pkg].empty())
-		return deps;
+		return meta_packages[pkg];
 
 	/* Check if this package has its dependencies in the cache already */
 	if (!dependency_cache[pkg].empty())
