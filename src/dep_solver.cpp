@@ -3,6 +3,7 @@
 /**************************************************/
 
 #include "Birb.hpp"
+#include <algorithm>
 #include <fstream>
 #include <iostream>
 #include <string.h>
@@ -51,17 +52,7 @@ std::vector<std::string> deduplicated_dep_list(std::vector<std::string> dependen
 	for (size_t i = dependencies.size() - 1; i > 0; --i)
 	{
 		/* Check if the package is already in the result list */
-		bool pkg_found = false;
-		for (size_t j = 0; j < result.size(); ++j)
-		{
-			if (result[j] == dependencies[i])
-			{
-				pkg_found = true;
-				break;
-			}
-		}
-
-		if (pkg_found)
+		if (std::find(result.begin(), result.end(), dependencies[i]) != result.end())
 			continue;
 
 		result.push_back(dependencies[i]);
