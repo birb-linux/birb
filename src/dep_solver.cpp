@@ -77,7 +77,7 @@ std::vector<std::string> deduplicated_dep_list(std::vector<std::string> dependen
 
 	/* Start from the end of the list and add each package
 	 * to the list only once */
-	for (size_t i = dependencies.size() - 1; i > 0; --i)
+	for (int i = dependencies.size() - 1; i >= 0; --i)
 	{
 		/* Skip meta-packages */
 		if (!meta_packages[dependencies[i]].empty())
