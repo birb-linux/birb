@@ -24,8 +24,8 @@ int main(int argc, char** argv)
 	for (int i = 1; i < argc; ++i)
 	{
 		std::cout << argv[i] << ";";
-		std::cout << birb::read_pkg_variable(argv[i], "DESC", REPO_PATH) << ";";
 		std::cout << birb::read_pkg_variable(argv[i], "VERSION", REPO_PATH) << ";";
+		std::cout << birb::read_pkg_variable(argv[i], "DESC", REPO_PATH) << ";";
 
 		/* Check if the package is installed */
 		for (std::string package : installed_packages)
