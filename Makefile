@@ -1,5 +1,5 @@
 CXX=g++
-CXX_FLAGS=-I./include
+CXX_FLAGS=-march=native -I./include
 
 SRC_DIR=./src
 BUILD_DIR=./build
