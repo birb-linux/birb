@@ -18,39 +18,43 @@ std::vector<std::string> get_dependencies(const std::string& pkg, const std::str
 {
 	std::vector<std::string> deps;
 
-	/* Don't do anything if this is a meta-package */
-	if (!meta_packages[pkg].empty())
-		return meta_packages[pkg];
-
-	/* Check if this package has its dependencies in the cache already */
-	if (!dependency_cache[pkg].empty())
-		return dependency_cache[pkg];
-
-	/* Read data from the package file */
-	std::string dep_line = birb::read_pkg_variable(pkg, "DEPS", repo_path);
-
-	/* Split the string */
-	size_t pos = 0;
-	while ((pos = dep_line.find(" ")) != std::string::npos)
+	/* Skip string splitting if this is a meta-package */
+	if (meta_packages[pkg].empty())
 	{
-		std::string dep = dep_line.substr(0, pos);
+		/* Check if this package has its dependencies in the cache already */
+		if (!dependency_cache[pkg].empty())
+			return dependency_cache[pkg];
 
-		/* Check if the dependency is a meta package and should be expanded */
-		if (!meta_packages[dep].empty())
+		/* Read data from the package file */
+		std::string dep_line = birb::read_pkg_variable(pkg, "DEPS", repo_path);
+
+		/* Split the string */
+		size_t pos = 0;
+		while ((pos = dep_line.find(" ")) != std::string::npos)
 		{
-			/* Expand the meta package */
-			deps.insert(deps.end(), meta_packages[dep].begin(), meta_packages[dep].end());
-		}
-		else
-		{
-			deps.push_back(dep);
+			std::string dep = dep_line.substr(0, pos);
+
+			/* Check if the dependency is a meta package and should be expanded */
+			if (!meta_packages[dep].empty())
+			{
+				/* Expand the meta package */
+				deps.insert(deps.end(), meta_packages[dep].begin(), meta_packages[dep].end());
+			}
+			else
+			{
+				deps.push_back(dep);
+			}
+
+			dep_line.erase(0, pos + 1);
 		}
 
-		dep_line.erase(0, pos + 1);
+		if (!dep_line.empty())
+			deps.push_back(dep_line);
 	}
-
-	if (!dep_line.empty())
-		deps.push_back(dep_line);
+	else
+	{
+		deps = meta_packages[pkg];
+	}
 
 	/* Get dependencies of the dependencies of this package, if any */
 	size_t deps_size = deps.size();
