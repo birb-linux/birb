@@ -8,7 +8,10 @@
 #include <iostream>
 #include <string.h>
 #include <string>
+#include <unordered_map>
 #include <vector>
+
+static std::unordered_map<std::string, std::vector<std::string>> meta_packages;
 
 std::vector<std::string> get_dependencies(const std::string& pkg, const std::string& repo_path)
 {
@@ -21,7 +24,19 @@ std::vector<std::string> get_dependencies(const std::string& pkg, const std::str
 	size_t pos = 0;
 	while ((pos = dep_line.find(" ")) != std::string::npos)
 	{
-		deps.push_back(dep_line.substr(0, pos));
+		std::string dep = dep_line.substr(0, pos);
+
+		/* Check if the dependency is a meta package and should be expanded */
+		if (!meta_packages[dep].empty())
+		{
+			/* Expand the meta package */
+			deps.insert(deps.end(), meta_packages[dep].begin(), meta_packages[dep].end());
+		}
+		else
+		{
+			deps.push_back(dep);
+		}
+
 		dep_line.erase(0, pos + 1);
 	}
 
@@ -86,6 +101,18 @@ int main(int argc, char** argv)
 	{
 		std::cout << "Incorrect amount of arguments!\n";
 		return 1;
+	}
+
+	/* Read in the list of meta-packages and parse them into a map */
+	std::vector<std::string> meta_package_list = birb::read_file(repo_path + "/meta_packages");
+	for (std::string line : meta_package_list)
+	{
+		/* Find the delimiter */
+		size_t pos = line.find(":");
+
+		/* Get the key and the corresponding value and assign it into a map */
+		std::vector<std::string> expanded_meta_package = birb::split_string(line.substr(pos + 1, line.size() - (pos + 1)), " ");
+		meta_packages[line.substr(0, pos)] = expanded_meta_package;
 	}
 
 	/* Get all package dependencies recursively */

@@ -3,6 +3,24 @@
 #include <vector>
 #include <iostream>
 
+std::vector<std::string> birb::split_string(std::string text, std::string delimiter)
+{
+	std::vector<std::string> result;
+
+	/* Split the string */
+	size_t pos = 0;
+	while ((pos = text.find(delimiter)) != std::string::npos)
+	{
+		result.push_back(text.substr(0, pos));
+		text.erase(0, pos + delimiter.length());
+	}
+
+	if (!text.empty())
+		result.push_back(text);
+
+	return result;
+}
+
 std::vector<std::string> birb::read_file(std::string file_path)
 {
 	std::ifstream file(file_path);
