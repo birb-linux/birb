@@ -17,6 +17,10 @@ std::vector<std::string> get_dependencies(const std::string& pkg, const std::str
 {
 	std::vector<std::string> deps;
 
+	/* Don't do anything if this is a meta-package */
+	if (!meta_packages[pkg].empty())
+		return deps;
+
 	/* Read data from the package file */
 	std::string dep_line = birb::read_pkg_variable(pkg, "DEPS", repo_path);
 
@@ -66,6 +70,10 @@ std::vector<std::string> deduplicated_dep_list(std::vector<std::string> dependen
 	 * to the list only once */
 	for (size_t i = dependencies.size() - 1; i > 0; --i)
 	{
+		/* Skip meta-packages */
+		if (!meta_packages[dependencies[i]].empty())
+			continue;
+
 		/* Check if the package is already in the result list */
 		if (std::find(result.begin(), result.end(), dependencies[i]) != result.end())
 			continue;
