@@ -95,7 +95,7 @@ int main(int argc, char** argv)
 	dependencies = deduplicated_dep_list(dependencies);
 
 	for (std::string d : dependencies)
-		std::cout << d << std::endl;
+		std::cout << d << "\n";
 
 	return 0;
 }
