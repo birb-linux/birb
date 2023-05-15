@@ -42,7 +42,7 @@ print_help()
 	echo "  -s  --search                       search for packages by name"
 	echo "      --sync [--force]               sync package repositories"
 	echo "      --list-installed               list all currently installed packages"
-	echo "      --upgrade                      update the birb package manager"
+	echo "      --upgrade [--debug]            update the birb package manager"
 	echo ""
 	echo "If a valid package names are given as the only arguments, birb will attempt"
 	echo "downloading and installing them"
@@ -583,7 +583,7 @@ birb_upgrade()
 	git pull
 
 	make clean
-	make release
+	[ "$1" == "debug" ] && make || make release
 	make install
 
 	println "Upgrade finished successfully"
@@ -722,7 +722,16 @@ while test $# -gt 0; do
 
 		--upgrade)
 			shift
-			birb_upgrade
+			case $1 in
+				--debug)
+					birb_upgrade debug
+					;;
+
+				*)
+					birb_upgrade
+					;;
+			esac
+			exit 0
 			;;
 
 		*)

@@ -1,4 +1,4 @@
-.TH birb 1 "10.5.2023"
+.TH birb 1 "15.5.2023"
 .SH NAME
 birb \- CLI package manager for BirbOS
 .SH SYNOPSIS
@@ -30,8 +30,8 @@ Sync package repositories. If there are any issues with syncing, you can try if 
 \fB--list-installed\fP
 List all currently installed packages
 .TP
-\fB--upgrade\fP
-Update the birb package manager
+\fB--upgrade [--debug]\fP
+Update the birb package manager. If --debug is set, build the C++ parts of birb with debug flags enabled and skip PGO.
 .SH FILES
 .TP
 \fC/etc/birb.conf\fR
