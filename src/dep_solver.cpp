@@ -69,6 +69,7 @@ std::vector<std::string> get_dependencies(const std::string& pkg, const std::str
 std::vector<std::string> deduplicated_dep_list(std::vector<std::string> dependencies)
 {
 	std::vector<std::string> result;
+	std::unordered_map<std::string, bool> exists_in_results;
 
 	/* Don't do anything if there are no dependencies */
 	if (dependencies.empty())
@@ -83,10 +84,11 @@ std::vector<std::string> deduplicated_dep_list(std::vector<std::string> dependen
 			continue;
 
 		/* Check if the package is already in the result list */
-		if (std::find(result.begin(), result.end(), dependencies[i]) != result.end())
+		if (exists_in_results[dependencies[i]])
 			continue;
 
 		result.push_back(dependencies[i]);
+		exists_in_results[dependencies[i]] = true;
 	}
 
 	return result;
