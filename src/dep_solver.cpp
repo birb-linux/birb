@@ -12,6 +12,7 @@
 #include <vector>
 
 static std::unordered_map<std::string, std::vector<std::string>> meta_packages;
+static std::unordered_map<std::string, std::vector<std::string>> dependency_cache;
 
 std::vector<std::string> get_dependencies(const std::string& pkg, const std::string& repo_path)
 {
@@ -20,6 +21,10 @@ std::vector<std::string> get_dependencies(const std::string& pkg, const std::str
 	/* Don't do anything if this is a meta-package */
 	if (!meta_packages[pkg].empty())
 		return deps;
+
+	/* Check if this package has its dependencies in the cache already */
+	if (!dependency_cache[pkg].empty())
+		return dependency_cache[pkg];
 
 	/* Read data from the package file */
 	std::string dep_line = birb::read_pkg_variable(pkg, "DEPS", repo_path);
@@ -54,6 +59,9 @@ std::vector<std::string> get_dependencies(const std::string& pkg, const std::str
 		std::vector<std::string> sub_deps = get_dependencies(deps[i], repo_path);
 		deps.insert(deps.end(), sub_deps.begin(), sub_deps.end());
 	}
+
+	/* Cache the results */
+	dependency_cache[pkg] = deps;
 
 	return deps;
 }
