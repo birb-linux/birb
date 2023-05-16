@@ -160,7 +160,7 @@ download_src()
 	[ ! -f /usr/bin/wget ] && println ERROR "wget isn't installed! Birb cannot download anything without it (╯°□°)╯︵ ┻━┻" && exit 1
 
 	# Download the source tarball
-	wget --directory-prefix=$DISTFILES $SOURCE
+	wget --directory-prefix=$DISTFILES $SOURCE || { println ERROR "Couldn't dowload $SOURCE"; exit 1; }
 
 	# Check the MD5 checksum
 	if [ "$(checksum_check "$DISTFILES/$TARBALL" "$CHECKSUM")" == "1" ]
