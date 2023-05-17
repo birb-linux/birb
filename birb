@@ -37,17 +37,19 @@ print_help()
 	echo ""
 	echo "      --help                         display this help page and exit"
 	echo "      --download PACKAGE(s)          download the source tarball for the given package"
-	echo "      --install [--test] PACKAGE(s)  install given package(s) to the filesystem"
+	echo "      --install [options] PACKAGE(s) install given package(s) to the filesystem"
 	echo "      --uninstall PACKAGE(s)         uninstall given package(s) from the filesystem"
 	echo "  -s  --search                       search for packages by name"
 	echo "      --sync [--force]               sync package repositories"
 	echo "      --source [option]              change or query the repository source"
-	echo "                                     (check the manual for list of options)"
 	echo "      --list-installed               list all currently installed packages"
 	echo "      --upgrade [--debug]            update the birb package manager"
 	echo ""
 	echo "If a valid package names are given as the only arguments, birb will attempt"
 	echo "downloading and installing them"
+	echo ""
+	echo "For more information (and to fill in the [option] gaps), please read the manual"
+	echo "with the 'man birb' command"
 }
 
 if [ -z $1 ]
@@ -411,13 +413,27 @@ install_package()
 		set +e
 		FILES_TO_DELETE="$(stow -S -t / -d $FAKEROOT $PACKAGE_NAME &>/dev/stdout | grep "existing target is not owned by stow" | awk -F' ' '{print "/" $9}')"
 		set -e
-		rm -f $FILES_TO_DELETE
+
+		if [ -n "$OVERWRITE_FILES" ]
+		then
+			rm -f $FILES_TO_DELETE
+		else
+			println WARNING "This package wants to overwite the following files:"
+			echo "$FILES_TO_DELETE"
+		fi
 
 		# Do another round of deletions in case there's some other error
 		set +e
 		FILES_TO_DELETE="$(stow -S -t / -d $FAKEROOT $PACKAGE_NAME &>/dev/stdout | grep "existing target is neither a link nor a directory" | awk -F' ' '{print "/" $11}')"
 		set -e
-		rm -f $FILES_TO_DELETE
+
+		if [ -n "$OVERWRITE_FILES" ]
+		then
+			rm -f $FILES_TO_DELETE
+		else
+			println WARNING "This package wants to overwite the following files:"
+			echo "$FILES_TO_DELETE"
+		fi
 	fi
 
 	# Make sure the package doesn't attempt to install the /usr/share/info/dir file
@@ -704,6 +720,11 @@ while test $# -gt 0; do
 			shift
 
 			case $1 in
+				--overwrite)
+					shift
+					export OVERWRITE_FILES="yes"
+					;;
+
 				--test)
 					shift
 					export ENABLE_TESTS="yes"
