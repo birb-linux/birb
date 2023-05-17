@@ -727,6 +727,31 @@ while test $# -gt 0; do
 			shift
 			;;
 
+		--source)
+			shift
+			cd $REPO_DIR
+			case $1 in
+				query)
+					BRANCH="$(git status | awk '/^On branch/ {print $3}')"
+					case $1 in
+						master) echo "stable" ;;
+						dev) 	echo "testing" ;;
+					esac
+					;;
+
+				stable)
+					echo "Swiching to the stable master branch..."
+					git checkout master
+					;;
+
+				testing)
+					echo "Switching to the unstable development branch..."
+					git checkout dev
+					;;
+			esac
+			shift
+			;;
+
 		--sync)
 			shift
 			case $1 in
