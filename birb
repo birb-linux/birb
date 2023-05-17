@@ -409,6 +409,8 @@ install_package()
 	then
 		# Stow the fakeroot directory to the root directory
 		println "Finding and deleting conflicting files"
+		HAD_CONFLICTS=""
+
 		cd $FAKEROOT
 		set +e
 		FILES_TO_DELETE="$(stow -S -t / -d $FAKEROOT $PACKAGE_NAME &>/dev/stdout | grep "existing target is not owned by stow" | awk -F' ' '{print "/" $9}')"
@@ -416,6 +418,7 @@ install_package()
 
 		if [ -n "$FILES_TO_DELETE" ]
 		then
+			HAD_CONFLICTS="true"
 			if [ -n "$OVERWRITE_FILES" ]
 			then
 				rm -f $FILES_TO_DELETE
@@ -432,6 +435,7 @@ install_package()
 
 		if [ -n "$FILES_TO_DELETE" ]
 		then
+			HAD_CONFLICTS="true"
 			if [ -n "$OVERWRITE_FILES" ]
 			then
 				rm -f $FILES_TO_DELETE
@@ -439,6 +443,13 @@ install_package()
 				println WARNING "This package wants to overwite the following files:"
 				echo "$FILES_TO_DELETE"
 			fi
+		fi
+
+		# Quit if there were any conflicts and overwrite wasn't specified
+		if [ -z "$OVERWRITE_FILES" ] && [ -n "$HAD_CONFLICTS" ]
+		then
+			println ERROR "Cancelling installation due to conflicts"
+			exit 1
 		fi
 	fi
 
