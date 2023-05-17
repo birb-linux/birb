@@ -24,6 +24,15 @@ Uninstall given package(s) from the filesystem
 \fB-s, --search\fP
 Search for packages by name
 .TP
+\fB--source [query|stable|testing]\fP
+Change or query the repository source branch.
+
+The \fBquery\fP option returns the current branch in use. You can also see the git branch names from git output.
+
+The \fBstable\fP branch contains (in theory at least) stable packages that have been somewhat proven to compile and install properly (and might even run properly too).
+
+The \fBtesting\fP branch is basically a raw feed of commits with no quarantee of working packages. It is more up-to-date than the stable branch, but carries the risk of breaking your installation or causing some other undefined trouble.
+.TP
 \fB--sync [--force]\fP
 Sync package repositories. If there are any issues with syncing, you can try if --force fixes the problem. The force flag hard resets the package repositories and throws any local uncommited changes away
 .TP

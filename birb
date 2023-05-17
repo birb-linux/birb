@@ -41,6 +41,8 @@ print_help()
 	echo "      --uninstall PACKAGE(s)         uninstall given package(s) from the filesystem"
 	echo "  -s  --search                       search for packages by name"
 	echo "      --sync [--force]               sync package repositories"
+	echo "      --source [option]              change or query the repository source"
+	echo "                                     (check the manual for list of options)"
 	echo "      --list-installed               list all currently installed packages"
 	echo "      --upgrade [--debug]            update the birb package manager"
 	echo ""
