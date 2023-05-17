@@ -253,6 +253,7 @@ install_package()
 	CHECKSUM=""
 	DEPS=""
 	FLAGS=""
+	NOTES=""
 
 	# Source the package variables and functions
 	source_pkg_seed $PACKAGE_NAME
@@ -441,6 +442,9 @@ install_package()
 
 	echo "$PACKAGE_NAME installation finished"
 	set +e
+
+	# Check if there are notes to print
+	[ -n "$NOTES" ] && echo -e "\e[1;33mPackage notes: $NOTES"
 }
 
 uninstall_package()
