@@ -189,6 +189,7 @@ expand_use()
 {
 	PKG_FLAG="$1"
 	OUTPUT="$2"
+	DISABLED_OUTPUT="$3"
 
 	# Check if a useflag is set by using grep
 	HAS_FLAG="$(echo "$USE_FLAGS" | grep -wo "$PKG_FLAG")"
@@ -198,6 +199,8 @@ expand_use()
 	if [ -n "$HAS_FLAG" ]
 	then
 		echo "$OUTPUT"
+	else
+		echo "$DISABLED_OUTPUT"
 	fi
 }
 
