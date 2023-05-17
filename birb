@@ -414,12 +414,15 @@ install_package()
 		FILES_TO_DELETE="$(stow -S -t / -d $FAKEROOT $PACKAGE_NAME &>/dev/stdout | grep "existing target is not owned by stow" | awk -F' ' '{print "/" $9}')"
 		set -e
 
-		if [ -n "$OVERWRITE_FILES" ]
+		if [ -n "$FILES_TO_DELETE" ]
 		then
-			rm -f $FILES_TO_DELETE
-		else
-			println WARNING "This package wants to overwite the following files:"
-			echo "$FILES_TO_DELETE"
+			if [ -n "$OVERWRITE_FILES" ]
+			then
+				rm -f $FILES_TO_DELETE
+			else
+				println WARNING "This package wants to overwite the following files:"
+				echo "$FILES_TO_DELETE"
+			fi
 		fi
 
 		# Do another round of deletions in case there's some other error
@@ -427,12 +430,15 @@ install_package()
 		FILES_TO_DELETE="$(stow -S -t / -d $FAKEROOT $PACKAGE_NAME &>/dev/stdout | grep "existing target is neither a link nor a directory" | awk -F' ' '{print "/" $11}')"
 		set -e
 
-		if [ -n "$OVERWRITE_FILES" ]
+		if [ -n "$FILES_TO_DELETE" ]
 		then
-			rm -f $FILES_TO_DELETE
-		else
-			println WARNING "This package wants to overwite the following files:"
-			echo "$FILES_TO_DELETE"
+			if [ -n "$OVERWRITE_FILES" ]
+			then
+				rm -f $FILES_TO_DELETE
+			else
+				println WARNING "This package wants to overwite the following files:"
+				echo "$FILES_TO_DELETE"
+			fi
 		fi
 	fi
 
