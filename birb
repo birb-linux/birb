@@ -14,7 +14,7 @@ PACKAGE_LIST="$DB_DIR/packages"
 export DISTFILES="$INSTALL_PREFIX/var/cache/distfiles"
 export FAKEROOT="$INSTALL_PREFIX/var/db/fakeroot"
 export PYTHON_DIST="usr/python_dist"
-export PATH="/usr/bin:/usr/sbin:/usr/local/bin:/usr/python_bin"
+export PATH="/usr/bin:/usr/sbin:/usr/local/bin:/usr/python_bin:/opt/rustc/bin"
 export ACLOCAL_PATH=/usr/share/aclocal
 
 # Load the configuration file (if it exists)
