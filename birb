@@ -170,6 +170,7 @@ download_src()
 	if [ "$(checksum_check "$DISTFILES/$TARBALL" "$CHECKSUM")" == "1" ]
 	then
 		println WARNING "There was a checksum mismatch. The downloaded archive will be removed to prevent installing a possibly corrupt package. Please re-try downloading it"
+		md5sum $DISTFILES/$TARBALL
 		rm -v $DISTFILES/$TARBALL
 		return 1
 	fi
