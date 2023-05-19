@@ -119,6 +119,14 @@ kernel_check()
 	return 0
 }
 
+# A really simple function that is used to check if a package is installed
+#
+# This functions prints out the package name if it was found
+package_check()
+{
+	grep -x "$1" $NEST
+}
+
 source_pkg_seed()
 {
 	source $REPO_DIR/$1/seed.sh
