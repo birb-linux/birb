@@ -367,7 +367,7 @@ install_package()
 	if [ -n "$ENABLE_32BIT" ]
 	then
 		println "Building the package with 32-bit libraries"
-		_build32
+		LDFLAGS="-L/usr/lib32" _build32
 
 		# Run 32-bit tests if the test32 flag is specified
 		if [ -n "$PACKAGE_HAS_32BIT_TESTS" ] && [ -n "$ENABLE_TESTS" ]
