@@ -663,7 +663,7 @@ birb_upgrade()
 	git pull
 
 	make clean
-	[ "$1" == "debug" ] && make || make release
+	[ "$1" == "debug" ] && make || make release -j$(nproc)
 	make install
 
 	println "Upgrade finished successfully"

@@ -23,23 +23,54 @@ debug_birb_db: debug_birb
 	${CXX} ${CXX_FLAGS} -g ${SRC_DIR}/birb_db.cpp -o ${BUILD_DIR}/birb_db ${BUILD_DIR}/birb.o
 
 
-release:
-	mkdir -p ${BUILD_DIR}
+release: birb_dep_solver birb_pkg_search birb_db
+
+
+# birb.o library
+birb: birb_profile_run birb_dep_solver_profile_run birb_pkg_search_profile_run birb_db_profile_run
+	${CXX} ${CXX_FLAGS} ${RELEASE_CXX_FLAGS} -fprofile-use -c ${SRC_DIR}/birb.cpp -o ${BUILD_DIR}/birb.o
+
+birb_profile_run: birb_profile_gen
+
+birb_profile_gen: build_dir
 	${CXX} ${CXX_FLAGS} ${RELEASE_CXX_FLAGS} -fprofile-generate -c ${SRC_DIR}/birb.cpp -o ${BUILD_DIR}/birb.o
-	${CXX} ${CXX_FLAGS} ${RELEASE_CXX_FLAGS} -fprofile-generate ${SRC_DIR}/dep_solver.cpp -o ${BUILD_DIR}/birb_dep_solver ${BUILD_DIR}/birb.o
-	${CXX} ${CXX_FLAGS} ${RELEASE_CXX_FLAGS} -fprofile-generate ${SRC_DIR}/pkg_search.cpp -o ${BUILD_DIR}/birb_pkg_search ${BUILD_DIR}/birb.o
-	${CXX} ${CXX_FLAGS} ${RELEASE_CXX_FLAGS} -fprofile-generate ${SRC_DIR}/birb_db.cpp -o ${BUILD_DIR}/birb_db ${BUILD_DIR}/birb.o
+
+
+# birb_dep_solver
+birb_dep_solver: birb_dep_solver_profile_run birb
+	${CXX} ${CXX_FLAGS} ${RELEASE_CXX_FLAGS} -fprofile-use ${SRC_DIR}/dep_solver.cpp -o ${BUILD_DIR}/birb_dep_solver ${BUILD_DIR}/birb.o
+
+birb_dep_solver_profile_run: birb_dep_solver_profile_gen
 	${BUILD_DIR}/birb_dep_solver xterm &>/dev/null
+
+birb_dep_solver_profile_gen: build_dir birb_profile_gen
+	${CXX} ${CXX_FLAGS} ${RELEASE_CXX_FLAGS} -fprofile-generate ${SRC_DIR}/dep_solver.cpp -o ${BUILD_DIR}/birb_dep_solver ${BUILD_DIR}/birb.o
+
+
+# birb_pkg_search
+birb_pkg_search: birb_pkg_search_profile_run birb
+	${CXX} ${CXX_FLAGS} ${RELEASE_CXX_FLAGS} -fprofile-use ${SRC_DIR}/pkg_search.cpp -o ${BUILD_DIR}/birb_pkg_search ${BUILD_DIR}/birb.o
+
+birb_pkg_search_profile_run: birb_pkg_search_profile_gen
 	${BUILD_DIR}/birb_pkg_search iceauth luit mkfontscale sessreg setxkbmap smproxy x11perf xauth xbacklight xcmsdb xcursorgen xdpyinfo xdriinfo xev xgamma xhost xinput xkbcomp xkbevd xkbutils xkill xlsatoms xlsclients xmessage xmodmap xpr xprop xrandr xrdb xrefresh xset xsetroot xvinfo xwd xwininfo xwud &>/dev/null
+
+birb_pkg_search_profile_gen: build_dir birb_profile_gen
+	${CXX} ${CXX_FLAGS} ${RELEASE_CXX_FLAGS} -fprofile-generate ${SRC_DIR}/pkg_search.cpp -o ${BUILD_DIR}/birb_pkg_search ${BUILD_DIR}/birb.o
+
+
+# birb_db
+birb_db: birb_db_profile_run birb
+	${CXX} ${CXX_FLAGS} ${RELEASE_CXX_FLAGS} -fprofile-use ${SRC_DIR}/birb_db.cpp -o ${BUILD_DIR}/birb_db ${BUILD_DIR}/birb.o
+
+birb_db_profile_run: birb_db_profile_gen
 	${BUILD_DIR}/birb_db --update this_package_will_not_exist 1.2.3
 	${BUILD_DIR}/birb_db --list &>/dev/null
 	${BUILD_DIR}/birb_db --remove this_package_will_not_exist
 	${BUILD_DIR}/birb_db --is-installed ncurses &>/dev/null
 	${BUILD_DIR}/birb_db --is-installed alweiuhlawiuefhu &>/dev/null
-	${CXX} ${CXX_FLAGS} ${RELEASE_CXX_FLAGS} -fprofile-use -c ${SRC_DIR}/birb.cpp -o ${BUILD_DIR}/birb.o
-	${CXX} ${CXX_FLAGS} ${RELEASE_CXX_FLAGS} -fprofile-use ${SRC_DIR}/dep_solver.cpp -o ${BUILD_DIR}/birb_dep_solver ${BUILD_DIR}/birb.o
-	${CXX} ${CXX_FLAGS} ${RELEASE_CXX_FLAGS} -fprofile-use ${SRC_DIR}/pkg_search.cpp -o ${BUILD_DIR}/birb_pkg_search ${BUILD_DIR}/birb.o
-	${CXX} ${CXX_FLAGS} ${RELEASE_CXX_FLAGS} -fprofile-use ${SRC_DIR}/birb_db.cpp -o ${BUILD_DIR}/birb_db ${BUILD_DIR}/birb.o
+
+birb_db_profile_gen: build_dir birb_profile_gen
+	${CXX} ${CXX_FLAGS} ${RELEASE_CXX_FLAGS} -fprofile-generate ${SRC_DIR}/birb_db.cpp -o ${BUILD_DIR}/birb_db ${BUILD_DIR}/birb.o
 
 
 install:
