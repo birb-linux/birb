@@ -360,7 +360,7 @@ install_package()
 
 	# Build the package
 	println "Building the package"
-	_build
+	CFLAGS="$CUSTOM_CFLAGS" CXXFLAGS="$CUSTOM_CXXFLAGS" _build
 
 	# Run tests if the package has them and the user
 	# has enabled test running
