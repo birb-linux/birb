@@ -2,15 +2,18 @@
 /* Version management system for the birb package manager */
 /**********************************************************/
 
+#include <algorithm>
 #include <filesystem>
 #include <fstream>
 #include <iostream>
+#include <iterator>
 #include <sstream>
+#include <string.h>
 #include <string>
 #include <unistd.h>
+#include <unordered_map>
 #include <vector>
 #include "Birb.hpp"
-#include "json.hpp"
 
 
 #define BIRB_DB_PATH "/var/lib/birb/birb_db"
@@ -41,33 +44,34 @@ int main(int argc, char** argv)
 		return -1;
 	}
 
-	nlohmann::json json_data;
+	std::vector<std::string> db_file;
+
 	bool update_db = false;
 
 	if (std::filesystem::exists(BIRB_DB_PATH) && std::filesystem::is_regular_file(BIRB_DB_PATH))
 	{
-		std::ostringstream str_stream;
-		std::ifstream file(BIRB_DB_PATH);
-		str_stream << file.rdbuf();
-
-		json_data = nlohmann::json::parse(str_stream.str());
-		file.close();
+		db_file = birb::read_file(BIRB_DB_PATH);
 	}
 
 	if (argcmp(argv[1], argc, "--is-installed", 1))
 	{
-		if (!json_data["packages"][argv[2]].empty())
-			std::cout << "yes\n";
-		else
-			std::cout << "no\n";
+		std::vector<std::string> value_pair(2);
+		for (size_t i = 0; i < db_file.size(); ++i)
+		{
+			value_pair = birb::split_string(db_file[i], ";");
+			if (value_pair[0] == argv[2])
+			{
+				std::cout << "yes\n";
+				return 0;
+			}
+		}
+		std::cout << "no\n";
 	}
 
 	if (argcmp(argv[1], argc, "--list", 0))
 	{
-		for (auto& element : json_data["packages"])
-		{
-			std::cout << std::string(element["name"]) << ";" << std::string(element["version"]) << std::endl;
-		}
+		for (std::string i : db_file)
+			std::cout << i << "\n";
 	}
 
 	if (argcmp(argv[1], argc, "--remove", 1))
@@ -75,7 +79,11 @@ int main(int argc, char** argv)
 		root_check();
 
 		/* Remove the given package from the database */
-		json_data["packages"].erase(argv[2]);
+		db_file.erase(std::remove_if(db_file.begin(), db_file.end(), [argv](std::string s)
+					{
+						return birb::split_string(s, ";")[0] == argv[2];
+					}), db_file.end());
+
 		update_db = true;
 	}
 
@@ -83,8 +91,8 @@ int main(int argc, char** argv)
 	{
 		root_check();
 
-		/* Clear the json data */
-		json_data.clear();
+		/* Clear the db vector */
+		db_file.clear();
 
 		/* Get list of all packages in the fakeroot */
 		std::vector<std::string> pkgs;
@@ -95,8 +103,7 @@ int main(int argc, char** argv)
 		/* Fetch version data and add all of that into the db */
 		for (size_t i = 0; i < pkgs.size(); ++i)
 		{
-			json_data["packages"][pkgs[i]]["name"] = pkgs[i];
-			json_data["packages"][pkgs[i]]["version"] = birb::read_pkg_variable(pkgs[i], "VERSION", BIRB_PKG_PATH);
+			db_file.push_back(pkgs[i] + ";" + birb::read_pkg_variable(pkgs[i], "VERSION", BIRB_PKG_PATH));
 		}
 		update_db = true;
 	}
@@ -105,19 +112,42 @@ int main(int argc, char** argv)
 	{
 		root_check();
 
-		/* Create an entry for the package and its version */
-		json_data["packages"][argv[2]]["name"] = argv[2];
-		json_data["packages"][argv[2]]["version"] = argv[3];
+		/* Attempt to find the entry for this package */
+		bool result_found = false;
+		std::vector<std::string> db_entry(2);
+		for (size_t i = 0; i < db_file.size(); ++i)
+		{
+			db_entry = birb::split_string(db_file[i], ";");
+			if (db_entry[0] == argv[2])
+			{
+				result_found = true;
+				db_file[i] = std::string(argv[2]) + ";" + argv[3];
+			}
+		}
+
+		/* Add a new entry if no results were found */
+		if (!result_found)
+			db_file.push_back(std::string(argv[2]) + ";" + argv[3]);
+
 		update_db = true;
 	}
 
 	if (argcmp(argv[1], argc, "--version", 1))
 	{
 		/* Check the installed version */
-		if (!json_data["packages"][argv[2]].empty())
-			std::cout << std::string(json_data["packages"][argv[2]]["version"]) << std::endl;
-		else
-			std::cout << "Package [" << argv[2] << "] is not installed!" << std::endl;
+		std::vector<std::string> db_entry(2);
+		for (size_t i = 0; i < db_file.size(); ++i)
+		{
+			db_entry = birb::split_string(db_file[i], ";");
+			if (db_entry[0] == argv[2])
+			{
+				std::cout << db_entry[1] << "\n";
+				return 0;
+			}
+		}
+
+		std::cout << "Package [" << argv[2] << "] is not installed!" << std::endl;
+		return 1;
 	}
 
 	if (argcmp(argv[1], argc, "--help", 0))
@@ -135,7 +165,8 @@ int main(int argc, char** argv)
 	if (update_db)
 	{
 		std::ofstream file(BIRB_DB_PATH);
-		file << std::setw(4) << json_data << std::endl;
+		std::ostream_iterator<std::string> output_iterator(file, "\n");
+		std::copy(db_file.begin(), db_file.end(), output_iterator);
 		file.close();
 	}
 
