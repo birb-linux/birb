@@ -7,11 +7,9 @@
 #include <fstream>
 #include <iostream>
 #include <iterator>
-#include <sstream>
 #include <string.h>
 #include <string>
 #include <unistd.h>
-#include <unordered_map>
 #include <vector>
 #include "Birb.hpp"
 
