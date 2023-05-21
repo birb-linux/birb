@@ -141,6 +141,8 @@ int main(int argc, char** argv)
 	{
 		root_check();
 
+		std::cout << "Resetting the version database with versions from " << BIRB_PKG_PATH << "\n";
+
 		/* Clear the db vector */
 		db_file.clear();
 
