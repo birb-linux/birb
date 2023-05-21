@@ -59,6 +59,7 @@ bootstrap:
 	touch ${LFS}/usr/share/man/.birb_symlink_lock
 	touch ${LFS}/usr/share/man/man{1..8}/.birb_symlink_lock
 	# Protect some misc. directories from stow takeover
+	mkdir -p ${LFS}/usr/share/pkgconfig
 	touch ${LFS}/usr/share/pkgconfig/.birb_symlink_lock
 	mkdir -p ${LFS}/lib/udev/rules.d
 	touch ${LFS}/lib/udev/rules.d/.birb_symlink_lock
