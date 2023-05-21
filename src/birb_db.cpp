@@ -100,7 +100,7 @@ int main(int argc, char** argv)
 
 			/* Compare the versions */
 			if (repo_data[db_entry[0]] != db_entry[1])
-				std::cout << p << "\n";
+				std::cout << p << ";" << repo_data[db_entry[0]] << "\n";
 		}
 	}
 
