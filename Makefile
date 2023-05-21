@@ -1,8 +1,8 @@
-CACHE_DIR="/var/cache"
-LIB_DIR="/var/lib/birb"
-DB_DIR="/var/db"
-REPO_DIR="$DB_DIR/pkg"
-BIRB_SRC_DIR="$CACHE_DIR/distfiles/birb"
+CACHE_DIR=/var/cache
+LIB_DIR=/var/lib/birb
+DB_DIR=/var/db
+REPO_DIR=${$DB_DIR}/pkg
+BIRB_SRC_DIR=${CACHE_DIR}/distfiles/birb
 
 CXX=g++
 CXX_FLAGS=-I./include
@@ -73,6 +73,8 @@ bootstrap:
 	mkdir -p ${LFS}/${CACHE_DIR}/distfiles
 	mkdir -p ${LFS}/${LIB_DIR}
 	mkdir -p ${LFS}/usr/python_dist
+	mkdir -p ${LFS}/${REPO_DIR}
+	mkdir -p ${LFS}/${BIRB_SRC_DIR}
 	# Create the nest file
 	touch ${LFS}/${LIB_DIR}/nest
 	# Update the repository
