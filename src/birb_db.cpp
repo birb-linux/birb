@@ -54,6 +54,14 @@ int main(int argc, char** argv)
 		file.close();
 	}
 
+	if (argcmp(argv[1], argc, "--is-installed", 1))
+	{
+		if (!json_data["packages"][argv[2]].empty())
+			std::cout << "yes\n";
+		else
+			std::cout << "no\n";
+	}
+
 	if (argcmp(argv[1], argc, "--list", 0))
 	{
 		for (auto& element : json_data["packages"])
@@ -115,6 +123,7 @@ int main(int argc, char** argv)
 	if (argcmp(argv[1], argc, "--help", 0))
 	{
 		std::cout << "Options:\n"
+			<< "  --is-installed [package]             check if a package is installed\n"
 			<< "  --list                               list all installed packages and their versions\n"
 			<< "  --remove                             remove a package and its data from the database\n"
 			<< "  --reset                              reset the version data with data found from /var/db/pkg\n"

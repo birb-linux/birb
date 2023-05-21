@@ -34,6 +34,8 @@ release:
 	${BUILD_DIR}/birb_db --update this_package_will_not_exist 1.2.3
 	${BUILD_DIR}/birb_db --list &>/dev/null
 	${BUILD_DIR}/birb_db --remove this_package_will_not_exist
+	${BUILD_DIR}/birb_db --is-installed ncurses &>/dev/null
+	${BUILD_DIR}/birb_db --is-installed alweiuhlawiuefhu &>/dev/null
 	${CXX} ${CXX_FLAGS} ${RELEASE_CXX_FLAGS} -flto -fprofile-use -c ${SRC_DIR}/birb.cpp -o ${BUILD_DIR}/birb.o
 	${CXX} ${CXX_FLAGS} ${RELEASE_CXX_FLAGS} -flto -fprofile-use ${SRC_DIR}/dep_solver.cpp -o ${BUILD_DIR}/birb_dep_solver ${BUILD_DIR}/birb.o
 	${CXX} ${CXX_FLAGS} ${RELEASE_CXX_FLAGS} -flto -fprofile-use ${SRC_DIR}/pkg_search.cpp -o ${BUILD_DIR}/birb_pkg_search ${BUILD_DIR}/birb.o
