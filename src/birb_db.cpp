@@ -10,6 +10,7 @@
 #include <string.h>
 #include <string>
 #include <unistd.h>
+#include <unordered_map>
 #include <vector>
 #include "Birb.hpp"
 
@@ -48,6 +49,22 @@ std::vector<std::string> find_db_entry(const std::vector<std::string>& db_file, 
 	}
 
 	return std::vector<std::string>(0);
+}
+
+std::unordered_map<std::string, std::string> get_repo_versions()
+{
+	std::unordered_map<std::string, std::string> pkgs;
+
+	/* Get list of all packages in the fakeroot */
+	for (auto& p : std::filesystem::directory_iterator(BIRB_FAKEROOT_PATH))
+	{
+		if (p.is_directory())
+		{
+			pkgs[p.path().filename().string()] = birb::read_pkg_variable(p.path().filename().string(), "VERSION", BIRB_PKG_PATH);
+		}
+	}
+
+	return pkgs;
 }
 
 int main(int argc, char** argv)
@@ -108,16 +125,12 @@ int main(int argc, char** argv)
 		db_file.clear();
 
 		/* Get list of all packages in the fakeroot */
-		std::vector<std::string> pkgs;
-		for (auto& p : std::filesystem::directory_iterator(BIRB_FAKEROOT_PATH))
-			if (p.is_directory())
-				pkgs.push_back(p.path().filename().string());
+		std::unordered_map<std::string, std::string> pkgs = get_repo_versions();
 
-		/* Fetch version data and add all of that into the db */
-		for (size_t i = 0; i < pkgs.size(); ++i)
-		{
-			db_file.push_back(pkgs[i] + ";" + birb::read_pkg_variable(pkgs[i], "VERSION", BIRB_PKG_PATH));
-		}
+		/* Transform the unordered_map into a std::string vector with the required format */
+		for (auto& pkg : pkgs)
+			db_file.push_back(pkg.first + ";" + pkg.second);
+
 		update_db = true;
 	}
 
