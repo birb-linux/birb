@@ -84,6 +84,26 @@ int main(int argc, char** argv)
 		db_file = birb::read_file(BIRB_DB_PATH);
 	}
 
+	if (argcmp(argv[1], argc, "--diff", 0))
+	{
+		std::unordered_map<std::string, std::string> repo_data = get_repo_versions();
+
+		/* Go through the installed packages and list out packages with differing versions */
+		std::vector<std::string> db_entry(2);
+		for (std::string p : db_file)
+		{
+			db_entry = birb::split_string(p, ";");
+
+			/* Skip packages that aren't in the pkg repo */
+			if (repo_data[db_entry[0]].empty())
+				continue;
+
+			/* Compare the versions */
+			if (repo_data[db_entry[0]] != db_entry[1])
+				std::cout << p << "\n";
+		}
+	}
+
 	if (argcmp(argv[1], argc, "--is-installed", 1))
 	{
 		std::vector<std::string> db_entry = find_db_entry(db_file, argv[2]);
@@ -173,6 +193,7 @@ int main(int argc, char** argv)
 	if (argcmp(argv[1], argc, "--help", 0))
 	{
 		std::cout << "Options:\n"
+			<< "  --diff                               list out-of-date installed packages\n"
 			<< "  --is-installed [package]             check if a package is installed\n"
 			<< "  --list                               list all installed packages and their versions\n"
 			<< "  --remove                             remove a package and its data from the database\n"
