@@ -40,4 +40,8 @@ mkdir -p ${LFS}/${BIRB_SRC_DIR}
 touch ${LFS}/${LIB_DIR}/nest
 
 # Update the repository
-cd ${LFS}/${REPO_DIR} ; git reset --hard ; git config pull.rebase true ; git fetch ; git pull
+cd ${LFS}/${REPO_DIR}
+git init
+git remote add origin https://github.com/toasterbirb/birbos-packages
+git fetch
+git pull origin master
