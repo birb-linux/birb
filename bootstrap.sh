@@ -8,7 +8,7 @@
 CACHE_DIR=/var/cache
 LIB_DIR=/var/lib/birb
 DB_DIR=/var/db
-REPO_DIR=${$DB_DIR}/pkg
+REPO_DIR=${DB_DIR}/pkg
 BIRB_SRC_DIR=${CACHE_DIR}/distfiles/birb
 
 # Make sure that all documentation directories exist and have a file in them
