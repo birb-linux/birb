@@ -36,6 +36,22 @@ bool argcmp(char* arg, int argc, std::string option, int required_arg_count)
 	return (!strcmp(arg, option.c_str()) && required_arg_count + 1 < argc);
 }
 
+std::vector<std::string> find_db_entry(const std::vector<std::string>& db_file, const std::string& pkg_name)
+{
+	std::vector<std::string> result(2);
+
+	for (size_t i = 0; i < db_file.size(); ++i)
+	{
+		/* Split the db line package;version */
+		result = birb::split_string(db_file[i], ";");
+
+		if (result[0] == pkg_name)
+			return result;
+	}
+
+	return std::vector<std::string>(0);
+}
+
 int main(int argc, char** argv)
 {
 	if (argc == 1)
@@ -55,17 +71,14 @@ int main(int argc, char** argv)
 
 	if (argcmp(argv[1], argc, "--is-installed", 1))
 	{
-		std::vector<std::string> value_pair(2);
-		for (size_t i = 0; i < db_file.size(); ++i)
-		{
-			value_pair = birb::split_string(db_file[i], ";");
-			if (value_pair[0] == argv[2])
-			{
-				std::cout << "yes\n";
-				return 0;
-			}
-		}
-		std::cout << "no\n";
+		std::vector<std::string> db_entry = find_db_entry(db_file, argv[2]);
+
+		if (db_entry.empty())
+			std::cout << "no\n";
+		else
+			std::cout << "yes\n";
+
+		return 0;
 	}
 
 	if (argcmp(argv[1], argc, "--list", 0))
@@ -79,10 +92,12 @@ int main(int argc, char** argv)
 		root_check();
 
 		/* Remove the given package from the database */
-		db_file.erase(std::remove_if(db_file.begin(), db_file.end(), [argv](std::string s)
+		db_file.erase(std::remove_if(db_file.begin(), db_file.end(),
+					[argv](std::string s)
 					{
 						return birb::split_string(s, ";")[0] == argv[2];
-					}), db_file.end());
+					}
+			), db_file.end());
 
 		update_db = true;
 	}
@@ -122,6 +137,7 @@ int main(int argc, char** argv)
 			{
 				result_found = true;
 				db_file[i] = std::string(argv[2]) + ";" + argv[3];
+				break;
 			}
 		}
 
@@ -135,19 +151,12 @@ int main(int argc, char** argv)
 	if (argcmp(argv[1], argc, "--version", 1))
 	{
 		/* Check the installed version */
-		std::vector<std::string> db_entry(2);
-		for (size_t i = 0; i < db_file.size(); ++i)
-		{
-			db_entry = birb::split_string(db_file[i], ";");
-			if (db_entry[0] == argv[2])
-			{
-				std::cout << db_entry[1] << "\n";
-				return 0;
-			}
-		}
+		std::vector<std::string> db_entry = find_db_entry(db_file, argv[2]);
 
-		std::cout << "Package [" << argv[2] << "] is not installed!" << std::endl;
-		return 1;
+		if (db_entry.empty())
+			return 1;
+
+		std::cout << db_entry[1] << "\n";
 	}
 
 	if (argcmp(argv[1], argc, "--help", 0))
