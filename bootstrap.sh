@@ -25,6 +25,9 @@ touch ${LFS}/lib/udev/rules.d/.birb_symlink_lock
 touch ${LFS}/sbin/.birb_symlink_lock
 mkdir -pv ${LFS}/usr/share/fonts/TTF
 touch ${LFS}/usr/share/fonts/TTF/.birb_symlink_lock
+mkdir -pv /usr/share/fonts/X11/{misc,util}
+touch /usr/share/fonts/X11/misc/.birb_symlink_lock,util
+touch /usr/share/fonts/X11/util/.birb_symlink_lock,util
 mkdir -pv ${LFS}/usr/share/applications
 touch ${LFS}/usr/share/applications/.birb_symlink_lock
 
