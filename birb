@@ -603,6 +603,49 @@ uninstall_package()
 	set +e
 }
 
+update_packages()
+{
+	println "Checking for out-of-date packages"
+	PKGS="$(birb_db --diff)"
+
+	if [ -z "$PKGS" ]
+	then
+		echo "Everything is up-to-date!"
+		exit 0
+	fi
+
+	echo -e "\e[1;33mThe following packages can be updated:\e[0m"
+
+	echo "$PKGS" | awk -F';' '{print $1 ";" $2 ";->;" $3}' | column -s ';' -t
+
+	echo ""
+	read -p "Proceed with the update? (y/r/N): " SELECTED_UPDATE_OPTION
+
+	case $SELECTED_UPDATE_OPTION in
+		y|Y) ;;
+		r|R)
+			read -p "Regex: " REGEX_PATTERN
+
+			echo -e "\e[1;33mThe following packages will be updated:\e[0m"
+			echo "$PKGS" | cut -d ';' -f1 | awk "/$REGEX_PATTERN/"
+			read -p "Proceed with the update? (y/N): " AGREE_REGEX_UPDATE
+			case $AGREE_REGEX_UPDATE in
+				y|Y) ;;
+				*)
+					echo "Cancelled"
+					exit 0
+					;;
+			esac
+			;;
+		*)
+			echo "Cancelled"
+			exit 0
+			;;
+	esac
+
+	println "Starting package updates"
+}
+
 search_package()
 {
 	RESULTS="$(grep "$1" $PACKAGE_LIST)"
@@ -784,6 +827,12 @@ while test $# -gt 0; do
 				shift
 			done
 
+			exit 0
+			;;
+
+		--update)
+			shift
+			update_packages
 			exit 0
 			;;
 
