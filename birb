@@ -198,6 +198,16 @@ prepare_fakeroot()
 	mkdir -p $1/etc/X11/app-defaults
 }
 
+# Returns whether the use flag is enabled
+# This is useful for customizing how programs get compiled and can be used
+# to minimize dependencies
+has_use()
+{
+	# Check if a useflag is set by using grep
+	HAS_FLAG="$(echo "$USE_FLAGS" | grep -wo "$1")"
+	return $([ -n "$HAS_FLAG" ])
+}
+
 # If the use flag has been set in the config file, expand it into some command
 # This is useful for customizing how programs get compiled and can be used
 # to minimize dependencies
@@ -207,12 +217,9 @@ expand_use()
 	OUTPUT="$2"
 	DISABLED_OUTPUT="$3"
 
-	# Check if a useflag is set by using grep
-	HAS_FLAG="$(echo "$USE_FLAGS" | grep -wo "$PKG_FLAG")"
-
 	# If the flag had been specified, expand it into the OUTPUT
 	# text
-	if [ -n "$HAS_FLAG" ]
+	if has_use $PKG_FLAG
 	then
 		echo "$OUTPUT"
 	else
