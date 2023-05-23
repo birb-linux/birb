@@ -281,6 +281,20 @@ install_package()
 	# Source the package variables and functions
 	source_pkg_seed $PACKAGE_NAME
 
+	# Check if the package is marked as proprietary
+	if [ -n "$(echo "$FLAGS" | grep -wo "proprietary")" ]
+	then
+		println WARNING "This package contains proprietary binary blobs!"
+		read -p "Are you sure you want to install it? (y/N): " AGREE_INSTALL_PROPRIETARY_BLOBS
+		case $AGREE_INSTALL_PROPRIETARY_BLOBS in
+			y|Y|yes|Yes) ;;
+			*)
+				echo "Cancelled"
+				exit 1
+				;;
+		esac
+	fi
+
 	# Export env variables used for installing Xorg related packages
 	export XORG_PREFIX="$FAKEROOT/$NAME/usr"
 	export XORG_CONFIG="--prefix=$XORG_PREFIX --sysconfdir=/etc \
