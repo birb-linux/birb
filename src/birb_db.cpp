@@ -146,7 +146,17 @@ int main(int argc, char** argv)
 	{
 		root_check();
 
-		std::cout << "Resetting the version database with versions from " << BIRB_PKG_PATH << "\n";
+		std::cout 	<< "WARNING: Packages that don't have fakeroots won't be counted!\n"
+					<< "Do you still want to continue? (y/n): ";
+		std::string answer;
+		std::cin >> answer;
+		if (answer != "Y" && answer != "y")
+		{
+			std::cout << "Cancelling the reset...\n";
+			exit(0);
+		}
+
+		std::cout << "Resetting the version database\n";
 
 		/* Clear the db vector */
 		db_file.clear();
