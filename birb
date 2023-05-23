@@ -17,12 +17,6 @@ export PYTHON_DIST="usr/python_dist"
 export PATH="/usr/local/bin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/python_bin:/opt/rustc/bin"
 export ACLOCAL_PATH=/usr/share/aclocal
 
-# If the 32bit option isn't set, default to enabled
-[ -z "$ENABLE_32BIT_PACKAGES" ] && ENABLE_32BIT_PACKAGES=yes
-
-# Load the configuration file (if it exists)
-BIRB_CFG_PATH="/etc/birb.conf"
-[ -f "$BIRB_CFG_PATH" ] && source "$BIRB_CFG_PATH"
 
 println()
 {
@@ -34,6 +28,27 @@ println()
 }
 
 
+# Make sure that the configuration files are in place
+BIRB_CFG_PATH="/etc/birb.conf"
+BIRB_REPO_LIST_PATH="/etc/birb-sources.conf"
+
+[ ! -f "$BIRB_CFG_PATH" ] && println WARNING "$BIRB_CFG_PATH is missing, please reinstall birb with 'birb --upgrade'"
+[ ! -f "$BIRB_REPO_LIST_PATH" ] && println ERROR "$BIRB_REPO_LIST_PATH is missing. Check TROUBLESHOOTING section in 'man birb' for instructions on how to fix this issue" && exit 1
+
+# Set default values for configuration variables in-case
+# the configuration doesn't exist
+[ -z "$ENABLE_LTO" ] && ENABLE_LTO=yes
+[ -z "$BUILD_JOBS" ] && BUILD_JOBS="$(nproc)"
+[ -z "$ENABLE_32BIT_PACKAGES" ] && ENABLE_32BIT_PACKAGES=yes
+
+# Load the configuration file (if it exists)
+if [ -f "$BIRB_CFG_PATH" ]
+then
+	source "$BIRB_CFG_PATH"
+fi
+
+
+
 print_help()
 {
 	echo "Usage: birb [OPTIONS...] [ARGUMENTS...] [PACKAGE(s)...]"
@@ -43,8 +58,8 @@ print_help()
 	echo "      --install [options] PACKAGE(s) install given package(s) to the filesystem"
 	echo "      --uninstall PACKAGE(s)         uninstall given package(s) from the filesystem"
 	echo "  -s  --search                       search for packages by name"
-	echo "      --sync [--force]               sync package repositories"
 	echo "      --source [option]              change or query the repository source"
+	echo "      --sync [--force]               sync package repositories"
 	echo "      --list-installed               list all currently installed packages"
 	echo "      --upgrade [--debug]            update the birb package manager"
 	echo ""
@@ -119,24 +134,28 @@ kernel_check()
 	return 0
 }
 
-# A really simple function that is used to check if a package is installed
-#
-# This functions prints out the package name if it was found
-package_check()
-{
-	grep -x "$1" $NEST
-}
-
 source_pkg_seed()
 {
 	source $REPO_DIR/$1/seed.sh
+}
+
+# Figure out what repository to use with birb_db
+# This function should be always called when a package is
+# downloaded or installed
+#
+# The function takes the package name as an argument
+update_repo_path()
+{
+	PACKAGE_NAME="$1"
+	REPO_DIR="$(birb_db --locate-package "$PACKAGE_NAME")"
 }
 
 # Download a tarball for the given package using wget
 # The tarball will be stored to /var/cache/distfiles
 download_src()
 {
-	PKG_PATH="$INSTALL_PREFIX/var/db/pkg/$1"
+	update_repo_path "$1"
+	PKG_PATH="$REPO_DIR/$1"
 
 	# Check if a package with this name is in the repositories
 	if [ ! -d $PKG_PATH ]
@@ -231,7 +250,8 @@ install_package()
 {
 	root_check
 	PACKAGE_NAME="$1"
-	export PKG_PATH="$INSTALL_PREFIX/var/db/pkg/$PACKAGE_NAME"
+	update_repo_path "$PACKAGE_NAME"
+	export PKG_PATH="$REPO_DIR/$PACKAGE_NAME"
 
 	# Check if a package with this name is in the repositories
 	if [ ! -d $PKG_PATH ]
@@ -241,7 +261,7 @@ install_package()
 	fi
 
 	# Check if the package is already installed
-	if [ -n "$(grep -x $PACKAGE_NAME $NEST)" ]
+	if [ "$(birb_db --is-installed $PACKAGE_NAME)" == "yes" ]
 	then
 		# Skip this package is SKIP_INSTALLED_PACKAGES has been set
 		if [ -n "$SKIP_INSTALLED_PACKAGES" ]
@@ -313,7 +333,7 @@ install_package()
 	for i in $RECURSIVE_DEPENDENCIES
 	do
 		# Check if the dependency is installed
-		if [ -z "$(grep -x $i $NEST)" ]
+		if [ "$(birb_db --is-installed $i)" == "no" ]
 		then
 			HAD_MISSING_DEP="yes"
 			DEPS_TO_INSTALL="$DEPS_TO_INSTALL $i"
@@ -434,6 +454,7 @@ install_package()
 		echo "This could be an intended 'feature' and not a bug, but if you are unsure, please report this message to the package maintainer"
 		println "Marking the package as 'installed'"
 		[ -z "$(grep -x $PACKAGE_NAME $NEST)" ] && echo "$PACKAGE_NAME" >> $NEST
+		birb_db --update "$PACKAGE_NAME" "$VERSION"
 		return 0;
 	fi
 
@@ -507,6 +528,7 @@ install_package()
 
 	# Add the package into the nest file if the installation was successful
 	[ -z "$(grep -x $PACKAGE_NAME $NEST)" ] && echo "$PACKAGE_NAME" >> $NEST
+	birb_db --update "$PACKAGE_NAME" "$VERSION"
 
 	echo "$PACKAGE_NAME installation finished"
 	set +e
@@ -519,8 +541,8 @@ uninstall_package()
 {
 	root_check
 	PACKAGE_NAME="$1"
-	println "Checking if the package $PACKAGE_NAME is in the nest"
-	if [ -z "$(grep -x $PACKAGE_NAME $NEST)" ]
+	println "Checking if the package $PACKAGE_NAME is installed"
+	if [ "$(birb_db --is-installed $PACKAGE_NAME)" == "no" ]
 	then
 		echo "$PACKAGE_NAME is not installed"
 		return 1
@@ -572,7 +594,7 @@ uninstall_package()
 		then
 			DEPENDENT_PACKAGES="${DEPENDENT_PACKAGES}${PACKAGE_TO_CHECK}\n"
 		fi
-	done < "${NEST}"
+	done <<< "$(birb_db --list | cut -d';' -f1)"
 
 	if [ -n "$DEPENDENT_PACKAGES" ]
 	then
@@ -613,6 +635,7 @@ uninstall_package()
 	[ -n "$PACKAGE_IS_FONT" ] && fc-cache
 
 	sed -i "/^$PACKAGE_NAME$/d" $NEST
+	birb_db --remove "$PACKAGE_NAME"
 	echo "$PACKAGE_NAME uninstalled"
 	set +e
 }
@@ -673,22 +696,41 @@ search_package()
 cache_package_list()
 {
 	println "Caching the package lists"
-	find /var/db/pkg -maxdepth 1 -not -path '*/[@.]*' -type d -printf "%f\n" | sed '/^pkg$/d' > $PACKAGE_LIST
+	find $(birb_db --list-repositories | cut -d';' -f3) -maxdepth 1 -not -path '*/[@.]*' -type d -printf "%f\n" | sed '/^pkg$/d' > $PACKAGE_LIST
 }
 
 sync_packages()
 {
 	root_check
 	println "Syncing package repositories"
-	cd $REPO_DIR
 
+	# Notify about the repository reset
 	if [ "$1" == "force" ]
 	then
 		println "Hard resetting repositories"
-		git reset --hard
 	fi
 
-	git fetch ; git pull
+	# Get list of repositories
+	REPO_LIST="$(birb_db --list-repositories)"
+
+	# Loop through the repositories and sync them
+	for REPO in $REPO_LIST
+	do
+		REPOSITORY_NAME="$(echo $REPO | cut -d';' -f1)"
+		REPOSITORY_PATH="$(echo $REPO | cut -d';' -f3)"
+
+		println "Syncing $REPOSITORY_NAME"
+
+		cd $REPOSITORY_PATH
+
+		if [ "$1" == "force" ]
+		then
+			git reset --hard
+		fi
+
+		git fetch ; git pull
+	done
+
 
 	# Cache the package list
 	cache_package_list
@@ -696,7 +738,7 @@ sync_packages()
 
 list_installed()
 {
-	cat $NEST
+	birb_db --list | cut -d';' -f1
 }
 
 birb_upgrade()
@@ -711,6 +753,9 @@ birb_upgrade()
 	# If it doesn't, clone it with git
 	if [ ! -d "$BIRB_DIST" ]
 	then
+		# Ensure that the distfiles directory exists
+		mkdir -p $DISTFILES
+
 		cd $DISTFILES
 		println "Cloning birb sources"
 		git clone https://github.com/Toasterbirb/birb

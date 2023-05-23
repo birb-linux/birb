@@ -19,13 +19,13 @@ bool pkg_source::is_valid()
 std::vector<pkg_source> birb::get_pkg_sources()
 {
 	/* Read the birb-sources.conf file line by line */
-	std::vector<std::string> source_lines = birb::read_file(PKG_SOURCE_CONFIG_PATH);
+	std::vector<std::string> repository_lines = birb::read_file(PKG_SOURCE_CONFIG_PATH);
 
 	std::vector<pkg_source> sources;
 	std::vector<std::string> line(3);
-	for (size_t i = 0; i < source_lines.size(); ++i)
+	for (size_t i = 0; i < repository_lines.size(); ++i)
 	{
-		line = birb::split_string(source_lines[i], ";");
+		line = birb::split_string(repository_lines[i], ";");
 
 		pkg_source s;
 		s.name = line[0];
@@ -36,6 +36,11 @@ std::vector<pkg_source> birb::get_pkg_sources()
 	}
 
 	return sources;
+}
+
+std::vector<std::string> birb::get_pkg_source_list()
+{
+	return birb::read_file(PKG_SOURCE_CONFIG_PATH);
 }
 
 pkg_source birb::locate_pkg_repo(const std::string& pkg_name, const std::vector<pkg_source>& package_sources)

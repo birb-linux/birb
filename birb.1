@@ -45,6 +45,18 @@ Update the birb package manager. If --debug is set, build the C++ parts of birb 
 .TP
 \fC/etc/birb.conf\fR
 The main configuration file for \fBbirb\fP. The file is in shell script form and gets sourced when \fBbirb\fP is run.
+.TP
+\fC/etc/birb-sources.conf\fR
+Configuration file for repository sources. Repositories are listed in the file formatted with the format repository-name;source-url;repository-directory-on-disk (see the default file for an example). The order of the lines is important, since the repositories are checked in the order that they are listed in the file.
+.SH TROUBLESHOOTING
+.TP
+\fBMissing /etc/birb-sources.conf\fP
+In case of an error indicating the that file \fB/etc/birb-sources.conf\fP is missing, you can recover it by either creating a new one manually with atleast one valid repository, or by navigating to \fB/var/cache/distfiles/birb\fP and running the commands \fBmake\fP and \fBmake install\fP as the root user. This should compile a non-optimized debug build and install any missing files back to their places. When the problem is solved, you can compile and install the optimized binaries by running the command \fBbirb --upgrade\fP as the root user.
+.TP
+\fBI accidentally deleted the birb sources from /var/cache/distfiles/birb
+If you still have birb installed, you can run \fBbirb --upgrade\fP to fix the situation. The upgrade process will look for the source code directory and clone the source code from git if it doesn't exist.
+
+If birb is unavailable, you can manually clone the birb github repository at https://github.com/Toasterbirb/birb to /var/cache/distfiles/birb and then install birb by running \fBmake\fP and \fBmake install\fP in the repo directory as the root user. If the installation was successful, you can compile and install the optimized binaries by running \fBmake release\fP and \fBmake install\fP as the root user, or by simply running \fBbirb --upgrade\fP.
 .SH "SEE ALSO"
 stow(8)
 .SH BUGS

@@ -80,10 +80,44 @@ int main(int argc, char** argv)
 		return -1;
 	}
 
+	/* Locating packages doesn't require reading the database,
+	 * so check for that before continuing with the rest of the program */
+	if (argcmp(argv[1], argc, "--locate-package", 1))
+	{
+		std::vector<pkg_source> repo_list = birb::get_pkg_sources();
+		pkg_source repo = birb::locate_pkg_repo(argv[2], repo_list);
+
+		if (repo.is_valid())
+		{
+			/* Package was found, return the repository path */
+			std::cout << repo.path << "\n";
+			return 0;
+		}
+		else
+		{
+			/* Package couldn't be found */
+			return 1;
+		}
+	}
+
+	/* Also this command doesn't need the package database */
+	if (argcmp(argv[1], argc, "--list-repositories", 0))
+	{
+		std::vector<std::string> repository_list = birb::get_pkg_source_list();
+
+		/* Print out the repositories */
+		for (std::string r : repository_list)
+			std::cout << r << "\n";
+	}
+
+
 	std::vector<std::string> db_file;
 
+	/* If set to true, update the package manager database
+	 * at the end of this program */
 	bool update_db = false;
 
+	/* Read in the package database, if it exists */
 	if (std::filesystem::exists(BIRB_DB_PATH) && std::filesystem::is_regular_file(BIRB_DB_PATH))
 	{
 		db_file = birb::read_file(BIRB_DB_PATH);
@@ -213,8 +247,11 @@ int main(int argc, char** argv)
 			<< "  --diff                               list out-of-date installed packages\n"
 			<< "  --is-installed [package]             check if a package is installed\n"
 			<< "  --list                               list all installed packages and their versions\n"
+			<< "  --list-repositories                  list repositories found from /etc/birb-sources.conf\n"
+			<< "  --locate-package [package]           print out the repository that the package can be\n"
+			<< "                                       found from, if any\n"
 			<< "  --remove                             remove a package and its data from the database\n"
-			<< "  --reset                              reset the version data with data found from /var/db/pkg\n"
+			<< "  --reset                              reset the version data with data found from repositories\n"
 			<< "  --update [package] [new version]     update a package version\n"
 			<< "  --version [package]                  get a version of a given package\n";
 	}

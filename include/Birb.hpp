@@ -19,6 +19,10 @@ struct birb
 {
 	static std::vector<pkg_source> get_pkg_sources();
 
+	/* Get the package source repositories in the same ';' separated
+	 * format as they are in the configuration file at /etc/birb-sources.conf */
+	static std::vector<std::string> get_pkg_source_list();
+
 	/* Check if a package exists and if it does, return the source it was found from */
 	static pkg_source locate_pkg_repo(const std::string& pkg_name, const std::vector<pkg_source>& package_sources);
 
