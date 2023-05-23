@@ -1,6 +1,6 @@
 CXX=g++
 CXX_FLAGS=-I./include
-RELEASE_CXX_FLAGS=-O2 -flto -march=native
+RELEASE_CXX_FLAGS=-O2 -flto=auto -march=native
 
 SRC_DIR=./src
 BUILD_DIR=./build
