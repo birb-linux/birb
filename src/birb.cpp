@@ -1,7 +1,57 @@
 #include "Birb.hpp"
+#include <filesystem>
 #include <fstream>
 #include <vector>
 #include <iostream>
+
+void pkg_source::print()
+{
+	std::cout 	<< "Name: \t" 	<< name << "\n"
+				<< "URL: \t" 	<< url 	<< "\n"
+				<< "Path: \t" 	<< path << "\n";
+}
+
+bool pkg_source::is_valid()
+{
+	return (!name.empty() || !url.empty() || !path.empty());
+}
+
+std::vector<pkg_source> birb::get_pkg_sources()
+{
+	/* Read the birb-sources.conf file line by line */
+	std::vector<std::string> source_lines = birb::read_file(PKG_SOURCE_CONFIG_PATH);
+
+	std::vector<pkg_source> sources;
+	std::vector<std::string> line(3);
+	for (size_t i = 0; i < source_lines.size(); ++i)
+	{
+		line = birb::split_string(source_lines[i], ";");
+
+		pkg_source s;
+		s.name = line[0];
+		s.url  = line[1];
+		s.path = line[2];
+
+		sources.push_back(s);
+	}
+
+	return sources;
+}
+
+pkg_source birb::locate_pkg_repo(const std::string& pkg_name, const std::vector<pkg_source>& package_sources)
+{
+	/* Loop through all of the repositories and try to find
+	 * the seed.sh file for the given package */
+	std::string seed_path;
+	for (pkg_source s : package_sources)
+	{
+		seed_path = s.path + "/" + pkg_name + "/seed.sh";
+		if (std::filesystem::exists(seed_path) && std::filesystem::is_regular_file(seed_path))
+			return s;
+	}
+
+	return pkg_source();
+}
 
 std::vector<std::string> birb::split_string(std::string text, std::string delimiter)
 {
@@ -36,7 +86,13 @@ std::vector<std::string> birb::read_file(std::string file_path)
 
 	/* Read the file */
 	while (std::getline(file, line))
+	{
+		/* Ignore empty lines and lines starting with '#' */
+		if (line.size() == 0 || line.at(0) == '#')
+			continue;
+
 		lines.push_back(line);
+	}
 
 	file.close();
 
@@ -58,8 +114,8 @@ std::string birb::read_pkg_variable(std::string pkg_name, std::string var_name, 
 
 	if (!pkg_file.is_open())
 	{
-		std::cout << "File [" << pkg_path << "] can't be opened!\n";
-		exit(2);
+		//std::cout << "File [" << pkg_path << "] can't be opened!\n";
+		return "";
 	}
 
 	while (std::getline(pkg_file, var_line))

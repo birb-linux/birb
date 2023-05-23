@@ -53,6 +53,9 @@ std::vector<std::string> find_db_entry(const std::vector<std::string>& db_file, 
 
 std::unordered_map<std::string, std::string> get_repo_versions()
 {
+	/* Repository list */
+	std::vector<pkg_source> pkg_sources = birb::get_pkg_sources();
+
 	std::unordered_map<std::string, std::string> pkgs;
 
 	/* Get list of all packages in the fakeroot */
@@ -60,6 +63,8 @@ std::unordered_map<std::string, std::string> get_repo_versions()
 	{
 		if (p.is_directory())
 		{
+			/* Iterate through the package source repositories and get the version
+			 * from the first repository that has the package in it */
 			pkgs[p.path().filename().string()] = birb::read_pkg_variable(p.path().filename().string(), "VERSION", BIRB_PKG_PATH);
 		}
 	}

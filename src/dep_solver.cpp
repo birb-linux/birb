@@ -4,6 +4,7 @@
 
 #include "Birb.hpp"
 #include <algorithm>
+#include <filesystem>
 #include <fstream>
 #include <iostream>
 #include <string.h>
@@ -14,9 +15,16 @@
 static std::unordered_map<std::string, std::vector<std::string>> meta_packages;
 static std::unordered_map<std::string, std::vector<std::string>> dependency_cache;
 
-std::vector<std::string> get_dependencies(const std::string& pkg, const std::string& repo_path)
+std::vector<std::string> get_dependencies(const std::string& pkg, const std::vector<pkg_source>& repos)
 {
 	std::vector<std::string> deps;
+
+	/* Find the repo that has the package */
+	pkg_source repo = birb::locate_pkg_repo(pkg, repos);
+
+	/* Return empty dependency list if the package couldn't be found */
+	if (!repo.is_valid())
+		return deps;
 
 	/* Skip string splitting if this is a meta-package */
 	if (meta_packages[pkg].empty())
@@ -26,7 +34,12 @@ std::vector<std::string> get_dependencies(const std::string& pkg, const std::str
 			return dependency_cache[pkg];
 
 		/* Read data from the package file */
-		std::string dep_line = birb::read_pkg_variable(pkg, "DEPS", repo_path);
+		std::string dep_line = birb::read_pkg_variable(pkg, "DEPS", repo.path);
+
+		/* Return empty dependency list if the dep_line is empty
+		 * The line could be empty for example when the package doesn't exist or is invalid etc. */
+		if (dep_line.empty())
+			return deps;
 
 		/* Split the string */
 		size_t pos = 0;
@@ -60,7 +73,7 @@ std::vector<std::string> get_dependencies(const std::string& pkg, const std::str
 	size_t deps_size = deps.size();
 	for (size_t i = 0; i < deps_size; ++i)
 	{
-		std::vector<std::string> sub_deps = get_dependencies(deps[i], repo_path);
+		std::vector<std::string> sub_deps = get_dependencies(deps[i], repos);
 		deps.insert(deps.end(), sub_deps.begin(), sub_deps.end());
 	}
 
@@ -104,14 +117,17 @@ int main(int argc, char** argv)
 	std::string pkg_name;
 
 	/* Location where we can find all of the packages in */
-	std::string repo_path = "/var/db/pkg";
+	std::vector<pkg_source> repos = birb::get_pkg_sources();
 
 	/* Testing args */
 	if (argc == 4)
 	{
 		if (!strcmp(argv[1], "--test"))
 		{
-			repo_path 		= argv[2];
+			repos.clear();
+
+			repos.push_back(pkg_source());
+			repos[0].path 	= argv[2];
 			pkg_name 		= argv[3];
 		}
 	}
@@ -126,7 +142,22 @@ int main(int argc, char** argv)
 	}
 
 	/* Read in the list of meta-packages and parse them into a map */
-	std::vector<std::string> meta_package_list = birb::read_file(repo_path + "/meta_packages");
+	std::vector<std::string> meta_package_list;
+
+	/* Loop through all repos to get all meta_packages */
+	std::vector<std::string> tmp_meta;
+	std::string meta_path;
+	for (pkg_source s : repos)
+	{
+		/* Check if the repo has a meta_package file */
+		meta_path = s.path + "/meta_packages";
+		if (!std::filesystem::exists(meta_path))
+			continue;
+
+		tmp_meta = birb::read_file(meta_path);
+		meta_package_list.insert(meta_package_list.end(), tmp_meta.begin(), tmp_meta.end());
+	}
+
 	for (std::string line : meta_package_list)
 	{
 		/* Find the delimiter */
@@ -138,7 +169,7 @@ int main(int argc, char** argv)
 	}
 
 	/* Get all package dependencies recursively */
-	std::vector<std::string> dependencies = get_dependencies(pkg_name, repo_path);
+	std::vector<std::string> dependencies = get_dependencies(pkg_name, repos);
 
 	/* Deduplicate the dependency list */
 	dependencies = deduplicated_dep_list(dependencies);
