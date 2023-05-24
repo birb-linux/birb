@@ -297,6 +297,7 @@ install_package()
 	DEPS=""
 	FLAGS=""
 	NOTES=""
+	unset _post_install
 
 	# Source the package variables and functions
 	source_pkg_seed $PACKAGE_NAME
@@ -525,6 +526,12 @@ install_package()
 	# If the package is a font, run fc-cache
 	[ -n "$PACKAGE_IS_FONT" ] && fc-cache
 
+	# Run a post-install hook if the package has specified the _post_install() function
+	if [ "$(type -t _post_install)" == "function" ]
+	then
+		println "Running a post-install commands"
+		_post_install
+	fi
 
 	# Add the package into the nest file if the installation was successful
 	[ -z "$(grep -x $PACKAGE_NAME $NEST)" ] && echo "$PACKAGE_NAME" >> $NEST
