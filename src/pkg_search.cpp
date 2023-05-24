@@ -22,6 +22,9 @@ int main(int argc, char** argv)
 	/* Get the list of repositories */
 	std::vector<pkg_source> pkg_sources = birb::get_pkg_sources();
 
+	/* Set this value to 1 if something goes wrong */
+	short return_value = 0;
+
 	/* Loop through the packages given as arguments and format the results */
 	for (int i = 1; i < argc; ++i)
 	{
@@ -30,6 +33,7 @@ int main(int argc, char** argv)
 		if (!repo.is_valid())
 		{
 			std::cout << "Package " << argv[i] << " doesn't exist" << std::endl;
+			return_value = 1;
 			continue;
 		}
 
@@ -45,5 +49,5 @@ int main(int argc, char** argv)
 		std::cout << "\n";
 	}
 
-	return 0;
+	return return_value;
 }
