@@ -387,6 +387,13 @@ install_package()
 	# Check if the package is a font
 	PACKAGE_IS_FONT="$(echo "$FLAGS" | grep -o "font")"
 
+	# If the package is a font, make sure that fontconfig is installed
+	if [ -n "$PACKAGE_IS_FONT" ] && [ "$(birb_db --is-installed fontconfig)" == "no" ]
+	then
+		println ERROR "The 'fontconfig' package is required for font installation. Please install it first before installing this package"
+		exit 1
+	fi
+
 	set -e
 
 	# Extract the package sources and do any required setup
