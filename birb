@@ -704,7 +704,7 @@ search_package()
 	# Print result names with their descriptions
 	RESULT_TABLE="$(birb_pkg_search $RESULTS)"
 
-	echo -e "$RESULT_TABLE" | column -s ";" -t
+	echo -e "$RESULT_TABLE" | column -s ";" -t -T 3
 }
 
 cache_package_list()
