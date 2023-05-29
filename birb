@@ -146,8 +146,13 @@ source_pkg_seed()
 # The function takes the package name as an argument
 update_repo_path()
 {
-	PACKAGE_NAME="$1"
-	REPO_DIR="$(birb_db --locate-package "$PACKAGE_NAME")"
+	if [ -f /etc/birb-sources.conf ]
+	then
+		PACKAGE_NAME="$1"
+		REPO_DIR="$(birb_db --locate-package "$PACKAGE_NAME")"
+	else
+		REPO_DIR="$INSTALL_PREFIX/var/db/pkg"
+	fi
 }
 
 # Download a tarball for the given package using wget
