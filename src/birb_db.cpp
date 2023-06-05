@@ -3,6 +3,7 @@
 /**********************************************************/
 
 #include <algorithm>
+#include <cassert>
 #include <filesystem>
 #include <fstream>
 #include <iostream>
@@ -15,9 +16,18 @@
 #include "Birb.hpp"
 
 
-#define BIRB_DB_PATH "/var/lib/birb/birb_db"
-#define BIRB_PKG_PATH "/var/db/pkg"
-#define BIRB_FAKEROOT_PATH "/var/db/fakeroot"
+constexpr char BIRB_DB_PATH[]       = "/var/lib/birb/birb_db";
+constexpr char BIRB_PKG_PATH[]      = "/var/db/pkg";
+constexpr char BIRB_FAKEROOT_PATH[] = "/var/db/fakeroot";
+
+constexpr int DB_LINE_COLUMN_COUNT = 2;
+
+/* Function declarations */
+void root_check();
+bool argcmp(char* arg, int argc, const std::string& option, int required_arg_count);
+std::vector<std::string> find_db_entry(const std::vector<std::string>& db_file, const std::string& pkg_name);
+std::unordered_map<std::string, std::string> get_repo_versions();
+
 
 /* Quit and spit out and error if the command wasn't run
  * as the root user */
@@ -30,14 +40,21 @@ void root_check()
 	}
 }
 
-bool argcmp(char* arg, int argc, std::string option, int required_arg_count)
+bool argcmp(char* arg, int argc, const std::string& option, int required_arg_count)
 {
+	assert(arg != NULL);
+	assert(option.empty() == false);
+	assert(required_arg_count >= 0);
+
 	return (!strcmp(arg, option.c_str()) && required_arg_count + 1 < argc);
 }
 
 std::vector<std::string> find_db_entry(const std::vector<std::string>& db_file, const std::string& pkg_name)
 {
-	std::vector<std::string> result(2);
+	assert(db_file.empty() == false);
+	assert(pkg_name.empty() == false);
+
+	std::vector<std::string> result(DB_LINE_COLUMN_COUNT);
 
 	for (size_t i = 0; i < db_file.size(); ++i)
 	{
@@ -55,6 +72,7 @@ std::unordered_map<std::string, std::string> get_repo_versions()
 {
 	/* Repository list */
 	std::vector<pkg_source> pkg_sources = birb::get_pkg_sources();
+	assert(pkg_sources.size() > 0 && "Package sources couldn't be found");
 
 	std::unordered_map<std::string, std::string> pkgs;
 
@@ -121,6 +139,8 @@ int main(int argc, char** argv)
 	if (std::filesystem::exists(BIRB_DB_PATH) && std::filesystem::is_regular_file(BIRB_DB_PATH))
 	{
 		db_file = birb::read_file(BIRB_DB_PATH);
+
+		assert(db_file.empty() == false);
 	}
 
 	if (argcmp(argv[1], argc, "--diff", 0))
@@ -128,7 +148,7 @@ int main(int argc, char** argv)
 		std::unordered_map<std::string, std::string> repo_data = get_repo_versions();
 
 		/* Go through the installed packages and list out packages with differing versions */
-		std::vector<std::string> db_entry(2);
+		std::vector<std::string> db_entry(DB_LINE_COLUMN_COUNT);
 		for (std::string p : db_file)
 		{
 			db_entry = birb::split_string(p, ";");
@@ -209,12 +229,26 @@ int main(int argc, char** argv)
 	{
 		root_check();
 
+		/* Make sure that the package name doesn't use the delimiter char */
+		if (std::string(argv[2]).find(";") != std::string::npos)
+		{
+			std::cout << "The ';' char can't be used in the package name\n";
+			exit(3);
+		}
+
 		/* Attempt to find the entry for this package */
 		bool result_found = false;
-		std::vector<std::string> db_entry(2);
+		std::vector<std::string> db_entry(DB_LINE_COLUMN_COUNT);
 		for (size_t i = 0; i < db_file.size(); ++i)
 		{
 			db_entry = birb::split_string(db_file[i], ";");
+
+			if (db_entry.size() != DB_LINE_COLUMN_COUNT)
+			{
+				std::cout << "Possibly malformed database line detected: [" << db_file[i] << "]\n";
+				continue;
+			}
+
 			if (db_entry[0] == argv[2])
 			{
 				result_found = true;

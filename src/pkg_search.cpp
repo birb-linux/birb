@@ -3,8 +3,8 @@
 #include <string>
 #include <vector>
 
-#define PACKAGE_LIST_PATH "/var/lib/birb/packages"
-#define NEST_PATH "/var/lib/birb/nest"
+constexpr char PACKAGE_LIST_PATH[] = "/var/lib/birb/packages";
+constexpr char NEST_PATH[] = "/var/lib/birb/nest";
 
 /* This program is supposed to take in a list of package names
  * and then fetch their descriptions and the installation status */
@@ -15,12 +15,22 @@ int main(int argc, char** argv)
 {
 	/* Read in the list of all existing packages */
 	std::vector<std::string> packages = birb::read_file(PACKAGE_LIST_PATH);
+	if (packages.empty())
+	{
+		std::cout << "ERROR: Empty package cache\n";
+		exit(2);
+	}
 
 	/* Read in the list of installed packages */
 	std::vector<std::string> installed_packages = birb::read_file(NEST_PATH);
 
 	/* Get the list of repositories */
 	std::vector<pkg_source> pkg_sources = birb::get_pkg_sources();
+	if (pkg_sources.empty())
+	{
+		std::cout << "ERROR: No valid package repositories were found\n";
+		exit(3);
+	}
 
 	/* Set this value to 1 if something goes wrong */
 	short return_value = 0;

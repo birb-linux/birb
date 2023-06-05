@@ -4,6 +4,7 @@
 
 #include "Birb.hpp"
 #include <algorithm>
+#include <cassert>
 #include <filesystem>
 #include <fstream>
 #include <iostream>
@@ -12,11 +13,20 @@
 #include <unordered_map>
 #include <vector>
 
+/* Function declarations */
+std::vector<std::string> get_dependencies(const std::string& pkg, const std::vector<pkg_source>& repos);
+std::vector<std::string> deduplicated_dep_list(std::vector<std::string> dependencies);
+
+
 static std::unordered_map<std::string, std::vector<std::string>> meta_packages;
 static std::unordered_map<std::string, std::vector<std::string>> dependency_cache;
 
+
 std::vector<std::string> get_dependencies(const std::string& pkg, const std::vector<pkg_source>& repos)
 {
+	assert(pkg.empty() == false);
+	assert(repos.size() > 0);
+
 	std::vector<std::string> deps;
 
 	/* Find the repo that has the package */
@@ -63,6 +73,8 @@ std::vector<std::string> get_dependencies(const std::string& pkg, const std::vec
 
 		if (!dep_line.empty())
 			deps.push_back(dep_line);
+
+		assert(deps.size() > 0);
 	}
 	else
 	{
@@ -76,6 +88,8 @@ std::vector<std::string> get_dependencies(const std::string& pkg, const std::vec
 		std::vector<std::string> sub_deps = get_dependencies(deps[i], repos);
 		deps.insert(deps.end(), sub_deps.begin(), sub_deps.end());
 	}
+
+	assert(dependency_cache[pkg].empty() == true && "Overwriting old cache results");
 
 	/* Cache the results */
 	dependency_cache[pkg] = deps;
@@ -145,10 +159,16 @@ int main(int argc, char** argv)
 	std::vector<std::string> meta_package_list;
 
 	/* Loop through all repos to get all meta_packages */
+	assert(repos.size() > 0);
 	std::vector<std::string> tmp_meta;
 	std::string meta_path;
 	for (pkg_source s : repos)
 	{
+		assert(s.path.empty() == false);
+		assert(s.name.empty() == false);
+		assert(s.url.empty()  == false);
+		assert(s.is_valid()   == true);
+
 		/* Check if the repo has a meta_package file */
 		meta_path = s.path + "/meta_packages";
 		if (!std::filesystem::exists(meta_path))
@@ -163,8 +183,13 @@ int main(int argc, char** argv)
 		/* Find the delimiter */
 		size_t pos = line.find(":");
 
+		/* Skip the line if the delimiter couldn't be found */
+		if (pos == std::string::npos)
+			continue;
+
 		/* Get the key and the corresponding value and assign it into a map */
 		std::vector<std::string> expanded_meta_package = birb::split_string(line.substr(pos + 1, line.size() - (pos + 1)), " ");
+		assert(expanded_meta_package.size() > 0);
 		meta_packages[line.substr(0, pos)] = expanded_meta_package;
 	}
 

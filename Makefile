@@ -1,6 +1,7 @@
 CXX=g++
-CXX_FLAGS=-I./include
-RELEASE_CXX_FLAGS=-O2 -flto=auto -march=native
+CXX_FLAGS=-std=c++20 -I./include -pedantic -Wall -Wextra -Wcast-align -Wcast-qual -Wdisabled-optimization -Wformat=2 -Winit-self -Wlogical-op -Wmissing-declarations -Wmissing-include-dirs -Wnoexcept -Woverloaded-virtual -Wsign-promo -Wstrict-null-sentinel -Wundef -Werror -Wno-unused
+DEBUG_CXX_FLAGS=-g -Weffc++
+RELEASE_CXX_FLAGS=-O2 -flto=auto -march=native -DNDEBUG
 
 SRC_DIR=./src
 BUILD_DIR=./build
@@ -11,16 +12,16 @@ build_dir:
 	mkdir -p ${BUILD_DIR}
 
 debug_birb: build_dir
-	${CXX} ${CXX_FLAGS} -g -c ${SRC_DIR}/birb.cpp -o ${BUILD_DIR}/birb.o
+	${CXX} ${CXX_FLAGS} ${DEBUG_CXX_FLAGS} -c ${SRC_DIR}/birb.cpp -o ${BUILD_DIR}/birb.o
 
 debug_dep_solver: debug_birb
-	${CXX} ${CXX_FLAGS} -g ${SRC_DIR}/dep_solver.cpp -o ${BUILD_DIR}/birb_dep_solver ${BUILD_DIR}/birb.o
+	${CXX} ${CXX_FLAGS} ${DEBUG_CXX_FLAGS} ${SRC_DIR}/dep_solver.cpp -o ${BUILD_DIR}/birb_dep_solver ${BUILD_DIR}/birb.o
 
 debug_pkg_search: debug_birb
-	${CXX} ${CXX_FLAGS} -g ${SRC_DIR}/pkg_search.cpp -o ${BUILD_DIR}/birb_pkg_search ${BUILD_DIR}/birb.o
+	${CXX} ${CXX_FLAGS} ${DEBUG_CXX_FLAGS} ${SRC_DIR}/pkg_search.cpp -o ${BUILD_DIR}/birb_pkg_search ${BUILD_DIR}/birb.o
 
 debug_birb_db: debug_birb
-	${CXX} ${CXX_FLAGS} -g ${SRC_DIR}/birb_db.cpp -o ${BUILD_DIR}/birb_db ${BUILD_DIR}/birb.o
+	${CXX} ${CXX_FLAGS} ${DEBUG_CXX_FLAGS} ${SRC_DIR}/birb_db.cpp -o ${BUILD_DIR}/birb_db ${BUILD_DIR}/birb.o
 
 
 release: birb_dep_solver birb_pkg_search birb_db

@@ -1,8 +1,9 @@
 #include "Birb.hpp"
+#include <cassert>
 #include <filesystem>
 #include <fstream>
-#include <vector>
 #include <iostream>
+#include <vector>
 
 void pkg_source::print()
 {
@@ -32,6 +33,10 @@ std::vector<pkg_source> birb::get_pkg_sources()
 		s.url  = line[1];
 		s.path = line[2];
 
+		assert(s.name.empty() == false);
+		assert(s.url.empty()  == false);
+		assert(s.path.empty() == false);
+
 		sources.push_back(s);
 	}
 
@@ -45,11 +50,16 @@ std::vector<std::string> birb::get_pkg_source_list()
 
 pkg_source birb::locate_pkg_repo(const std::string& pkg_name, const std::vector<pkg_source>& package_sources)
 {
+	assert(pkg_name.empty() == false);
+	assert(package_sources.size() > 0);
+
 	/* Loop through all of the repositories and try to find
 	 * the seed.sh file for the given package */
 	std::string seed_path;
 	for (pkg_source s : package_sources)
 	{
+		assert(s.path.empty() == false);
+
 		seed_path = s.path + "/" + pkg_name + "/seed.sh";
 		if (std::filesystem::exists(seed_path) && std::filesystem::is_regular_file(seed_path))
 			return s;
@@ -60,6 +70,9 @@ pkg_source birb::locate_pkg_repo(const std::string& pkg_name, const std::vector<
 
 std::vector<std::string> birb::split_string(std::string text, std::string delimiter)
 {
+	assert(text.empty() == false);
+	assert(delimiter.empty() == false);
+
 	std::vector<std::string> result;
 
 	/* Split the string */
@@ -78,6 +91,8 @@ std::vector<std::string> birb::split_string(std::string text, std::string delimi
 
 std::vector<std::string> birb::read_file(std::string file_path)
 {
+	assert(file_path.empty() == false);
+
 	std::ifstream file(file_path);
 
 	if (!file.is_open())
@@ -106,6 +121,10 @@ std::vector<std::string> birb::read_file(std::string file_path)
 
 std::string birb::read_pkg_variable(std::string pkg_name, std::string var_name, std::string repo_path)
 {
+	assert(pkg_name.empty() == false);
+	assert(var_name.empty() == false);
+	assert(repo_path.empty() == false);
+
    	/* Check if the result is already in the cache*/
 	std::string key = pkg_name + var_name;
 	if (!var_cache[key].empty())
@@ -128,13 +147,15 @@ std::string birb::read_pkg_variable(std::string pkg_name, std::string var_name, 
 		/* Check if we have located the dependency line */
 		if (var_line.substr(0, var_name.size() + 2) == var_name + "=\"")
 		{
-			/* We are done with the file, stop reading it */
-			pkg_file.close();
-
 			/* Break the file reading loop */
 			break;
 		}
 	}
+
+	assert(var_line.size() > var_name.size() + 2 && "The var_line result is too short");
+
+	/* We are done with the file, stop reading it */
+	pkg_file.close();
 
 	/* Clean up the string */
 	var_line.erase(0, var_name.size() + 2);
