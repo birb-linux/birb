@@ -24,6 +24,22 @@ debug_birb_db: debug_birb
 	${CXX} ${CXX_FLAGS} ${DEBUG_CXX_FLAGS} ${SRC_DIR}/birb_db.cpp -o ${BUILD_DIR}/birb_db ${BUILD_DIR}/birb.o
 
 
+optimized: optimized_dep_solver optimized_pkg_search optimized_birb_db
+
+optimized_birb: build_dir
+	${CXX} ${CXX_FLAGS} ${RELEASE_CXX_FLAGS} -g -c ${SRC_DIR}/birb.cpp -o ${BUILD_DIR}/birb.o
+
+optimized_dep_solver: optimized_birb
+	${CXX} ${CXX_FLAGS} ${RELEASE_CXX_FLAGS} -g ${SRC_DIR}/dep_solver.cpp -o ${BUILD_DIR}/birb_dep_solver ${BUILD_DIR}/birb.o
+
+optimized_pkg_search: optimized_birb
+	${CXX} ${CXX_FLAGS} ${RELEASE_CXX_FLAGS} -g ${SRC_DIR}/pkg_search.cpp -o ${BUILD_DIR}/birb_pkg_search ${BUILD_DIR}/birb.o
+
+optimized_birb_db: optimized_birb
+	${CXX} ${CXX_FLAGS} ${RELEASE_CXX_FLAGS} -g ${SRC_DIR}/birb_db.cpp -o ${BUILD_DIR}/birb_db ${BUILD_DIR}/birb.o
+
+
+
 release: birb_dep_solver birb_pkg_search birb_db
 
 
