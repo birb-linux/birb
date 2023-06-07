@@ -7,9 +7,11 @@
 
 struct pkg_source
 {
-	std::string name = "";
-	std::string url  = "";
-	std::string path = "";
+	pkg_source();
+	pkg_source(const std::string& name, const std::string& url, const std::string& path);
+	std::string name;
+	std::string url;
+	std::string path;
 
 	void print();
 	bool is_valid();
@@ -26,8 +28,9 @@ struct birb
 	/* Check if a package exists and if it does, return the source it was found from */
 	static pkg_source locate_pkg_repo(const std::string& pkg_name, const std::vector<pkg_source>& package_sources);
 
-	static std::vector<std::string> split_string(std::string text, std::string delimiter);
-	static std::vector<std::string> read_file(std::string file_path);
-	static std::string read_pkg_variable(std::string pkg_name, std::string var_name, std::string repo_path);
+	static std::vector<std::string> split_string(std::string text, const std::string& delimiter);
+	static std::vector<std::string> read_file(const std::string& file_path);
+	static std::string read_pkg_variable(const std::string& pkg_name, const std::string& var_name, const std::string& repo_path);
 	static inline std::unordered_map<std::string, std::string> var_cache;
+	static inline std::unordered_map<std::string, pkg_source> pkg_repo_cache;
 };

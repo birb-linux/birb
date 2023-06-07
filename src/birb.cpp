@@ -5,6 +5,12 @@
 #include <iostream>
 #include <vector>
 
+pkg_source::pkg_source() {}
+
+pkg_source::pkg_source(const std::string& name, const std::string& url, const std::string& path)
+:name(name), url(url), path(path)
+{}
+
 void pkg_source::print()
 {
 	std::cout 	<< "Name: \t" 	<< name << "\n"
@@ -14,7 +20,7 @@ void pkg_source::print()
 
 bool pkg_source::is_valid()
 {
-	return (!name.empty() || !url.empty() || !path.empty());
+	return (!name.empty() && !url.empty() && !path.empty());
 }
 
 std::vector<pkg_source> birb::get_pkg_sources()
@@ -28,10 +34,7 @@ std::vector<pkg_source> birb::get_pkg_sources()
 	{
 		line = birb::split_string(repository_lines[i], ";");
 
-		pkg_source s;
-		s.name = line[0];
-		s.url  = line[1];
-		s.path = line[2];
+		pkg_source s(line[0], line[1], line[2]);
 
 		assert(s.name.empty() == false);
 		assert(s.url.empty()  == false);
@@ -53,6 +56,10 @@ pkg_source birb::locate_pkg_repo(const std::string& pkg_name, const std::vector<
 	assert(pkg_name.empty() == false);
 	assert(package_sources.size() > 0);
 
+	/* Check if the result has already been cached */
+	if (pkg_repo_cache.contains(pkg_name))
+		return pkg_repo_cache[pkg_name];
+
 	/* Loop through all of the repositories and try to find
 	 * the seed.sh file for the given package */
 	std::string seed_path;
@@ -62,13 +69,18 @@ pkg_source birb::locate_pkg_repo(const std::string& pkg_name, const std::vector<
 
 		seed_path = s.path + "/" + pkg_name + "/seed.sh";
 		if (std::filesystem::exists(seed_path) && std::filesystem::is_regular_file(seed_path))
+		{
+			///* Cache the results */
+			pkg_repo_cache[pkg_name] = s;
+
 			return s;
+		}
 	}
 
-	return pkg_source();
+	return pkg_source("", "", "");
 }
 
-std::vector<std::string> birb::split_string(std::string text, std::string delimiter)
+std::vector<std::string> birb::split_string(std::string text, const std::string& delimiter)
 {
 	assert(text.empty() == false);
 	assert(delimiter.empty() == false);
@@ -89,7 +101,7 @@ std::vector<std::string> birb::split_string(std::string text, std::string delimi
 	return result;
 }
 
-std::vector<std::string> birb::read_file(std::string file_path)
+std::vector<std::string> birb::read_file(const std::string& file_path)
 {
 	assert(file_path.empty() == false);
 
@@ -119,7 +131,7 @@ std::vector<std::string> birb::read_file(std::string file_path)
 	return lines;
 }
 
-std::string birb::read_pkg_variable(std::string pkg_name, std::string var_name, std::string repo_path)
+std::string birb::read_pkg_variable(const std::string& pkg_name, const std::string& var_name, const std::string& repo_path)
 {
 	assert(pkg_name.empty() == false);
 	assert(var_name.empty() == false);
@@ -127,7 +139,7 @@ std::string birb::read_pkg_variable(std::string pkg_name, std::string var_name, 
 
    	/* Check if the result is already in the cache*/
 	std::string key = pkg_name + var_name;
-	if (!var_cache[key].empty())
+	if (var_cache.contains(key))
 		return var_cache[key];
 
 	std::string pkg_path = repo_path + "/" + pkg_name + "/seed.sh";

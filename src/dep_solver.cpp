@@ -11,11 +11,12 @@
 #include <string.h>
 #include <string>
 #include <unordered_map>
+#include <unordered_set>
 #include <vector>
 
 /* Function declarations */
 std::vector<std::string> get_dependencies(const std::string& pkg, const std::vector<pkg_source>& repos);
-std::vector<std::string> deduplicated_dep_list(std::vector<std::string> dependencies);
+std::vector<std::string> deduplicated_dep_list(const std::vector<std::string>& dependencies);
 
 
 static std::unordered_map<std::string, std::vector<std::string>> meta_packages;
@@ -27,6 +28,10 @@ std::vector<std::string> get_dependencies(const std::string& pkg, const std::vec
 	assert(pkg.empty() == false);
 	assert(repos.size() > 0);
 
+	/* Check if this package has its dependencies in the cache already */
+	if (dependency_cache.contains(pkg))
+		return dependency_cache[pkg];
+
 	std::vector<std::string> deps;
 
 	/* Find the repo that has the package */
@@ -36,13 +41,9 @@ std::vector<std::string> get_dependencies(const std::string& pkg, const std::vec
 	if (!repo.is_valid())
 		return deps;
 
-	/* Skip string splitting if this is a meta-package */
-	if (meta_packages[pkg].empty())
+	/* Perform string splitting only if this isn't a meta package */
+	if (!meta_packages.contains(pkg))
 	{
-		/* Check if this package has its dependencies in the cache already */
-		if (!dependency_cache[pkg].empty())
-			return dependency_cache[pkg];
-
 		/* Read data from the package file */
 		std::string dep_line = birb::read_pkg_variable(pkg, "DEPS", repo.path);
 
@@ -58,7 +59,7 @@ std::vector<std::string> get_dependencies(const std::string& pkg, const std::vec
 			std::string dep = dep_line.substr(0, pos);
 
 			/* Check if the dependency is a meta package and should be expanded */
-			if (!meta_packages[dep].empty())
+			if (meta_packages.contains(dep))
 			{
 				/* Expand the meta package */
 				deps.insert(deps.end(), meta_packages[dep].begin(), meta_packages[dep].end());
@@ -89,7 +90,7 @@ std::vector<std::string> get_dependencies(const std::string& pkg, const std::vec
 		deps.insert(deps.end(), sub_deps.begin(), sub_deps.end());
 	}
 
-	assert(dependency_cache[pkg].empty() == true && "Overwriting old cache results");
+	assert(dependency_cache.contains(pkg) == false && "Overwriting old cache results");
 
 	/* Cache the results */
 	dependency_cache[pkg] = deps;
@@ -97,29 +98,30 @@ std::vector<std::string> get_dependencies(const std::string& pkg, const std::vec
 	return deps;
 }
 
-std::vector<std::string> deduplicated_dep_list(std::vector<std::string> dependencies)
+std::vector<std::string> deduplicated_dep_list(const std::vector<std::string>& dependencies)
 {
 	std::vector<std::string> result;
-	std::unordered_map<std::string, bool> exists_in_results;
 
 	/* Don't do anything if there are no dependencies */
 	if (dependencies.empty())
 		return result;
+
+	std::unordered_set<std::string> exists_in_results;
 
 	/* Start from the end of the list and add each package
 	 * to the list only once */
 	for (int i = dependencies.size() - 1; i >= 0; --i)
 	{
 		/* Skip meta-packages */
-		if (!meta_packages[dependencies[i]].empty())
+		if (meta_packages.contains(dependencies[i]))
 			continue;
 
 		/* Check if the package is already in the result list */
-		if (exists_in_results[dependencies[i]])
+		if (exists_in_results.contains(dependencies[i]))
 			continue;
 
 		result.push_back(dependencies[i]);
-		exists_in_results[dependencies[i]] = true;
+		exists_in_results.insert(dependencies[i]);
 	}
 
 	return result;
@@ -140,10 +142,7 @@ int main(int argc, char** argv)
 		{
 			repos.clear();
 
-			repos.push_back(pkg_source());
-			repos[0].name 	= "Testing repo";
-			repos[0].url    = "0.0.0.0";
-			repos[0].path 	= argv[2];
+			repos.push_back(pkg_source("Testing repo", "0.0.0.0", argv[2]));
 			pkg_name 		= argv[3];
 		}
 	}
@@ -191,9 +190,7 @@ int main(int argc, char** argv)
 			continue;
 
 		/* Get the key and the corresponding value and assign it into a map */
-		std::vector<std::string> expanded_meta_package = birb::split_string(line.substr(pos + 1, line.size() - (pos + 1)), " ");
-		assert(expanded_meta_package.size() > 0);
-		meta_packages[line.substr(0, pos)] = expanded_meta_package;
+		meta_packages[line.substr(0, pos)] = birb::split_string(line.substr(pos + 1, line.size() - (pos + 1)), " ");
 	}
 
 	/* Get all package dependencies recursively */
