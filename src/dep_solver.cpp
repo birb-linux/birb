@@ -131,7 +131,7 @@ int main(int argc, char** argv)
 	std::string pkg_name;
 
 	/* Location where we can find all of the packages in */
-	std::vector<pkg_source> repos = birb::get_pkg_sources();
+	std::vector<pkg_source> repos;
 
 	/* Testing args */
 	if (argc == 4)
@@ -141,6 +141,8 @@ int main(int argc, char** argv)
 			repos.clear();
 
 			repos.push_back(pkg_source());
+			repos[0].name 	= "Testing repo";
+			repos[0].url    = "0.0.0.0";
 			repos[0].path 	= argv[2];
 			pkg_name 		= argv[3];
 		}
@@ -148,6 +150,7 @@ int main(int argc, char** argv)
 	else if (argc == 2) /* Only the package name was provided */
 	{
 		pkg_name = argv[1];
+		repos = birb::get_pkg_sources();
 	}
 	else
 	{
