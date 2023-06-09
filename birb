@@ -445,7 +445,7 @@ install_package()
 	export GOPATH="/usr/share/go"
 	export PYTHON_PREFIX="$FAKEROOT/$NAME/$PYTHON_DIST"
 	export PKG_CONFIG_PATH="/usr/lib/pkgconfig:/usr/share/pkgconfig:/usr/lib32/pkgconfig"
-	TEMPORARY_BUILD_DIR="$BUILD_DIR_PATH/birb_package_build-$NAME"
+	export TEMPORARY_BUILD_DIR="$BUILD_DIR_PATH/birb_package_build-$NAME"
 	rm -rf $TEMPORARY_BUILD_DIR
 	mkdir -p $TEMPORARY_BUILD_DIR
 	cd $TEMPORARY_BUILD_DIR
