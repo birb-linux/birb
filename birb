@@ -326,6 +326,9 @@ install_package()
 				;;
 		esac
 	else
+		# TODO: This portion is a bit dangerous, since reinstalling an important
+		# mission critical package would render the system unusable
+
 		# If the package isn't already installed, but a fakeroot for it exists,
 		# delete the fakeroot to avoid any dangling / corrupt files
 		[ -d "$FAKEROOT/$PACKAGE_NAME" ] && println "Deleting an existing fakeroot" && rm -r "$FAKEROOT/$PACKAGE_NAME"
