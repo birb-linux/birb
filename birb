@@ -136,6 +136,9 @@ kernel_check()
 
 source_pkg_seed()
 {
+	# Make sure that the seed file exists
+	[ ! -f "$REPO_DIR/$1/seed.sh" ] && echo "Invalid seed file: $1" && exit 1
+
 	source $REPO_DIR/$1/seed.sh
 }
 
@@ -272,10 +275,25 @@ flag_warning()
 	fi
 }
 
+invalid_package_name_error()
+{
+	echo "Invalid package name: [$1]"
+	echo "Quitting..."
+	exit 1
+}
+
+# Make sure that the package name doesn't include characters
+# like '/' and '.', because they can cause a lot of trouble
+validate_package_name()
+{
+	echo "$1" | grep -q '[\./,!?]' && invalid_package_name_error "$1"
+}
+
 install_package()
 {
 	root_check
 	PACKAGE_NAME="$1"
+	validate_package_name "$PACKAGE_NAME"
 	update_repo_path "$PACKAGE_NAME"
 	export PKG_PATH="$REPO_DIR/$PACKAGE_NAME"
 
@@ -573,6 +591,7 @@ uninstall_package()
 {
 	root_check
 	PACKAGE_NAME="$1"
+	validate_package_name "$PACKAGE_NAME"
 	println "Checking if the package $PACKAGE_NAME is installed"
 	if [ "$(birb_db --is-installed $PACKAGE_NAME)" == "no" ]
 	then
@@ -813,6 +832,7 @@ birb_upgrade()
 
 install_meta_package()
 {
+	validate_package_name $1
 	META_PACKAGE_RESULT="$(awk "/^$1:/" $REPO_DIR/meta_packages)"
 	if [ -n "$META_PACKAGE_RESULT" ]
 	then
@@ -848,6 +868,27 @@ install_meta_package()
 	fi
 
 	return 0
+}
+
+# Attempt to recover a broken system by using the
+# package database as a ground truth for what should be installed
+# on the system. This way we can reinstall packages that have their
+# files missing, but the system still thinks that the package is already
+# installed
+fakeroot_repair()
+{
+	# Get list of all packages that *should* be installed on the system
+	INSTALLED_PACKAGES="$(birb_db --list | cut -d';' -f1)"
+
+	# Loop through the packages and check if their fakeroots exist
+	for i in $INSTALLED_PACKAGES
+	do
+		if [ ! -d $FAKEROOT/$i ]
+		then
+			# Force reinstall the package
+			yes | birb $i
+		fi
+	done
 }
 
 
@@ -989,6 +1030,11 @@ while test $# -gt 0; do
 					;;
 			esac
 			exit 0
+			;;
+
+		--repair)
+			shift
+			fakeroot_repair
 			;;
 
 		*)
