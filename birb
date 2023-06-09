@@ -370,7 +370,7 @@ install_package()
 	for i in $RECURSIVE_DEPENDENCIES
 	do
 		# Check if the dependency is installed
-		if [ "$(birb_db --is-installed $i)" == "no" ]
+		if [ "$(birb_db --is-installed $i)" == "no" ] || [ ! -d "$FAKEROOT/$i" ]
 		then
 			HAD_MISSING_DEP="yes"
 			DEPS_TO_INSTALL="$DEPS_TO_INSTALL $i"
@@ -877,6 +877,8 @@ install_meta_package()
 # installed
 fakeroot_repair()
 {
+	println "Attempting to reinstall packages with missing fakeroots"
+
 	# Get list of all packages that *should* be installed on the system
 	INSTALLED_PACKAGES="$(birb_db --list | cut -d';' -f1)"
 
@@ -886,7 +888,8 @@ fakeroot_repair()
 		if [ ! -d $FAKEROOT/$i ]
 		then
 			# Force reinstall the package
-			yes | birb $i
+			yes | birb --install $i
+			[ "$?" != "0" ] && echo "Non-zero exit status from birb! Stopping..." && exit 1
 		fi
 	done
 }
