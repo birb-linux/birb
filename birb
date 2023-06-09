@@ -11,6 +11,7 @@ REPO_DIR="$INSTALL_PREFIX/var/db/pkg"
 DB_DIR="/var/lib/birb"
 NEST="$DB_DIR/nest"
 PACKAGE_LIST="$DB_DIR/packages"
+BUILD_DIR_PATH="/var/tmp/birb"
 export DISTFILES="$INSTALL_PREFIX/var/cache/distfiles"
 export FAKEROOT="$INSTALL_PREFIX/var/db/fakeroot"
 export PYTHON_DIST="usr/python_dist"
@@ -444,7 +445,7 @@ install_package()
 	export GOPATH="/usr/share/go"
 	export PYTHON_PREFIX="$FAKEROOT/$NAME/$PYTHON_DIST"
 	export PKG_CONFIG_PATH="/usr/lib/pkgconfig:/usr/share/pkgconfig:/usr/lib32/pkgconfig"
-	TEMPORARY_BUILD_DIR="/tmp/birb_package_build-$NAME"
+	TEMPORARY_BUILD_DIR="$BUILD_DIR_PATH/birb_package_build-$NAME"
 	rm -rf $TEMPORARY_BUILD_DIR
 	mkdir -p $TEMPORARY_BUILD_DIR
 	cd $TEMPORARY_BUILD_DIR
