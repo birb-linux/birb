@@ -58,7 +58,8 @@ birb_dep_solver: birb_dep_solver_profile_run birb
 	${CXX} ${CXX_FLAGS} ${RELEASE_CXX_FLAGS} -fprofile-use ${SRC_DIR}/dep_solver.cpp -o ${BUILD_DIR}/birb_dep_solver ${BUILD_DIR}/birb.o
 
 birb_dep_solver_profile_run: birb_dep_solver_profile_gen
-	${BUILD_DIR}/birb_dep_solver xterm &>/dev/null
+	${BUILD_DIR}/birb_dep_solver dde &>/dev/null
+	${BUILD_DIR}/birb_dep_solver firefox &>/dev/null
 
 birb_dep_solver_profile_gen: build_dir birb_profile_gen
 	${CXX} ${CXX_FLAGS} ${RELEASE_CXX_FLAGS} -fprofile-generate ${SRC_DIR}/dep_solver.cpp -o ${BUILD_DIR}/birb_dep_solver ${BUILD_DIR}/birb.o
