@@ -27,6 +27,11 @@ println()
 	esac
 }
 
+set_win_title()
+{
+	echo -e '\033k'birb: $1'\033\\'
+}
+
 
 # Make sure that the configuration files are in place
 BIRB_CFG_PATH="/etc/birb.conf"
@@ -444,10 +449,12 @@ install_package()
 	mkdir -p $TEMPORARY_BUILD_DIR
 	cd $TEMPORARY_BUILD_DIR
 	println "Setting things up for compiling"
+	set_win_title "Installing $PACKAGE_NAME (setup)"
 	_setup
 
 	# Build the package
 	println "Building the package"
+	set_win_title "Installing $PACKAGE_NAME (build)"
 	CFLAGS="$CUSTOM_CFLAGS" CXXFLAGS="$CUSTOM_CXXFLAGS" _build
 
 	# Run tests if the package has them and the user
@@ -455,32 +462,38 @@ install_package()
 	if [ -n "$PACKAGE_HAS_TESTS" ] && [ -n "$ENABLE_TESTS" ]
 	then
 		println "Running tests"
+		set_win_title "Installing $PACKAGE_NAME (testing)"
 		_test
 	fi
 
 	# Install the package into fakeroot directory
 	println "Installing the package"
+	set_win_title "Installing $PACKAGE_NAME (install)"
 	prepare_fakeroot $FAKEROOT/$PACKAGE_NAME
 	_install
 
 	if [ -n "$ENABLE_32BIT" ] && [ "$ENABLE_32BIT_PACKAGES" == "yes" ]
 	then
 		println "Building the package with 32-bit libraries"
+		set_win_title "Installing $PACKAGE_NAME (build 32bit)"
 		CC="gcc -m32" CXX="g++ -m32" PKG_CONFIG_PATH="/usr/lib32/pkgconfig" LDFLAGS="-L/usr/lib32" _build32
 
 		# Run 32-bit tests if the test32 flag is specified
 		if [ -n "$PACKAGE_HAS_32BIT_TESTS" ] && [ -n "$ENABLE_TESTS" ]
 		then
 			println "Running 32-bit tests"
+			set_win_title "Installing $PACKAGE_NAME (test 32bit)"
 			_test32
 		fi
 
 		println "Installing 32-bit libraries"
+		set_win_title "Installing $PACKAGE_NAME (install 32bit)"
 		_install32
 	fi
 
 	# Clean things up
 	println "Cleaning up"
+	set_win_title "Installing $PACKAGE_NAME (cleanup)"
 	rm -r $TEMPORARY_BUILD_DIR
 
 	# Remove all empty directories from the fakeroot
@@ -576,6 +589,7 @@ install_package()
 	if [ "$(type -t _post_install)" == "function" ]
 	then
 		println "Running a post-install commands"
+		set_win_title "Installing $PACKAGE_NAME (post-install)"
 		_post_install
 	fi
 
@@ -588,6 +602,7 @@ install_package()
 
 	# Check if there are notes to print
 	[ -n "$NOTES" ] && echo -e "\e[1;33mPackage notes: $NOTES"
+	set_win_title "done"
 }
 
 uninstall_package()
