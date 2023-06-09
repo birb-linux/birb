@@ -30,7 +30,7 @@ println()
 
 set_win_title()
 {
-	echo -e '\033k'birb: $1'\033\\'
+	echo -en '\033k'birb: $1'\033\\'
 }
 
 
