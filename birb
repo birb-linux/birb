@@ -413,6 +413,7 @@ install_package()
 	fi
 
 	# Attempt to download the package
+	set_win_title "Installing $PACKAGE_NAME (download)"
 	download_src $PACKAGE_NAME
 	[ $? -eq 1 ] && echo "Error during downloading [$PACKAGE_NAME]. Aborting the mission..." && exit 1
 
