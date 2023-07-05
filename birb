@@ -35,8 +35,8 @@ set_win_title()
 
 
 # Make sure that the configuration files are in place
-BIRB_CFG_PATH="/etc/birb.conf"
-BIRB_REPO_LIST_PATH="/etc/birb-sources.conf"
+BIRB_CFG_PATH="$INSTALL_PREFIX/etc/birb.conf"
+BIRB_REPO_LIST_PATH="$INSTALL_PREFIX/etc/birb-sources.conf"
 
 [ ! -f "$BIRB_CFG_PATH" ] && println WARNING "$BIRB_CFG_PATH is missing, please reinstall birb with 'birb --upgrade'"
 [ ! -f "$BIRB_REPO_LIST_PATH" ] && println ERROR "$BIRB_REPO_LIST_PATH is missing. Check TROUBLESHOOTING section in 'man birb' for instructions on how to fix this issue" && exit 1
