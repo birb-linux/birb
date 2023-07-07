@@ -30,7 +30,11 @@ println()
 
 set_win_title()
 {
-	echo -en '\033k'birb: $1'\033\\'
+	# Change the title if X is running
+	if [ -d "$INSTALL_PREFIX/tmp/.X11-unix" ]
+	then
+		echo -en '\033k'birb: $1'\033\\'
+	fi
 }
 
 
