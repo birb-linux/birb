@@ -9,9 +9,9 @@ struct pkg_source
 {
 	pkg_source();
 	pkg_source(const std::string& name, const std::string& url, const std::string& path);
-	std::string name;
-	std::string url;
-	std::string path;
+	std::string name = "";
+	std::string url  = "";
+	std::string path = "";
 
 	void print();
 	bool is_valid();
