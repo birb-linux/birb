@@ -660,16 +660,7 @@ uninstall_package()
 
 	# Check if the package would possibly break any dependencies
 	println "Checking dependencies"
-	while read PACKAGE_TO_CHECK
-	do
-		#source $INSTALL_PREFIX/var/db/pkg/$PACKAGE_TO_CHECK/seed.sh
-		DEPS="$(birb_dep_solver $PACKAGE_TO_CHECK)"
-		DEPENDENCY_FOUND="$(echo "$DEPS" | grep -w "$PACKAGE_NAME")"
-		if [ -n "$DEPENDENCY_FOUND" ]
-		then
-			DEPENDENT_PACKAGES="${DEPENDENT_PACKAGES}${PACKAGE_TO_CHECK}\n"
-		fi
-	done <<< "$(birb_db --list | cut -d';' -f1)"
+	DEPENDENT_PACKAGES="$(birb_dep_solver -r $PACKAGE_NAME)"
 
 	if [ -n "$DEPENDENT_PACKAGES" ]
 	then
