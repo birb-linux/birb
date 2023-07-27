@@ -165,6 +165,7 @@ int main(int argc, char** argv)
 			exit(1);
 		}
 
+		repos = birb::get_pkg_sources();
 		pkg_name = argv[2];
 		repos = birb::get_pkg_sources();
 	}
@@ -238,14 +239,8 @@ int main(int argc, char** argv)
 
 			/* Check if the package had this package we are inspecting in
 			 * its dependency list */
-			for (std::string s : temp_deps)
-			{
-				if (s == pkg_name)
-				{
-					dependencies.push_back(installed_packages[i]);
-					break;
-				}
-			}
+			if (std::find(temp_deps.begin(), temp_deps.end(), pkg_name) != temp_deps.end())
+				dependencies.push_back(installed_packages[i]);
 		}
 	}
 
