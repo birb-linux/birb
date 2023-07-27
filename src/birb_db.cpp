@@ -129,19 +129,12 @@ int main(int argc, char** argv)
 	}
 
 
-	std::vector<std::string> db_file;
-
 	/* If set to true, update the package manager database
 	 * at the end of this program */
 	bool update_db = false;
 
-	/* Read in the package database, if it exists */
-	if (std::filesystem::exists(BIRB_DB_PATH) && std::filesystem::is_regular_file(BIRB_DB_PATH))
-	{
-		db_file = birb::read_file(BIRB_DB_PATH);
-
-		assert(db_file.empty() == false);
-	}
+	/* Read in the package database */
+	std::vector<std::string> db_file = birb::read_birb_db();
 
 	if (argcmp(argv[1], argc, "--diff", 0))
 	{

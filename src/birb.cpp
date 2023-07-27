@@ -5,6 +5,8 @@
 #include <iostream>
 #include <vector>
 
+constexpr char BIRB_DB_PATH[]       = "/var/lib/birb/birb_db";
+
 pkg_source::pkg_source() {}
 
 pkg_source::pkg_source(const std::string& name, const std::string& url, const std::string& path)
@@ -179,3 +181,30 @@ std::string birb::read_pkg_variable(const std::string& pkg_name, const std::stri
 	return var_line;
 }
 
+std::vector<std::string> birb::read_birb_db()
+{
+	std::vector<std::string> db_file;
+
+	/* Read in the package database, if it exists */
+	if (std::filesystem::exists(BIRB_DB_PATH) && std::filesystem::is_regular_file(BIRB_DB_PATH))
+	{
+		db_file = birb::read_file(BIRB_DB_PATH);
+
+		assert(db_file.empty() == false);
+	}
+
+	return db_file;
+}
+
+std::vector<std::string> birb::get_installed_packages()
+{
+	std::vector<std::string> birb_db = read_birb_db();
+
+	/* Split the strings to get package names */
+	std::vector<std::string> pkg_names;
+	pkg_names.reserve(birb_db.size());
+	for (size_t i = 0; i < birb_db.size(); ++i)
+		pkg_names.push_back(split_string(birb_db[i], ";")[0]);
+
+	return pkg_names;
+}
