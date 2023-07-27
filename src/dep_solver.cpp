@@ -15,7 +15,7 @@
 #include <vector>
 
 /* Function declarations */
-std::vector<std::string> get_dependencies(const std::string& pkg, const std::vector<pkg_source>& repos);
+std::vector<std::string> get_dependencies(const std::string& pkg, const std::vector<pkg_source>& repos, int depth);
 std::vector<std::string> deduplicated_dep_list(const std::vector<std::string>& dependencies);
 
 
@@ -23,7 +23,7 @@ static std::unordered_map<std::string, std::vector<std::string>> meta_packages;
 static std::unordered_map<std::string, std::vector<std::string>> dependency_cache;
 
 
-std::vector<std::string> get_dependencies(const std::string& pkg, const std::vector<pkg_source>& repos)
+std::vector<std::string> get_dependencies(const std::string& pkg, const std::vector<pkg_source>& repos, int depth)
 {
 	assert(pkg.empty() == false);
 	assert(repos.size() > 0);
@@ -33,6 +33,10 @@ std::vector<std::string> get_dependencies(const std::string& pkg, const std::vec
 		return dependency_cache[pkg];
 
 	std::vector<std::string> deps;
+
+	/* Avoid dependency loops and infinite (or unnecessary) recursion */
+	if (depth < 0)
+		return deps;
 
 	/* Find the repo that has the package */
 	pkg_source repo = birb::locate_pkg_repo(pkg, repos);
@@ -86,7 +90,7 @@ std::vector<std::string> get_dependencies(const std::string& pkg, const std::vec
 	size_t deps_size = deps.size();
 	for (size_t i = 0; i < deps_size; ++i)
 	{
-		std::vector<std::string> sub_deps = get_dependencies(deps[i], repos);
+		std::vector<std::string> sub_deps = get_dependencies(deps[i], repos, depth - 1);
 		deps.insert(deps.end(), sub_deps.begin(), sub_deps.end());
 	}
 
@@ -135,6 +139,9 @@ int main(int argc, char** argv)
 	/* Location where we can find all of the packages in */
 	std::vector<pkg_source> repos;
 
+	/* Dependency resolution direction */
+	bool resolve_reverse = false;
+
 	/* Testing args */
 	if (argc == 4)
 	{
@@ -145,6 +152,21 @@ int main(int argc, char** argv)
 			repos.push_back(pkg_source("Testing repo", "0.0.0.0", argv[2]));
 			pkg_name 		= argv[3];
 		}
+	}
+	else if (argc == 3) /* Some extra argument + package name */
+	{
+		if (!strcmp(argv[1], "-r") || !strcmp(argv[1], "--reverse"))
+		{
+			resolve_reverse = true;
+		}
+		else /* No valid argument was given */
+		{
+			std::cout << "Invalid argument: " << argv[1] << "\n";
+			exit(1);
+		}
+
+		pkg_name = argv[2];
+		repos = birb::get_pkg_sources();
 	}
 	else if (argc == 2) /* Only the package name was provided */
 	{
@@ -193,11 +215,39 @@ int main(int argc, char** argv)
 		meta_packages[line.substr(0, pos)] = birb::split_string(line.substr(pos + 1, line.size() - (pos + 1)), " ");
 	}
 
-	/* Get all package dependencies recursively */
-	std::vector<std::string> dependencies = get_dependencies(pkg_name, repos);
+	std::vector<std::string> dependencies;
 
-	/* Deduplicate the dependency list */
-	dependencies = deduplicated_dep_list(dependencies);
+	if (!resolve_reverse) /* Resolve dependencie normally for the given package */
+	{
+		/* Get all package dependencies recursively */
+		dependencies = get_dependencies(pkg_name, repos, 512);
+
+		/* Deduplicate the dependency list */
+		dependencies = deduplicated_dep_list(dependencies);
+	}
+	else /* Find packages that depend on this given package */
+	{
+		/* Get list of installed packages */
+		std::vector<std::string> installed_packages = birb::get_installed_packages();
+
+		/* Get the reverse dependencies for the package with no recursion */
+		std::vector<std::string> temp_deps;
+		for (size_t i = 0; i < installed_packages.size(); ++i)
+		{
+			temp_deps = get_dependencies(installed_packages[i], repos, 0);
+
+			/* Check if the package had this package we are inspecting in
+			 * its dependency list */
+			for (std::string s : temp_deps)
+			{
+				if (s == pkg_name)
+				{
+					dependencies.push_back(installed_packages[i]);
+					break;
+				}
+			}
+		}
+	}
 
 	for (std::string d : dependencies)
 		std::cout << d << "\n";
