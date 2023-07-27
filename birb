@@ -609,6 +609,8 @@ install_package()
 	# Check if there are notes to print
 	[ -n "$NOTES" ] && echo -e "\e[1;33mPackage notes: $NOTES"
 	set_win_title "done"
+
+	return 0
 }
 
 uninstall_package()
