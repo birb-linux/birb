@@ -212,17 +212,22 @@ download_src()
 	# Make sure that wget is installed on the system
 	[ ! -f /usr/bin/wget ] && println ERROR "wget isn't installed! Birb cannot download anything without it (╯°□°)╯︵ ┻━┻" && exit 1
 
-	# Download the source tarball
-	wget --directory-prefix=$DISTFILES $SOURCE || { println ERROR "Couldn't dowload $SOURCE"; exit 1; }
+	for i in {1..3}
+	do
+		# Download the source tarball
+		echo "Downloading $SOURCE (Attempt $i / 3)"
+		wget --directory-prefix=$DISTFILES $SOURCE || { println ERROR "Couldn't dowload $SOURCE"; exit 1; }
 
-	# Check the MD5 checksum
-	if [ "$(checksum_check "$DISTFILES/$TARBALL" "$CHECKSUM")" == "1" ]
-	then
-		println WARNING "There was a checksum mismatch. The downloaded archive will be removed to prevent installing a possibly corrupt package. Please re-try downloading it"
-		md5sum $DISTFILES/$TARBALL
-		rm -v $DISTFILES/$TARBALL
-		return 1
-	fi
+		# Check the MD5 checksum
+		if [ "$(checksum_check "$DISTFILES/$TARBALL" "$CHECKSUM")" == "1" ]
+		then
+			println WARNING "There was a checksum mismatch. The downloaded archive will be removed to prevent installing a possibly corrupt package. Please re-try downloading it"
+			md5sum $DISTFILES/$TARBALL
+			rm -v $DISTFILES/$TARBALL
+		else
+			return 0
+		fi
+	done
 }
 
 # Create some basic directories for the fakeroot
