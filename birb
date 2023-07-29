@@ -215,7 +215,6 @@ download_src()
 	for i in {1..3}
 	do
 		# Download the source tarball
-		echo "Downloading $SOURCE (Attempt $i / 3)"
 		wget -q --show-progress --directory-prefix=$DISTFILES $SOURCE || { println ERROR "Couldn't dowload $SOURCE"; exit 1; }
 
 		# Check the MD5 checksum
