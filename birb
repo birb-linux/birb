@@ -178,7 +178,7 @@ download_src()
 	# Check if a package with this name is in the repositories
 	if [ ! -d $PKG_PATH ]
 	then
-		echo "ERROR: There's no package with the name [$1]"
+		println ERROR "There's no package with the name [$1]"
 		exit 1
 	fi
 
@@ -315,7 +315,7 @@ install_package()
 	# Check if a package with this name is in the repositories
 	if [ ! -d $PKG_PATH ]
 	then
-		echo "ERROR: There's no package with the name [$PACKAGE_NAME]"
+		println ERROR "There's no package with the name [$PACKAGE_NAME]"
 		exit 1
 	fi
 
