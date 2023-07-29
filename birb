@@ -216,7 +216,7 @@ download_src()
 	do
 		# Download the source tarball
 		echo "Downloading $SOURCE (Attempt $i / 3)"
-		wget --directory-prefix=$DISTFILES $SOURCE || { println ERROR "Couldn't dowload $SOURCE"; exit 1; }
+		wget -q --show-progress --directory-prefix=$DISTFILES $SOURCE || { println ERROR "Couldn't dowload $SOURCE"; exit 1; }
 
 		# Check the MD5 checksum
 		if [ "$(checksum_check "$DISTFILES/$TARBALL" "$CHECKSUM")" == "1" ]
