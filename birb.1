@@ -7,7 +7,7 @@ birb \- CLI package manager for BirbOS
 \fBbirb\fP is a package manager specifically written to be used in BirbOS. It installs packages into separate fakeroots and then uses GNU stow to install those fakeroots to the system root. \fBbirb\fP packages are simple shell scripts called seeds.
 .SH OPTIONS
 .TP
-All non-matching arguments are interpreted as package names. This means that running `\fBbirb \fIpackage\fP` would attempt to install the given package.
+All non-matching arguments are interpreted as package names. This means that running '\fBbirb \fP\fIpackage\fP' would attempt to install the given package.
 .TP
 \fB--help\fP
 Output a usage message and exit
@@ -15,8 +15,10 @@ Output a usage message and exit
 \fB--download \fIPACKAGE(s)\fP
 Download the source tarball for the given package
 .TP
-\fB--install [--test] \fIPACKAGE(s)\fP
+\fB--install [--test] [--overwrite] \fIPACKAGE(s)\fP
 Install given package(s) to the filesystem. If --test is set, run any tests that the package might contain
+
+If you come across a package that wants to overwrite something, you can use the --overwrite flag to give \fBbirb\fP the permission to delete files from root directories like /usr to attempt solving conflicts. This however can in some cases result in a partially broken system if used carelessly.
 .TP
 \fB--uninstall \fIPACKAGE(s)\fP
 Uninstall given package(s) from the filesystem
@@ -41,6 +43,9 @@ List all currently installed packages
 .TP
 \fB--upgrade [--debug]\fP
 Update the birb package manager. If --debug is set, build the C++ parts of birb with debug flags enabled and skip PGO and LTO.
+.TP
+\fB--repair\fP
+Attempt to recover a broken system (due to missing packages) by using the package database as a ground truth for what should be installed on the system. This way we can reinstall packages that have their files missing, but the system still thinks that the package is already installed.
 .SH FILES
 .TP
 \fC/etc/birb.conf\fR
