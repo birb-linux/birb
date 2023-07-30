@@ -67,6 +67,7 @@ print_help()
 	echo "      --download PACKAGE(s)          download the source tarball for the given package"
 	echo "      --install [options] PACKAGE(s) install given package(s) to the filesystem"
 	echo "      --uninstall PACKAGE(s)         uninstall given package(s) from the filesystem"
+	echo "      --relink PACKAGE(s)            re-create symlinks to the package fakeroots"
 	echo "  -s  --search                       search for packages by name"
 	echo "      --source [option]              change or query the repository source"
 	echo "      --sync [--force]               sync package repositories"
@@ -713,6 +714,35 @@ uninstall_package()
 	set +e
 }
 
+# Re-stow a fakeroot
+# Args: [ package_name ]
+relink_package()
+{
+	println "Restoring symlinks for $1"
+
+	# Validate the package name
+	if [ -n "$(echo "$1" | grep "[./!&\\]")" ]
+	then
+		println ERROR "The package name '$1' isn't valid"
+		exit 1
+	fi
+
+	# Validate the existance of the fakeroot
+	if [ ! -d "$1" ]
+	then
+		println ERROR "There is no valid fakeroot for $1"
+		return 1
+	fi
+
+	# Check if the package exists
+	if [ -z "$(birb_pkg_search $1)" ]
+	then
+		println WARNING "There's no package with the name $1"
+	fi
+
+	stow -R -t / -d "$FAKEROOT" "$1"
+}
+
 update_packages()
 {
 	println "Checking for out-of-date packages"
@@ -981,6 +1011,17 @@ while test $# -gt 0; do
 
 			while test $# -gt 0; do
 				uninstall_package $1
+				shift
+			done
+
+			exit 0
+			;;
+
+		--relink)
+			shift
+
+			while test $# -gt 0; do
+				relink_package $1
 				shift
 			done
 
