@@ -718,6 +718,7 @@ uninstall_package()
 # Args: [ package_name ]
 relink_package()
 {
+	root_check
 	println "Restoring symlinks for $1"
 
 	# Validate the package name
