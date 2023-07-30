@@ -728,7 +728,7 @@ relink_package()
 	fi
 
 	# Validate the existance of the fakeroot
-	if [ ! -d "$1" ]
+	if [ ! -d "$FAKEROOT/$1" ]
 	then
 		println ERROR "There is no valid fakeroot for $1"
 		return 1
