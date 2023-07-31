@@ -4,7 +4,6 @@
 #include <vector>
 
 constexpr char PACKAGE_LIST_PATH[] = "/var/lib/birb/packages";
-constexpr char NEST_PATH[] = "/var/lib/birb/nest";
 
 /* This program is supposed to take in a list of package names
  * and then fetch their descriptions and the installation status */
@@ -22,7 +21,7 @@ int main(int argc, char** argv)
 	}
 
 	/* Read in the list of installed packages */
-	std::vector<std::string> installed_packages = birb::read_file(NEST_PATH);
+	std::vector<std::string> installed_packages = birb::get_installed_packages();
 
 	/* Get the list of repositories */
 	std::vector<pkg_source> pkg_sources = birb::get_pkg_sources();
