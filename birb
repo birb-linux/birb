@@ -196,6 +196,9 @@ remove_orphan_dependencies()
 	do
 		echo -e "\e[1A\e[KScanning... [$progress/$max_progress]"
 
+		# Skip packages that don't have a fakeroot
+		[ ! -d $FAKEROOT/$i ] && continue
+
 		# Source the package variables
 		source_pkg_seed $i
 
