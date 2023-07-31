@@ -169,6 +169,34 @@ update_repo_path()
 	fi
 }
 
+# Delete packages that were installed as dependencies but
+# their went missing. These packages are usually waste of space
+remove_orphan_dependencies()
+{
+	println "Looking for orphan packages..."
+
+	INSTALLED_PACKAGES=$(list_installed)
+
+	# Get only dependency packages by appending the nest file
+	# to the INSTALLED_PACKAGES variable, sorting it and then
+	# getting the unique lines
+	#
+	# This way we don't waste time on packages that were installed
+	# by the user manually
+	NEST_FILE_PACKAGES="$(<$NEST)"
+	INSTALLED_PACKAGES="$INSTALLED_PACKAGES\n$NEST_FILE_PACKAGES"
+
+	INSTALLED_PACKAGES="$(echo $INSTALLED_PACKAGES | sort | uniq -u)"
+
+	echo "Dependency packages: $INSTALLED_PACKAGES"
+
+	for i in $INSTALLED_PACKAGES
+	do
+		# Check if the package has any reverse dependencies
+		REVERSE_DEPS="$(birb_dep_solver -r $i)"
+	done
+}
+
 # Download a tarball for the given package using wget
 # The tarball will be stored to /var/cache/distfiles
 download_src()
@@ -979,6 +1007,12 @@ while test $# -gt 0; do
 		--help)
 			shift
 			print_help
+			exit 0
+			;;
+
+		--depclean)
+			shift
+			remove_orphan_dependencies
 			exit 0
 			;;
 
