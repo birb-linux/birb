@@ -23,6 +23,9 @@ If you come across a package that wants to overwrite something, you can use the 
 \fB--uninstall \fIPACKAGE(s)\fP
 Uninstall given package(s) from the filesystem
 .TP
+\fB--depclean\fP
+Delete orphan packages that were installed as a dependency for some package that isn't installed anymore. With its current implementation you might have to run it multiple times to get rid of all orphans, because some orphans might be dependencies for some other orphan package. This should get fixed in a future release at some point.
+.TP
 \fB--relink \fIPACKAGE(s)\fP
 Re-create symlinks to the package fakeroots. This is useful in situations where you have accidentally removed something from /usr/bin for example. Simply re-applying the symlinks also saves you the compiling time required to fully reinstall the package.
 .TP

@@ -67,6 +67,7 @@ print_help()
 	echo "      --download PACKAGE(s)          download the source tarball for the given package"
 	echo "      --install [options] PACKAGE(s) install given package(s) to the filesystem"
 	echo "      --uninstall PACKAGE(s)         uninstall given package(s) from the filesystem"
+	echo "      --depclean                     find and uninstall orphan packages"
 	echo "      --relink PACKAGE(s)            re-create symlinks to the package fakeroots"
 	echo "  -s  --search                       search for packages by name"
 	echo "      --source [option]              change or query the repository source"
