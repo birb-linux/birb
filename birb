@@ -184,17 +184,53 @@ remove_orphan_dependencies()
 	# This way we don't waste time on packages that were installed
 	# by the user manually
 	NEST_FILE_PACKAGES="$(<$NEST)"
-	INSTALLED_PACKAGES="$INSTALLED_PACKAGES\n$NEST_FILE_PACKAGES"
+	INSTALLED_PACKAGES="$(echo -e "$INSTALLED_PACKAGES\n$NEST_FILE_PACKAGES")"
 
-	INSTALLED_PACKAGES="$(echo $INSTALLED_PACKAGES | sort | uniq -u)"
+	INSTALLED_PACKAGES="$(echo "$INSTALLED_PACKAGES" | sort | uniq -u)"
 
-	echo "Dependency packages: $INSTALLED_PACKAGES"
-
+	unset ORPHAN_PACKAGES
 	for i in $INSTALLED_PACKAGES
 	do
+		# Source the package variables
+		source_pkg_seed $i
+
+		# Check if the package is "important" and should be skipped
+		IS_IMPORTANT_PACKAGE="$(echo "$FLAGS" | grep -o "important")"
+		[ -n "$IS_IMPORTANT_PACKAGE" ] && continue
+
 		# Check if the package has any reverse dependencies
 		REVERSE_DEPS="$(birb_dep_solver -r $i)"
+
+		if [ -z "$REVERSE_DEPS" ]
+		then
+			ORPHAN_PACKAGES="$ORPHAN_PACKAGES $i"
+		fi
 	done
+
+	# Remove any extra spaces from the start of the orphan list
+	ORPHAN_PACKAGES="$(echo $ORPHAN_PACKAGES | sed 's/^[[:space:]]*//g')"
+
+	if [ -z "$ORPHAN_PACKAGES" ]
+	then
+		echo "No orphan packages were found"
+		exit 0
+	else
+		echo -e "The following orphans were found:\n\n$ORPHAN_PACKAGES\n"
+	fi
+
+	read -p "Would you like to remove them? (y/N): " AGREE_UNINSTALL_WARNED
+	case $AGREE_UNINSTALL_WARNED in
+		y|Y|yes|Yes) ;;
+		*)
+			echo "Cancelled"
+			exit 1
+			;;
+	esac
+
+	cd $FAKEROOT
+	RECLAIMED_SPACE="$(du -shc $ORPHAN_PACKAGES)"
+
+	birb --uninstall $ORPHAN_PACKAGES && echo -e "Orphan removal finished!\nReclaimed storage:\n$RECLAIMED_SPACE" || println ERROR "Something went wrong during orphan removal..."
 }
 
 # Download a tarball for the given package using wget
