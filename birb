@@ -189,8 +189,12 @@ remove_orphan_dependencies()
 	INSTALLED_PACKAGES="$(echo "$INSTALLED_PACKAGES" | sort | uniq -u)"
 
 	unset ORPHAN_PACKAGES
+	let progress=1
+	let max_progress=$(echo "$INSTALLED_PACKAGES" | wc -l)
 	for i in $INSTALLED_PACKAGES
 	do
+		echo -e "\e[1A\e[KScanning... [$progress/$max_progress]"
+
 		# Source the package variables
 		source_pkg_seed $i
 
@@ -205,6 +209,8 @@ remove_orphan_dependencies()
 		then
 			ORPHAN_PACKAGES="$ORPHAN_PACKAGES $i"
 		fi
+
+		let progress+=1
 	done
 
 	# Remove any extra spaces from the start of the orphan list
