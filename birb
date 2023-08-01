@@ -195,6 +195,7 @@ remove_orphan_dependencies()
 	for i in $INSTALLED_PACKAGES
 	do
 		echo -e "\e[1A\e[KScanning... [$progress/$max_progress]"
+		let progress+=1
 
 		# Skip packages that don't have a fakeroot
 		[ ! -d $FAKEROOT/$i ] && continue
@@ -213,8 +214,6 @@ remove_orphan_dependencies()
 		then
 			ORPHAN_PACKAGES="$ORPHAN_PACKAGES $i"
 		fi
-
-		let progress+=1
 	done
 
 	# Remove any extra spaces from the start of the orphan list
