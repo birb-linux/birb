@@ -688,6 +688,13 @@ install_package()
 		_post_install
 	fi
 
+	# Update links and cache for shared libraries, if there are any in the fakeroot
+	if [ -n "$(find $FAKEROOT/$PACKAGE_NAME -iname "*.so*")" ]
+	then
+		println "Running ldconfig"
+		ldconfig
+	fi
+
 	# Add the package into the nest file if the installation was successful
 	add_package_to_nest "$PACKAGE_NAME"
 	birb_db --update "$PACKAGE_NAME" "$VERSION"
