@@ -364,6 +364,14 @@ flag_warning()
 	fi
 }
 
+# Disables LTO for the package build
+# Call this if the package refuses to build with LTO enabled
+disable_lto()
+{
+	export CFLAGS="$CFLAGS -fno-lto"
+	export CXXFLAGS="$CXXFLAGS -fno-lto"
+}
+
 invalid_package_name_error()
 {
 	echo "Invalid package name: [$1]"
