@@ -16,11 +16,21 @@
 
 /* Function declarations */
 std::vector<std::string> get_dependencies(const std::string& pkg, const std::vector<pkg_source>& repos, int depth);
+std::vector<std::string> get_reverse_dependencies(const std::string& pkg_name, const std::vector<pkg_source>& repos);
 std::vector<std::string> deduplicated_dep_list(const std::vector<std::string>& dependencies);
+void orphan_finder(const std::vector<pkg_source>& repos);
 
 
 static std::unordered_map<std::string, std::vector<std::string>> meta_packages;
 static std::unordered_map<std::string, std::vector<std::string>> dependency_cache;
+static std::unordered_map<std::string, std::vector<std::string>> reverse_dependency_cache;
+
+enum Mode
+{
+	DEPENDENCY_SOLVER,
+	REVERSE_DEPENDENCY_SOLVER,
+	ORPHAN_FINDER,
+};
 
 
 std::vector<std::string> get_dependencies(const std::string& pkg, const std::vector<pkg_source>& repos, int depth)
@@ -102,6 +112,28 @@ std::vector<std::string> get_dependencies(const std::string& pkg, const std::vec
 	return deps;
 }
 
+std::vector<std::string> get_reverse_dependencies(const std::string& pkg_name, const std::vector<pkg_source>& repos)
+{
+	std::vector<std::string> dependencies;
+
+	/* Get list of installed packages */
+	std::vector<std::string> installed_packages = birb::get_installed_packages();
+
+	/* Get the reverse dependencies for the package with no recursion */
+	std::vector<std::string> temp_deps;
+	for (size_t i = 0; i < installed_packages.size(); ++i)
+	{
+		temp_deps = get_dependencies(installed_packages[i], repos, 0);
+
+		/* Check if the package had this package we are inspecting in
+		 * its dependency list */
+		if (std::find(temp_deps.begin(), temp_deps.end(), pkg_name) != temp_deps.end())
+			dependencies.push_back(installed_packages[i]);
+	}
+
+	return dependencies;
+}
+
 std::vector<std::string> deduplicated_dep_list(const std::vector<std::string>& dependencies)
 {
 	std::vector<std::string> result;
@@ -131,6 +163,118 @@ std::vector<std::string> deduplicated_dep_list(const std::vector<std::string>& d
 	return result;
 }
 
+void orphan_finder(const std::vector<pkg_source>& repos)
+{
+	std::unordered_set<std::string> result;
+
+	/* Read in the list of packages installed by the user */
+	std::vector<std::string> nest = birb::read_file("/var/lib/birb/nest");
+
+	/* Get the list of all installed applications */
+	std::vector<std::string> installed_packages = birb::get_installed_packages();
+
+	/* Orphan candidates are packages that are installed but aren't in the nest */
+	std::vector<std::string> orphan_candidates;
+	orphan_candidates.reserve(installed_packages.size() - nest.size());
+
+	/* Find all orphan candidates */
+	for (size_t i = 0; i < installed_packages.size(); ++i)
+	{
+		if (std::find(nest.begin(), nest.end(), installed_packages[i]) == nest.end())
+			orphan_candidates.push_back(installed_packages[i]);
+	}
+	std::cout << "Found " << orphan_candidates.size() << " orphan candidates\n";
+
+	/* Call it quits if there are no packages that could be orphans */
+	if (orphan_candidates.size() == 0)
+		return;
+
+	std::cout << "Starting the orphan scan\n";
+
+	pkg_source repo;
+	std::string flags_var;
+	std::vector<std::string> flags;
+	std::vector<std::string> reverse_deps;
+	std::vector<std::string> clean_reverse_deps;
+
+	constexpr int max_passes = 64;
+	bool clean_run = true;
+
+	for (int pass = 0; pass < max_passes; ++pass)
+	{
+		clean_run = true;
+		for (size_t i = 0; i < orphan_candidates.size(); ++i)
+		{
+			std::cout << "\rScanning... [Pass: " << pass + 1 << "] [" << i + 1 << "/" << orphan_candidates.size() << "]" << std::flush;
+
+			/* Skip packages that are already in the result list */
+			if (result.contains(orphan_candidates[i]))
+				continue;
+
+			/* Skip the package if it doesn't have a fakeroot */
+			if (!std::filesystem::exists("/var/db/fakeroot/" + orphan_candidates[i]))
+				continue;
+
+			/* Check if the package is "important" and should be skipped */
+			repo      = birb::locate_pkg_repo(orphan_candidates[i], repos);
+			flags_var = birb::read_pkg_variable(orphan_candidates[i], "FLAGS", repo.path);
+
+			if (!flags_var.empty())
+			{
+				flags = birb::split_string(flags_var, " ");
+				if (std::find(flags.begin(), flags.end(), "important") !=  flags.end())
+					continue;
+			}
+
+			/* Check if the package has any reverse dependencies */
+			if (reverse_dependency_cache.contains(orphan_candidates[i]))
+			{
+				reverse_deps = reverse_dependency_cache[orphan_candidates[i]];
+			}
+			else
+			{
+				reverse_deps = get_reverse_dependencies(orphan_candidates[i], repos);
+				reverse_dependency_cache[orphan_candidates[i]] = reverse_deps;
+			}
+			clean_reverse_deps.clear();
+
+			/* Clean out packages that have already been confirmed to be orphans */
+			for (size_t j = 0; j < reverse_deps.size(); ++j)
+			{
+				if (result.contains(reverse_deps[j]))
+					continue;
+
+				clean_reverse_deps.push_back(reverse_deps[j]);
+			}
+
+			if (clean_reverse_deps.empty())
+			{
+				result.insert(orphan_candidates[i]);
+				clean_run = false;
+			}
+		}
+
+		/* We found all orphans */
+		if (clean_run)
+			break;
+	}
+	std::cout << "\n";
+
+	/* Reverse the result set */
+	std::vector<std::string> orphans(result.size());
+	int i = orphans.size() - 1;
+	for (std::string p : result)
+	{
+		orphans[i] = p;
+		--i;
+	}
+
+	for (std::string o : orphans)
+		std::cerr << o << " ";
+
+	std::cout << "\n";
+}
+
 int main(int argc, char** argv)
 {
 	/* Name of the package that we are inspecting */
@@ -140,7 +284,7 @@ int main(int argc, char** argv)
 	std::vector<pkg_source> repos;
 
 	/* Dependency resolution direction */
-	bool resolve_reverse = false;
+	Mode operation_mode = DEPENDENCY_SOLVER;
 
 	/* Testing args */
 	if (argc == 4)
@@ -157,7 +301,7 @@ int main(int argc, char** argv)
 	{
 		if (!strcmp(argv[1], "-r") || !strcmp(argv[1], "--reverse"))
 		{
-			resolve_reverse = true;
+			operation_mode = REVERSE_DEPENDENCY_SOLVER;
 		}
 		else /* No valid argument was given */
 		{
@@ -165,13 +309,21 @@ int main(int argc, char** argv)
 			exit(1);
 		}
 
-		repos = birb::get_pkg_sources();
 		pkg_name = argv[2];
 		repos = birb::get_pkg_sources();
 	}
-	else if (argc == 2) /* Only the package name was provided */
+	else if (argc == 2)
 	{
-		pkg_name = argv[1];
+		if (!strcmp(argv[1], "-o") || !strcmp(argv[1], "--orphan"))
+		{
+			operation_mode = ORPHAN_FINDER;
+		}
+		else
+		{
+			/* Only the package name was provided */
+			pkg_name = argv[1];
+		}
+
 		repos = birb::get_pkg_sources();
 	}
 	else
@@ -218,31 +370,28 @@ int main(int argc, char** argv)
 
 	std::vector<std::string> dependencies;
 
-	if (!resolve_reverse) /* Resolve dependencie normally for the given package */
+	switch (operation_mode)
 	{
-		/* Get all package dependencies recursively */
-		dependencies = get_dependencies(pkg_name, repos, 512);
+		/* Resolve dependencie normally for the given package */
+		case (DEPENDENCY_SOLVER):
+			/* Get all package dependencies recursively */
+			dependencies = get_dependencies(pkg_name, repos, 512);
 
-		/* Deduplicate the dependency list */
-		dependencies = deduplicated_dep_list(dependencies);
-	}
-	else /* Find packages that depend on this given package */
-	{
-		/* Get list of installed packages */
-		std::vector<std::string> installed_packages = birb::get_installed_packages();
+			/* Deduplicate the dependency list */
+			dependencies = deduplicated_dep_list(dependencies);
+			break;
 
-		/* Get the reverse dependencies for the package with no recursion */
-		std::vector<std::string> temp_deps;
-		for (size_t i = 0; i < installed_packages.size(); ++i)
-		{
-			temp_deps = get_dependencies(installed_packages[i], repos, 0);
 
-			/* Check if the package had this package we are inspecting in
-			 * its dependency list */
-			if (std::find(temp_deps.begin(), temp_deps.end(), pkg_name) != temp_deps.end())
-				dependencies.push_back(installed_packages[i]);
-		}
-	}
+		/* Find packages that depend on this given package */
+		case (REVERSE_DEPENDENCY_SOLVER):
+			dependencies = get_reverse_dependencies(pkg_name, repos);
+			break;
+
+		case (ORPHAN_FINDER):
+			orphan_finder(repos);
+			return 0;
+			break;
+	};
 
 	for (std::string d : dependencies)
 		std::cout << d << "\n";

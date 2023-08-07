@@ -87,6 +87,10 @@ std::vector<std::string> birb::split_string(std::string text, const std::string&
 	assert(text.empty() == false);
 	assert(delimiter.empty() == false);
 
+	/* Check if the result is already cached */
+	if (split_string_cache.contains(text))
+		return split_string_cache[text];
+
 	std::vector<std::string> result;
 
 	/* Split the string */
@@ -99,6 +103,9 @@ std::vector<std::string> birb::split_string(std::string text, const std::string&
 
 	if (!text.empty())
 		result.push_back(text);
+
+	/* Cache the result */
+	split_string_cache[text] = result;
 
 	return result;
 }
@@ -198,6 +205,10 @@ std::vector<std::string> birb::read_birb_db()
 
 std::vector<std::string> birb::get_installed_packages()
 {
+	/* If the result is already cached, return that instead */
+	if (!installed_packages_cache.empty())
+		return installed_packages_cache;
+
 	std::vector<std::string> birb_db = read_birb_db();
 
 	/* Split the strings to get package names */
@@ -205,6 +216,9 @@ std::vector<std::string> birb::get_installed_packages()
 	pkg_names.reserve(birb_db.size());
 	for (size_t i = 0; i < birb_db.size(); ++i)
 		pkg_names.push_back(split_string(birb_db[i], ";")[0]);
+
+	/* Cache the result */
+	installed_packages_cache = pkg_names;
 
 	return pkg_names;
 }

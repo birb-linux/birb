@@ -38,6 +38,9 @@ struct birb
 	/* Get the list of installed package names with the birb_db file */
 	static std::vector<std::string> get_installed_packages();
 
+	/* Caching */
 	static inline std::unordered_map<std::string, std::string> var_cache;
 	static inline std::unordered_map<std::string, pkg_source> pkg_repo_cache;
+	static inline std::unordered_map<std::string, std::vector<std::string>> split_string_cache;
+	static inline std::vector<std::string> installed_packages_cache;
 };
