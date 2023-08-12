@@ -807,6 +807,24 @@ relink_package()
 	stow -R -t / -d "$FAKEROOT" "$1"
 }
 
+cancel_update()
+{
+	println "Update cancelled!"
+
+	if [ ! -d $FAKEROOT/$PKG_UPDATE_IN_PROGRESS ]
+	then
+		echo "Restoring fakeroot backup"
+		cp -r $FAKEROOT_BACKUP_PATH/$PKG_UPDATE_IN_PROGRESS $FAKEROOT/$PKG_UPDATE_IN_PROGRESS
+
+		echo "Transferring symlinks back to the original fakeroot"
+		stow -D -t / -d $FAKEROOT_BACKUP_PATH $PKG_UPDATE_IN_PROGRESS
+		stow -S -t / -d $FAKEROOT $PKG_UPDATE_IN_PROGRESS
+
+		echo "Marking the package as installed"
+		birb_db --update $PKG_UPDATE_IN_PROGRESS $OLD_VERSION
+	fi
+}
+
 update_packages()
 {
 	println "Checking for out-of-date packages"
@@ -851,16 +869,34 @@ update_packages()
 
 	println "Starting package updates"
 
+	UPDATE_QUEUE="$(echo "$PKGS" | cut -d';' -f1)"
+
+	# Download all of the packages before starting the update
+	# This should help with cases where internet might be disrupted
+	# during the update for whatever reason. This could be really annoying
+	# if some of the packages have really long compiling times
+	for PKG in $UPDATE_QUEUE
+	do
+		download_src $PKG
+	done
+
+	# The system might get borked if anything goes wrong
+	# after this point
+	set -e
+
 	# Make sure that the fakeroot backup directory exists
 	mkdir -p $FAKEROOT_BACKUP_PATH
 
+	# Attempt to rescue the situation in-case the user cancels the update
+	trap cancel_update SIGINT
+	trap cancel_update SIGTERM
+
 	# Loop through pending package updates and install them
-	UPDATE_QUEUE="$(echo $PKGS | cut -d';' -f1)"
 	for PKG in $UPDATE_QUEUE
 	do
-		# The system might get borked if anything goes wrong
-		# in this for loop and the script continues running
-		set -e
+		# Store the PKG variable for the update cancel function trap
+		PKG_UPDATE_IN_PROGRESS="$PKG"
+		OLD_VERSION="$(birb_db --version $PKG)"
 
 		println "Backing up $PKG fakeroot"
 		if [ -d $FAKEROOT_BACKUP_PATH/$PKG ]
@@ -900,10 +936,10 @@ update_packages()
 		println "Removing the backup fakeroot"
 		rm -r $FAKEROOT_BACKUP_PATH/$PKG
 
-		set +e
-
 		println "$PKG updated successfully"
 	done
+
+	set +e
 }
 
 search_package()
