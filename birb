@@ -74,6 +74,7 @@ print_help()
 	echo "      --source [option]              change or query the repository source"
 	echo "      --sync [--force]               sync package repositories"
 	echo "      --list-installed               list all currently installed packages"
+	echo "      --update                       update out-of-date packages"
 	echo "      --upgrade [--debug]            update the birb package manager"
 	echo ""
 	echo "If a valid package names are given as the only arguments, birb will attempt"

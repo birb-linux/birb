@@ -47,6 +47,9 @@ Sync package repositories. If there are any issues with syncing, you can try if 
 \fB--list-installed\fP
 List all currently installed packages
 .TP
+\fB--update\fP
+Find all packages that are out-of-date and attempt to update them. In most cases you should be able to cancel the update after you have already started it and \fBbirb\fP should be able to restore things back, but if anything goes wrong, you can find (usually) a backup of the package fakeroot from /var/backup/birb/fakeroot_backups.
+.TP
 \fB--upgrade [--debug]\fP
 Update the birb package manager. If --debug is set, build the C++ parts of birb with debug flags enabled and skip PGO and LTO.
 .TP
