@@ -12,6 +12,7 @@ DB_DIR="/var/lib/birb"
 NEST="$DB_DIR/nest"
 PACKAGE_LIST="$DB_DIR/packages"
 BUILD_DIR_PATH="/var/tmp/birb"
+FAKEROOT_BACKUP_PATH="/var/backup/birb/fakeroot_backups"
 export DISTFILES="$INSTALL_PREFIX/var/cache/distfiles"
 export FAKEROOT="$INSTALL_PREFIX/var/db/fakeroot"
 export PYTHON_DIST="usr/python_dist"
@@ -585,52 +586,55 @@ install_package()
 		return 0;
 	fi
 
-	# Skip the file deletion part when reinstalling
-	if [ -z "$FORCE_REINSTALL" ]
+	# Skip the file deletion part when reinstalling or updating
+	if [ "$BIRB_PKG_UPDATE" != "true" ]
 	then
-		# Stow the fakeroot directory to the root directory
-		println "Finding and deleting conflicting files"
-		HAD_CONFLICTS=""
-
-		cd $FAKEROOT
-		set +e
-		FILES_TO_DELETE="$(stow -S -t / -d $FAKEROOT $PACKAGE_NAME &>/dev/stdout | grep "existing target is not owned by stow" | awk -F' ' '{print "/" $9}')"
-		set -e
-
-		if [ -n "$FILES_TO_DELETE" ]
+		if [ -z "$FORCE_REINSTALL" ]
 		then
-			HAD_CONFLICTS="true"
-			if [ -n "$OVERWRITE_FILES" ]
+			# Stow the fakeroot directory to the root directory
+			println "Finding and deleting conflicting files"
+			HAD_CONFLICTS=""
+
+			cd $FAKEROOT
+			set +e
+			FILES_TO_DELETE="$(stow -S -t / -d $FAKEROOT $PACKAGE_NAME &>/dev/stdout | grep "existing target is not owned by stow" | awk -F' ' '{print "/" $9}')"
+			set -e
+
+			if [ -n "$FILES_TO_DELETE" ]
 			then
-				rm -f $FILES_TO_DELETE
-			else
-				println WARNING "This package wants to overwite the following files:"
-				echo "$FILES_TO_DELETE"
+				HAD_CONFLICTS="true"
+				if [ -n "$OVERWRITE_FILES" ]
+				then
+					rm -f $FILES_TO_DELETE
+				else
+					println WARNING "This package wants to overwite the following files:"
+					echo "$FILES_TO_DELETE"
+				fi
 			fi
-		fi
 
-		# Do another round of deletions in case there's some other error
-		set +e
-		FILES_TO_DELETE="$(stow -S -t / -d $FAKEROOT $PACKAGE_NAME &>/dev/stdout | grep "existing target is neither a link nor a directory" | awk -F' ' '{print "/" $11}')"
-		set -e
+			# Do another round of deletions in case there's some other error
+			set +e
+			FILES_TO_DELETE="$(stow -S -t / -d $FAKEROOT $PACKAGE_NAME &>/dev/stdout | grep "existing target is neither a link nor a directory" | awk -F' ' '{print "/" $11}')"
+			set -e
 
-		if [ -n "$FILES_TO_DELETE" ]
-		then
-			HAD_CONFLICTS="true"
-			if [ -n "$OVERWRITE_FILES" ]
+			if [ -n "$FILES_TO_DELETE" ]
 			then
-				rm -f $FILES_TO_DELETE
-			else
-				println WARNING "This package wants to overwite the following files:"
-				echo "$FILES_TO_DELETE"
+				HAD_CONFLICTS="true"
+				if [ -n "$OVERWRITE_FILES" ]
+				then
+					rm -f $FILES_TO_DELETE
+				else
+					println WARNING "This package wants to overwite the following files:"
+					echo "$FILES_TO_DELETE"
+				fi
 			fi
-		fi
 
-		# Quit if there were any conflicts and overwrite wasn't specified
-		if [ -z "$OVERWRITE_FILES" ] && [ -n "$HAD_CONFLICTS" ]
-		then
-			println ERROR "Cancelling installation due to conflicts"
-			exit 1
+			# Quit if there were any conflicts and overwrite wasn't specified
+			if [ -z "$OVERWRITE_FILES" ] && [ -n "$HAD_CONFLICTS" ]
+			then
+				println ERROR "Cancelling installation due to conflicts"
+				exit 1
+			fi
 		fi
 	fi
 
@@ -639,14 +643,18 @@ install_package()
 	rm -f $FAKEROOT/$PACKAGE_NAME/usr/share/info/dir
 
 
-	if [ -z "$FORCE_REINSTALL" ]
+	# Skip symlinking if updating
+	if [ -z "$BIRB_PKG_UPDATE" ]
 	then
-		println "Symlinking the package fakeroot to the system root"
-		stow -S -t / -d $FAKEROOT $PACKAGE_NAME
-	else
-		println "Re-Symlinking the package fakeroot to the system root"
-		cd $FAKEROOT
-		stow -R -t / -d $FAKEROOT $PACKAGE_NAME
+		if [ -z "$FORCE_REINSTALL" ]
+		then
+			println "Symlinking the package fakeroot to the system root"
+			stow -S -t / -d $FAKEROOT $PACKAGE_NAME
+		else
+			println "Re-Symlinking the package fakeroot to the system root"
+			cd $FAKEROOT
+			stow -R -t / -d $FAKEROOT $PACKAGE_NAME
+		fi
 	fi
 
 	# If the package is a font, run fc-cache
@@ -839,7 +847,63 @@ update_packages()
 			;;
 	esac
 
+	root_check
+
 	println "Starting package updates"
+
+	# Make sure that the fakeroot backup directory exists
+	mkdir -p $FAKEROOT_BACKUP_PATH
+
+	# Loop through pending package updates and install them
+	UPDATE_QUEUE="$(echo $PKGS | cut -d';' -f1)"
+	for PKG in $UPDATE_QUEUE
+	do
+		# The system might get borked if anything goes wrong
+		# in this for loop and the script continues running
+		set -e
+
+		println "Backing up $PKG fakeroot"
+		if [ -d $FAKEROOT_BACKUP_PATH/$PKG ]
+		then
+			println ERROR "An existing fakeroot backup seems to exist for package $PKG"
+			echo "This could mean that the previous update was cancelled prematurely"
+			echo "and the system isn't in a fully healthy state."
+			echo ""
+			echo "To solve this issue, manually move / copy the fakeroot directory"
+			echo "to $FAKEROOT/$PKG and run this command: birb --relink $PKG"
+			echo ""
+			echo "If the program works after this, you *should* be able to safely"
+			echo "remove the backup fakeroot and try to run this update again"
+			exit 1
+		fi
+		cp -r $FAKEROOT/$PKG $FAKEROOT_BACKUP_PATH/$PKG
+
+		println "Transferring symlinks to the backup copy of $PKG"
+		stow -D -t / -d $FAKEROOT $PKG
+		stow -S -t / -d $FAKEROOT_BACKUP_PATH $PKG
+
+		println "Removing the fakeroot for $PKG"
+		rm -r $FAKEROOT/$PKG
+
+		# Trick birb into thinking that the package isn't installed
+		birb_db --remove $PKG
+
+		# Update the package by installing as usual, but skip the symlink
+		# part at the end of the installation process. We'll do that here
+		# by transferring the symlinks back from the backup
+		BIRB_PKG_UPDATE="true" birb --install $PKG
+
+		println "Transferring symlinks from the backup copy of $PKG back to the real fakeroot"
+		stow -D -t / -d $FAKEROOT_BACKUP_PATH $PKG
+		stow -S -t / -d $FAKEROOT $PKG
+
+		println "Removing the backup fakeroot"
+		rm -r $FAKEROOT_BACKUP_PATH/$PKG
+
+		set +e
+
+		println "$PKG updated successfully"
+	done
 }
 
 search_package()
