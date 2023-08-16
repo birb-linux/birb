@@ -41,6 +41,5 @@ struct birb
 	/* Caching */
 	static inline std::unordered_map<std::string, std::string> var_cache;
 	static inline std::unordered_map<std::string, pkg_source> pkg_repo_cache;
-	static inline std::unordered_map<std::string, std::vector<std::string>> split_string_cache;
 	static inline std::vector<std::string> installed_packages_cache;
 };

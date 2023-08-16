@@ -87,10 +87,6 @@ std::vector<std::string> birb::split_string(std::string text, const std::string&
 	assert(text.empty() == false);
 	assert(delimiter.empty() == false);
 
-	/* Check if the result is already cached */
-	if (split_string_cache.contains(text))
-		return split_string_cache[text];
-
 	std::vector<std::string> result;
 
 	/* Split the string */
@@ -103,9 +99,6 @@ std::vector<std::string> birb::split_string(std::string text, const std::string&
 
 	if (!text.empty())
 		result.push_back(text);
-
-	/* Cache the result */
-	split_string_cache[text] = result;
 
 	return result;
 }
