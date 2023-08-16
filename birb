@@ -176,6 +176,8 @@ update_repo_path()
 # their went missing. These packages are usually waste of space
 remove_orphan_dependencies()
 {
+	root_check
+
 	println "Looking for orphan packages..."
 
 	ORPHAN_TMP_FILE="/tmp/birb_orphan_tmp"
