@@ -197,7 +197,7 @@ void orphan_finder(const std::vector<pkg_source>& repos)
 	std::vector<std::string> reverse_deps;
 	std::vector<std::string> clean_reverse_deps;
 
-	constexpr int max_passes = 64;
+	constexpr int max_passes = 256;
 	bool clean_run = true;
 
 	for (int pass = 0; pass < max_passes; ++pass)
