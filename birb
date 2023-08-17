@@ -112,7 +112,7 @@ root_check()
 {
 	if [ "$(whoami)" != "root" ]
 	then
-		println ERROR "This command needs to be run with root privileges (＞﹏＜)"
+		println ERROR "This command needs to be run with root privileges (￢_￢;)"
 		exit 1
 	fi
 }
@@ -1321,7 +1321,7 @@ while test $# -gt 0; do
 			;;
 
 		*)
-			echo "Package $1 does not exist (╥﹏╥)"
+			echo "Package $1 does not exist (╥_╥)"
 			exit 1
 		;;
 	esac
