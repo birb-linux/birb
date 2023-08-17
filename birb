@@ -210,6 +210,18 @@ remove_orphan_dependencies()
 	YOLO=true birb --uninstall $ORPHAN_PACKAGES && echo -e "Orphan removal finished!\nReclaimed storage:\n$RECLAIMED_SPACE" || println ERROR "Something went wrong during orphan removal..."
 }
 
+# A wrapper around wget with some error checking and output formatting
+# All files are downloaded to /var/cache/distfiles
+#
+# Args: [url]
+fetch_file()
+{
+	# Check if wget is installed
+	[ ! -f /usr/bin/wget ] && println ERROR "wget isn't installed! Birb cannot download anything without it (╯°□°)╯︵ ┻━┻" && exit 1
+
+	wget -q --show-progress --directory-prefix=$DISTFILES $1 || { println ERROR "Couldn't dowload $1"; exit 1; }
+}
+
 # Download a tarball for the given package using wget
 # The tarball will be stored to /var/cache/distfiles
 download_src()
@@ -251,13 +263,10 @@ download_src()
 		fi
 	fi
 
-	# Make sure that wget is installed on the system
-	[ ! -f /usr/bin/wget ] && println ERROR "wget isn't installed! Birb cannot download anything without it (╯°□°)╯︵ ┻━┻" && exit 1
-
 	for i in {1..3}
 	do
 		# Download the source tarball
-		wget -q --show-progress --directory-prefix=$DISTFILES $SOURCE || { println ERROR "Couldn't dowload $SOURCE"; exit 1; }
+		fetch_file $SOURCE
 
 		# Check the MD5 checksum
 		if [ "$(checksum_check "$DISTFILES/$TARBALL" "$CHECKSUM")" == "1" ]
@@ -268,6 +277,44 @@ download_src()
 		else
 			return 0
 		fi
+	done
+}
+
+# Allows for easy download of additional files during package setup
+# Args: url:md5
+#
+# For example:
+# download_additional example.com:5ababd603b22780302dd8d83498e5172 hello.world:18aa7764566d19e9a9afb6ea0bf1fa81
+download_additional()
+{
+	println "Fetching additional files"
+
+	while test $# -gt 0
+	do
+		ADDITIONAL_URL="$(echo $1 | cut -d':' -f1)"
+		ADDITIONAL_CHECKSUM="$(echo $1 | cut -d':' -f2)"
+		shift
+
+		ADDITIONAL_FILE="$(basename $ADDITIONAL_URL)"
+
+		# Check if the file is already downloaded
+		[ -f "$DISTFILES/$ADDITIONAL_FILE" ] && continue
+
+		for i in {1..3}
+		do
+			# Download the file
+			fetch_file $ADDITIONAL_URL
+
+			# Verify the checksum
+			if [ "$(checksum_check "$DISTFILES/$ADDITIONAL_FILE" "$ADDITIONAL_CHECKSUM")" == "1" ]
+			then
+				pritnln WARNING "Checksum mismatch! Re-downloading $ADDITIONAL_FILE..."
+				rm -v $DISTFILES/$ADDITIONAL_FILE
+			else
+				# Download was successful, break the download loop
+				break
+			fi
+		done
 	done
 }
 
