@@ -710,6 +710,10 @@ install_package()
 	# If the package is a font, run fc-cache
 	[ -n "$PACKAGE_IS_FONT" ] && fc-cache
 
+	# Add the package into the nest file if the installation was successful
+	add_package_to_nest "$PACKAGE_NAME"
+	birb_db --update "$PACKAGE_NAME" "$VERSION"
+
 	# Run a post-install hook if the package has specified the _post_install() function
 	if [ "$(type -t _post_install)" == "function" ]
 	then
@@ -718,9 +722,6 @@ install_package()
 		_post_install
 	fi
 
-	# Add the package into the nest file if the installation was successful
-	add_package_to_nest "$PACKAGE_NAME"
-	birb_db --update "$PACKAGE_NAME" "$VERSION"
 
 	echo "$PACKAGE_NAME installation finished"
 	set +e
