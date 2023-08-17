@@ -185,6 +185,9 @@ remove_orphan_dependencies()
 	# Read in the orphan list
 	ORPHAN_PACKAGES=$(<$ORPHAN_TMP_FILE)
 
+	# Remove the temporary file
+	rm $ORPHAN_TMP_FILE
+
 	if [ -z "$ORPHAN_PACKAGES" ]
 	then
 		echo "No orphan packages were found"
