@@ -71,6 +71,7 @@ print_help()
 	echo "      --depclean                     find and uninstall orphan packages"
 	echo "      --relink PACKAGE(s)            re-create symlinks to the package fakeroots"
 	echo "  -s  --search                       search for packages by name"
+	echo "  -b  --browse                       browse packages and their descriptions with fzf"
 	echo "      --source [option]              change or query the repository source"
 	echo "      --sync [--force]               sync package repositories"
 	echo "      --list-installed               list all currently installed packages"
@@ -1004,6 +1005,17 @@ search_package()
 	echo -e "$RESULT_TABLE" | column -s ";" -t -T 3 -c $COLS
 }
 
+browse_packages()
+{
+	if [ ! -f /usr/bin/fzf ]
+	then
+		println ERROR "This feature needs the \e[1mfzf\e[0m\e[31m package to be installed\e[0m"
+		exit 1
+	fi
+
+	search_package "" | fzf --height=10 | awk '{print $1}'
+}
+
 cache_package_list()
 {
 	println "Caching the package lists"
@@ -1252,6 +1264,11 @@ while test $# -gt 0; do
 			shift
 			search_package $1
 			shift
+			;;
+
+		-b|--browse)
+			browse_packages
+			exit 0
 			;;
 
 		--source)
