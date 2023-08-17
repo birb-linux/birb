@@ -1000,7 +1000,8 @@ search_package()
 	# Print result names with their descriptions
 	RESULT_TABLE="$(birb_pkg_search $RESULTS)"
 
-	echo -e "$RESULT_TABLE" | column -s ";" -t -T 3
+	let COLS=$(tput cols)-3
+	echo -e "$RESULT_TABLE" | column -s ";" -t -T 3 -c $COLS
 }
 
 cache_package_list()
