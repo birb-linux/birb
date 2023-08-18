@@ -371,6 +371,14 @@ short_version()
 	echo $1 | awk -F'.' '{print $1 "." $2}'
 }
 
+# Transform a version string X.X.X to X leaving only the major version
+# This will also convert version X.X to X
+# Args: [version]
+major_version()
+{
+	echo $1 | cut -d'.' -f1
+}
+
 
 # Print out a custom warning if some specific package flag is specified
 # The FLAGS variable needs to be already sourced when calling this function
