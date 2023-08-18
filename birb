@@ -1041,9 +1041,19 @@ sync_packages()
 	for REPO in $REPO_LIST
 	do
 		REPOSITORY_NAME="$(echo $REPO | cut -d';' -f1)"
+		REPOSITORY_URL="$(echo $REPO | cut -d';' -f2)"
 		REPOSITORY_PATH="$(echo $REPO | cut -d';' -f3)"
 
 		println "Syncing $REPOSITORY_NAME"
+
+		# Check if the repository exists
+		if [ ! -d $REPOSITORY_PATH ]
+		then
+			# The repository doesn't seem to exist
+			# Clone the repository
+			println WARNING "The repo $REPOSITORY_NAME was missing. Cloning it..."
+			git clone $REPOSITORY_URL $REPOSITORY_PATH
+		fi
 
 		cd $REPOSITORY_PATH
 
