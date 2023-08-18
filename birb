@@ -1297,6 +1297,7 @@ while test $# -gt 0; do
 
 		--source)
 			shift
+			root_check
 			cd $REPO_DIR
 			case $1 in
 				status)
@@ -1312,7 +1313,7 @@ while test $# -gt 0; do
 					git checkout master
 					;;
 
-				testing)
+				testing|dev)
 					echo "Switching to the unstable development branch..."
 					git checkout dev
 					;;
