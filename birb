@@ -497,7 +497,7 @@ install_package()
 	for i in $RECURSIVE_DEPENDENCIES
 	do
 		# Check if the dependency is installed
-		if [ "$(birb_db --is-installed $i)" == "no" ] || [ ! -d "$FAKEROOT/$i" ]
+		if [ "$(birb_db --is-installed $i)" == "no" ] #|| [ ! -d "$FAKEROOT/$i" ]
 		then
 			HAD_MISSING_DEP="yes"
 			DEPS_TO_INSTALL="$DEPS_TO_INSTALL $i"
