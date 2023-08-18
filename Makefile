@@ -94,6 +94,8 @@ birb_db_profile_gen: build_dir birb_profile_gen
 
 install:
 	cp ./birb ${BUILD_DIR}/{birb_dep_solver,birb_pkg_search,birb_db} /usr/bin/
+	mkdir -p /usr/lib/birb
+	cp ./birb_funcs /usr/lib/birb/
 	cp ./birb.1 /usr/share/man/man1/birb.1
 	[ -f /etc/birb.conf ] || cp ./birb.conf /etc/birb.conf
 	[ -f /etc/birb-sources.conf ] || cp ./birb-sources.conf /etc/birb-sources.conf
