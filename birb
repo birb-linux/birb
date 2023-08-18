@@ -146,6 +146,19 @@ kernel_check()
 	return 0
 }
 
+# Make sure that we are in a TTY with no Xorg running
+# Quit with error code 1 if Xorg process is found to be running
+#
+# This function is supposed to be using in package install scripts
+tty_check()
+{
+	if [ -n "$(pgrep -x Xorg)" ]
+	then
+		echo "This package can only be installed in the TTY. Please close Xorg before proceeding"
+		exit 1
+	fi
+}
+
 source_pkg_seed()
 {
 	# Make sure that the seed file exists
