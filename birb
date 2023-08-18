@@ -362,6 +362,16 @@ expand_use()
 	fi
 }
 
+# Version parsing helper functions
+
+# Transform a version string X.X.X to X.X taking out the patch number
+# Args: [version]
+short_version()
+{
+	echo $1 | awk -F'.' '{print $1 "." $2}'
+}
+
+
 # Print out a custom warning if some specific package flag is specified
 # The FLAGS variable needs to be already sourced when calling this function
 flag_warning()
