@@ -1073,6 +1073,7 @@ sync_packages()
 		if [ "$1" == "force" ]
 		then
 			git reset --hard
+			git config pull.rebase true
 		fi
 
 		git fetch ; git pull
