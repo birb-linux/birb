@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# URL where birb gets its source code from
+BIRB_REMOTE="https://github.com/birb-linux/birb"
+
 # Check if the LFS variable is set
 # If it isn't empty, it means that we are installing
 # BirbOS and the LFS variable should be used as the
@@ -1079,7 +1082,7 @@ birb_upgrade()
 
 		cd $DISTFILES
 		println "Cloning birb sources"
-		git clone https://github.com/Toasterbirb/birb
+		git clone $BIRB_REMOTE
 	fi
 
 	# If the package list cache doesn't exist yet, create it
