@@ -1,8 +1,8 @@
 # birb
-Package manager used for [BirbOS](https://github.com/Toasterbirb/BirbOS). Package repository available at https://github.com/Toasterbirb/BirbOS-packages
+Package manager used for [BirbOS](https://github.com/birb-linux/BirbOS). Package repository available at https://github.com/birb-linux/BirbOS-packages
 
 > **Warning**
-> Please don't use this (outside of [BirbOS](https://github.com/Toasterbirb/BirbOS) of course). It will cause nuclear war and your computer will catch fire. **You have been warned!**
+> Please don't use this (outside of [BirbOS](https://github.com/birb-linux/BirbOS) of course). It will cause nuclear war and your computer will catch fire. **You have been warned!**
 
 Birb will be installed as a part of the BirbOS installation process and doesn't have to be manually installed.
 
@@ -22,7 +22,7 @@ For usage instructions, please check the manual either by running `man birb` in 
 
 
 ## About
-birb is a source-based package manager purpose made for [BirbOS](https://github.com/Toasterbirb/BirbOS). It compiles programs from source and installs them into "fakeroots". Those fakeroots are then symlinked to the actual system root with [stow](https://www.gnu.org/software/stow/).
+birb is a source-based package manager purpose made for [BirbOS](https://github.com/birb-linux/BirbOS). It compiles programs from source and installs them into "fakeroots". Those fakeroots are then symlinked to the actual system root with [stow](https://www.gnu.org/software/stow/).
 
 The core of birb is written in bash, but some of the features are split into separate programs written in C++ to make things a bit faster. The package files that birb uses to install things are written in bash compatible syntax.
 
