@@ -1358,7 +1358,9 @@ while test $# -gt 0; do
 					sync_packages
 					;;
 			esac
-			shift
+
+			# Exit after a successful sync
+			exit 0
 			;;
 
 		--list-installed)
