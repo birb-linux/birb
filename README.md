@@ -19,6 +19,7 @@ For usage instructions, please check the manual either by running `man birb` in 
     - [Search for packages](#search-for-packages)
 - [Feature checklist](#feature-checklist)
 - [Project structure](#project-structure)
+- [Releases](#releases)
 
 
 ## About
@@ -139,3 +140,6 @@ The output will list all packages that match the search query. The output will a
     - Orphan package finder
 - birb_pkg_search
     - Package finder/browser
+
+## Releases
+Updates to birb come in a rolling release manner. However if you are in a need of some stable point, you can use release tarballs from [here](https://github.com/birb-linux/birb/releases). However if you are using a release tarball, make sure that you are using a matching birb-core repository version from [here](https://github.com/birb-linux/BirbOS-packages/releases). As a general rule of thumb, if the major versions match, the repository should be fully compatible with the package manager.
