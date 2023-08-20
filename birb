@@ -1372,8 +1372,13 @@ while test $# -gt 0; do
 					;;
 
 				testing|dev)
-					echo "Switching to the unstable development branch..."
-					git checkout dev
+					if [ "$BIRB_DEV_MODE" == "true" ]
+					then
+						echo "Switching to the unstable development branch..."
+						git checkout dev
+					else
+						echo "You need to set birb to developer mode if you want to use the unstable repo branch"
+					fi
 					;;
 
 				*)
