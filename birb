@@ -1116,6 +1116,7 @@ birb_upgrade()
 	root_check
 	println "Upgrading birb ^-^"
 	[ "$1" == "debug" ] && echo " --- Debug mode enabled ＿φ(°-°=) ---"
+	[ "$BIRB_DEV_MODE" == "true" ] && echo " ----- Development mode enabled (O_O;) -----"
 
 	# Check if birb is in the distfile cache
 	# If it doesn't, clone it with git
@@ -1136,6 +1137,40 @@ birb_upgrade()
 	set -e
 
 	cd $BIRB_DIST
+
+	# Check if we are in the correct branch
+	CURRENT_BIRB_BRANCH="$(git status | head -n1 | cut -d' ' -f3)"
+	case $CURRENT_BIRB_BRANCH in
+		# We are in a stable branch
+		main)
+			case $BIRB_DEV_MODE in
+				true)
+					# Make sure that a development branch exists at the moment
+					# If so, switch to it
+					if [ -n "$(git branch | awk '/^[[:space:]]*dev$/')" ]
+					then
+						git switch dev
+					else
+						println WARNING "The development branch doesn't seem to exist at the moment. Staying in main..."
+					fi
+					;;
+
+				*) ;;
+			esac
+			;;
+
+		# We are in a development branch
+		dev)
+			case $BIRB_DEV_MODE in
+				true) ;;
+				*) git switch main ;;
+			esac
+			;;
+
+		# We are in some other branch, switch back to main
+		*) git switch main ;;
+	esac
+
 	git fetch
 	git pull
 
