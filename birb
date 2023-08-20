@@ -1141,16 +1141,16 @@ birb_upgrade()
 
 	make clean
 
-	DEBUG_CXX_FLAGS="-g -Weffc++"
-	RELEASE_CXX_FLAGS="-O1 -flto=auto -march=native -DNDEBUG"
+	DEBUG_CXXFLAGS="-g -Weffc++"
+	RELEASE_CXXFLAGS="-O1 -flto=auto -march=native -DNDEBUG"
 
 	if [ "$1" == "debug" ]
 	then
-		make CXX_FLAGS="$DEBUG_CXX_FLAGS"
+		make CXXFLAGS="$DEBUG_CXXFLAGS"
 	else
-		make CXX_FLAGS="-fprofile-generate $RELEASE_CXX_FLAGS" -j$(nproc)
+		make CXXFLAGS="-fprofile-generate $RELEASE_CXXFLAGS" -j$(nproc)
 		./pgo_run.sh
-		make CXX_FLAGS="-fprofile-use $RELEASE_CXX_FLAGS" -j$(nproc)
+		make CXXFLAGS="-fprofile-use $RELEASE_CXXFLAGS" -j$(nproc)
 	fi
 
 	make install
