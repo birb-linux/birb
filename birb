@@ -177,7 +177,7 @@ source_pkg_seed()
 # The function takes the package name as an argument
 update_repo_path()
 {
-	if [ -f /etc/birb-sources.conf ]
+	if [ -f "$BIRB_REPO_LIST_PATH" ]
 	then
 		PACKAGE_NAME="$1"
 		REPO_DIR="$(birb_db --locate-package "$PACKAGE_NAME")"
