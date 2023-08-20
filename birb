@@ -1140,7 +1140,16 @@ birb_upgrade()
 	git pull
 
 	make clean
-	[ "$1" == "debug" ] && make || make release -j$(nproc)
+
+	if [ "$1" == "debug" ]
+	then
+		make
+	else
+		make CXX_FLAGS="-fprofile-generate" optimized -j$(nproc)
+		./pgo_run.sh
+		make CXX_FLAGS="-fprofile-use" optimized -j$(nproc)
+	fi
+
 	make install
 
 	println "Upgrade finished successfully"
