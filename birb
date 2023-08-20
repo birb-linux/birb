@@ -1148,9 +1148,9 @@ birb_upgrade()
 	then
 		make CXX_FLAGS="$DEBUG_CXX_FLAGS"
 	else
-		make CXX_FLAGS="-fprofile-generate $RELEASE_CXX_FLAGS" optimized -j$(nproc)
+		make CXX_FLAGS="-fprofile-generate $RELEASE_CXX_FLAGS" -j$(nproc)
 		./pgo_run.sh
-		make CXX_FLAGS="-fprofile-use $RELEASE_CXX_FLAGS" optimized -j$(nproc)
+		make CXX_FLAGS="-fprofile-use $RELEASE_CXX_FLAGS" -j$(nproc)
 	fi
 
 	make install
