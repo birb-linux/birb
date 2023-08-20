@@ -1369,6 +1369,7 @@ while test $# -gt 0; do
 				stable)
 					echo "Swiching to the stable master branch..."
 					git checkout master
+					sync_packages
 					;;
 
 				testing|dev)
@@ -1376,6 +1377,7 @@ while test $# -gt 0; do
 					then
 						echo "Switching to the unstable development branch..."
 						git checkout dev
+						sync_packages
 					else
 						echo "You need to set birb to developer mode if you want to use the unstable repo branch"
 					fi
