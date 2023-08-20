@@ -1144,7 +1144,17 @@ birb_upgrade()
 		# We are in a stable branch
 		main)
 			case $BIRB_DEV_MODE in
-				true) git checkout dev ;;
+				true)
+					# Make sure that a development branch exists at the moment
+					# If so, switch to it
+					if [ -n "$(git branch | awk '/^[[:space:]]*dev$/')" ]
+					then
+						git switch dev
+					else
+						println WARNING "The development branch doesn't seem to exist at the moment. Staying in main..."
+					fi
+					;;
+
 				*) ;;
 			esac
 			;;
