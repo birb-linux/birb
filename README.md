@@ -20,6 +20,7 @@ For usage instructions, please check the manual either by running `man birb` in 
 - [Feature checklist](#feature-checklist)
 - [Project structure](#project-structure)
 - [Releases](#releases)
+- [Notes on stability](#notes-on-stability)
 
 
 ## About
@@ -144,4 +145,9 @@ The output will list all packages that match the search query. The output will a
 ## Releases
 Updates to birb come in a rolling release manner. However if you are in a need of some stable point, you can use release tarballs from [here](https://github.com/birb-linux/birb/releases). However if you are using a release tarball, make sure that you are using a matching birb-core repository version from [here](https://github.com/birb-linux/BirbOS-packages/releases). As a general rule of thumb, if the major versions match, the repository should be fully compatible with the package manager.
 
-Even though it might be a bit unintuitive, the master branch of the [BirbOS-packages](https://github.com/birb-linux/BirbOS-packages) or the `birb --source stable` isn't actually as stable as the development branch. This is due to the way birb gets updated. If you want to use the master branch of the birb-core repository, you should avoid updating birb. However when the dev branch gets merged to master (the "stable" branch), you might end up with a situation where you have to update birb or you risk incompatibilities. This issue will most likely be fixed at some point by having some sort of way to let the package manager know when it needs to be updated to be fully compatible with the repository.
+## Notes on stability
+As a small safeguard, birb checks for updates every time you sync the repositories. If there's an update available, birb will notify about that and recommend upgrading. Upgrading at this point isn't *mandatory*, but highly recommended.
+
+Keeping birb up-to-date alongside the repositories is important, because there might be some sweeping change to how packages work at this stage of development. This shouldn't be that big of a deal anymore, since most of the basic features are implemented, but as an example, at one point a lot of important packages were not marked as important. Because of this, the orphan removal feature would have removed lots of system critical packages if your repositories were out-of-date since those important packages weren't marked as a dependency for anything.
+
+If you want to be sure that your system stays fully functional through the quirks of running a package manager that is still at alpha stage (even though its version is marked as 1.0, I know, don't ask why), **take backups** and take them often. You might need them some day. If you don't want to take a full system backup, backup at least the `/var/db/fakeroot` directory. If you can restore that, you can most likely bring your installation back to life.
