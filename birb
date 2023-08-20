@@ -177,7 +177,7 @@ source_pkg_seed()
 # The function takes the package name as an argument
 update_repo_path()
 {
-	if [ -f /etc/birb-sources.conf ]
+	if [ -f "$BIRB_REPO_LIST_PATH" ]
 	then
 		PACKAGE_NAME="$1"
 		REPO_DIR="$(birb_db --locate-package "$PACKAGE_NAME")"
@@ -1369,11 +1369,18 @@ while test $# -gt 0; do
 				stable)
 					echo "Swiching to the stable master branch..."
 					git checkout master
+					sync_packages
 					;;
 
 				testing|dev)
-					echo "Switching to the unstable development branch..."
-					git checkout dev
+					if [ "$BIRB_DEV_MODE" == "true" ]
+					then
+						echo "Switching to the unstable development branch..."
+						git checkout dev
+						sync_packages
+					else
+						echo "You need to set birb to developer mode if you want to use the unstable repo branch"
+					fi
 					;;
 
 				*)
