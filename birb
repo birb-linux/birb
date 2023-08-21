@@ -26,7 +26,7 @@ export ACLOCAL_PATH=/usr/share/aclocal
 BIRB_DIST="$DISTFILES/birb"
 
 # Source misc. functions from /usr/lib/birb/birb_funcs
-source /usr/lib/birb/birb_funcs
+source $INSTALL_PREFIX/usr/lib/birb/birb_funcs
 
 
 set_win_title()
