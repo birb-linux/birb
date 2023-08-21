@@ -54,7 +54,7 @@ birb --uninstall emacs feh
 ```
 
 > **Note**
-> The order of the packages to uninstall is important, because birb doesn't do any pre-processing of the list, so it will raise alarms if you try to uninstall a package that is a dependency for another package that you are also trying to uninstall.
+> The order of the packages to uninstall is important, because birb doesn't do any preprocessing of the list, so it will raise alarms if you try to uninstall a package that is a dependency for another package that you are also trying to uninstall.
 
 If you installed a package that pulled in other packages as dependencies, you don't have to remove those dependencies manually. You can simply install the package that pulled in those dependencies and then [remove orphans](#remove-orphan-packages).
 
@@ -96,7 +96,7 @@ If for some reason compiling/installing birb with `birb --upgrade` fails, you ca
 > **Warning**
 > Package updates are still work in progress and things might break here and there. This feature is deeply in the alpha realm
 
-To update packages to their latest versions available in the repositories, first sync the repos and then run the update command
+To update packages to their latest versions available in the repositories, first sync the repositories and then run the update command
 ```sh
 birb --sync
 birb --update
