@@ -32,9 +32,13 @@ source $INSTALL_PREFIX/usr/lib/birb/birb_funcs
 set_win_title()
 {
 	# Change the title if X is running
-	if [ -d "$INSTALL_PREFIX/tmp/.X11-unix" ]
+	# This requires pgrep to be installed
+	if [ -f /usr/bin/pgrep ]
 	then
-		echo -en '\033k'birb: $1'\033\\'
+		if [ -n "$(pgrep X)" ]
+		then
+			echo -en '\033k'birb: $1'\033\\'
+		fi
 	fi
 }
 
