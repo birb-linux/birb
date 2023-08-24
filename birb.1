@@ -15,12 +15,12 @@ Output a usage message and exit
 \fB--download \fIPACKAGE(s)\fP
 Download the source tarball for the given package
 .TP
-\fB--install [--test] [--overwrite] \fIPACKAGE(s)\fP
+\fB-i, --install [--test] [--overwrite] \fIPACKAGE(s)\fP
 Install given package(s) to the filesystem. If --test is set, run any tests that the package might contain
 
 If you come across a package that wants to overwrite something, you can use the --overwrite flag to give \fBbirb\fP the permission to delete files from root directories like /usr to attempt solving conflicts. This however can in some cases result in a partially broken system if used carelessly.
 .TP
-\fB--uninstall \fIPACKAGE(s)\fP
+\fB-u, --uninstall \fIPACKAGE(s)\fP
 Uninstall given package(s) from the filesystem
 .TP
 \fB--depclean\fP

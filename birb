@@ -70,8 +70,8 @@ print_help()
 	echo ""
 	echo "      --help                         display this help page and exit"
 	echo "      --download PACKAGE(s)          download the source tarball for the given package"
-	echo "      --install [options] PACKAGE(s) install given package(s) to the filesystem"
-	echo "      --uninstall PACKAGE(s)         uninstall given package(s) from the filesystem"
+	echo "  -i  --install [options] PACKAGE(s) install given package(s) to the filesystem"
+	echo "  -u  --uninstall PACKAGE(s)         uninstall given package(s) from the filesystem"
 	echo "      --depclean                     find and uninstall orphan packages"
 	echo "      --relink PACKAGE(s)            re-create symlinks to the package fakeroots"
 	echo "  -s  --search                       search for packages by name"
@@ -1294,7 +1294,7 @@ while test $# -gt 0; do
 			exit 0
 			;;
 
-		--install)
+		-i|--install)
 			shift
 
 			case $1 in
@@ -1318,7 +1318,7 @@ while test $# -gt 0; do
 			done
 			;;
 
-		--uninstall)
+		-u|--uninstall)
 			shift
 
 			while test $# -gt 0; do
