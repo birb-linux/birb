@@ -2,9 +2,31 @@
 #include <cassert>
 #include <fstream>
 #include <iostream>
+#include <string.h>
+#include <unistd.h>
 
 namespace birb
 {
+	/* Quit and spit out and error if the command wasn't run
+	 * as the root user */
+	void root_check()
+	{
+		if (getuid() != 0)
+		{
+			std::cout << "This command needs to be run as the root user!\n";
+			exit(1);
+		}
+	}
+
+	bool argcmp(char* arg, int argc, const std::string& option, int required_arg_count)
+	{
+		assert(arg != NULL);
+		assert(option.empty() == false);
+		assert(required_arg_count >= 0);
+
+		return (!strcmp(arg, option.c_str()) && required_arg_count + 1 < argc);
+	}
+
 	std::vector<std::string> split_string(std::string text, const std::string& delimiter)
 	{
 		assert(text.empty() == false);

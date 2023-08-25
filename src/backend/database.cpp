@@ -5,8 +5,6 @@
 #include <fstream>
 #include <iostream>
 
-constexpr char BIRB_DB_PATH[] = "/var/lib/birb/birb_db";
-
 pkg_source::pkg_source() {}
 
 pkg_source::pkg_source(const std::string& name, const std::string& url, const std::string& path)
@@ -147,6 +145,25 @@ namespace birb
 		return db_file;
 	}
 
+	std::vector<std::string> find_db_entry(const std::vector<std::string>& db_file, const std::string& pkg_name)
+	{
+		assert(db_file.empty() == false);
+		assert(pkg_name.empty() == false);
+
+		std::vector<std::string> result(DB_LINE_COLUMN_COUNT);
+
+		for (size_t i = 0; i < db_file.size(); ++i)
+		{
+			/* Split the db line package;version */
+			result = birb::split_string(db_file[i], ";");
+
+			if (result[0] == pkg_name)
+				return result;
+		}
+
+		return std::vector<std::string>(0);
+	}
+
 	std::vector<std::string> get_installed_packages()
 	{
 		/* If the result is already cached, return that instead */
@@ -165,5 +182,27 @@ namespace birb
 		installed_packages_cache = pkg_names;
 
 		return pkg_names;
+	}
+
+	std::unordered_map<std::string, std::string> get_repo_versions()
+	{
+		/* Repository list */
+		std::vector<pkg_source> pkg_sources = birb::get_pkg_sources();
+		assert(pkg_sources.size() > 0 && "Package sources couldn't be found");
+
+		std::unordered_map<std::string, std::string> pkgs;
+
+		/* Get list of all packages in the fakeroot */
+		for (auto& p : std::filesystem::directory_iterator(BIRB_FAKEROOT_PATH))
+		{
+			if (p.is_directory())
+			{
+				/* Iterate through the package source repositories and get the version
+				 * from the first repository that has the package in it */
+				pkgs[p.path().filename().string()] = birb::read_pkg_variable(p.path().filename().string(), "VERSION", BIRB_PKG_PATH);
+			}
+		}
+
+		return pkgs;
 	}
 }
