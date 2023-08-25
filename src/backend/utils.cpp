@@ -1,9 +1,11 @@
+#include <doctest/doctest.h>
 #include "Utils.hpp"
 #include <cassert>
 #include <fstream>
 #include <iostream>
 #include <string.h>
 #include <unistd.h>
+#include <vector>
 
 namespace birb
 {
@@ -46,6 +48,39 @@ namespace birb
 			result.push_back(text);
 
 		return result;
+	}
+
+	TEST_CASE("split_string()")
+	{
+		SUBCASE("One char delimiter")
+		{
+			std::vector<std::string> A = split_string("The quick brown fox jumps over the lazy dog", " ");
+			CHECK(A.size() == 9);
+			CHECK(A[0] == "The");
+			CHECK(A[1] == "quick");
+			CHECK(A[2] == "brown");
+			CHECK(A[3] == "fox");
+			CHECK(A[4] == "jumps");
+			CHECK(A[5] == "over");
+			CHECK(A[6] == "the");
+			CHECK(A[7] == "lazy");
+			CHECK(A[8] == "dog");
+		}
+
+		SUBCASE("One char delimiter with no splits")
+		{
+			std::vector<std::string> A = split_string("Hello_world!", " ");
+			CHECK(A.size() == 1);
+			CHECK(A[0] == "Hello_world!");
+		}
+
+		SUBCASE("Multichar delimiter")
+		{
+			std::vector<std::string> A = split_string("HelloASDworld!", "ASD");
+			CHECK(A.size() == 2);
+			CHECK(A[0] == "Hello");
+			CHECK(A[1] == "world!");
+		}
 	}
 
 	std::vector<std::string> read_file(const std::string& file_path)

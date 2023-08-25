@@ -1,6 +1,7 @@
 CXX=g++
 
 override CXXFLAGS+=-std=c++20 -static -I./include -pedantic -Wall -Wextra -Wcast-align -Wcast-qual -Wdisabled-optimization -Wformat=2 -Winit-self -Wlogical-op -Wmissing-declarations -Wmissing-include-dirs -Wnoexcept -Woverloaded-virtual -Wsign-promo -Wstrict-null-sentinel -Wundef -Werror -Wno-unused
+FRONTEND_CXXFLAGS=-flto=auto -DDOCTEST_CONFIG_DISABLE
 
 SRC_DIR=./src
 BUILD_DIR=./build
@@ -13,28 +14,31 @@ build_dir:
 
 #### Backend ####
 database: build_dir
-	$(CXX) $(CXXFLAGS) -c $(SRC_DIR)/backend/$@.cpp -o $(BUILD_DIR)/$@.o
+	$(CXX) $(CXXFLAGS) -DDOCTEST_CONFIG_IMPLEMENT -c $(SRC_DIR)/backend/$@.cpp -o $(BUILD_DIR)/$@.o
 
 dependencies: build_dir
-	$(CXX) $(CXXFLAGS) -c $(SRC_DIR)/backend/$@.cpp -o $(BUILD_DIR)/$@.o
+	$(CXX) $(CXXFLAGS) -DDOCTEST_CONFIG_IMPLEMENT -c $(SRC_DIR)/backend/$@.cpp -o $(BUILD_DIR)/$@.o
 
 utils: build_dir
-	$(CXX) $(CXXFLAGS) -c $(SRC_DIR)/backend/$@.cpp -o $(BUILD_DIR)/$@.o
+	$(CXX) $(CXXFLAGS) -DDOCTEST_CONFIG_IMPLEMENT -c $(SRC_DIR)/backend/$@.cpp -o $(BUILD_DIR)/$@.o
 
 
 birb_lib: database dependencies utils
 	ar -rcs $(BUILD_DIR)/libbirb.a $(BUILD_DIR)/{database,dependencies,utils}.o
 
+#### Testing ####
+test: birb_lib
+	$(CXX) $(CXXFLAGS) $(SRC_DIR)/birb_test.cpp -o $(BUILD_DIR)/birb_test $(BUILD_DIR)/utils.o
 
 #### Frontend ####
 dep_solver: birb_lib
-	$(CXX) $(CXXFLAGS) -flto=auto $(SRC_DIR)/frontend/dep_solver.cpp -o $(BUILD_DIR)/birb_dep_solver $(BUILD_DIR)/libbirb.a
+	$(CXX) $(CXXFLAGS) $(FRONTEND_CXXFLAGS) $(SRC_DIR)/frontend/dep_solver.cpp -o $(BUILD_DIR)/birb_dep_solver $(BUILD_DIR)/libbirb.a
 
 pkg_search: birb_lib
-	$(CXX) $(CXXFLAGS) -flto=auto $(SRC_DIR)/frontend/pkg_search.cpp -o $(BUILD_DIR)/birb_pkg_search $(BUILD_DIR)/libbirb.a
+	$(CXX) $(CXXFLAGS) $(FRONTEND_CXXFLAGS) $(SRC_DIR)/frontend/pkg_search.cpp -o $(BUILD_DIR)/birb_pkg_search $(BUILD_DIR)/libbirb.a
 
 birb_db: birb_lib
-	$(CXX) $(CXXFLAGS) -flto=auto $(SRC_DIR)/frontend/birb_db.cpp -o $(BUILD_DIR)/birb_db $(BUILD_DIR)/libbirb.a
+	$(CXX) $(CXXFLAGS) $(FRONTEND_CXXFLAGS) $(SRC_DIR)/frontend/birb_db.cpp -o $(BUILD_DIR)/birb_db $(BUILD_DIR)/libbirb.a
 
 
 
