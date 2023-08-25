@@ -27,7 +27,7 @@ birb_lib: database dependencies utils
 	ar -rcs $(BUILD_DIR)/libbirb.a $(BUILD_DIR)/{database,dependencies,utils}.o
 
 #### Testing ####
-test: birb_lib
+test: utils
 	$(CXX) $(CXXFLAGS) $(SRC_DIR)/birb_test.cpp -o $(BUILD_DIR)/birb_test $(BUILD_DIR)/utils.o
 
 #### Frontend ####
