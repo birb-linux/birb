@@ -28,13 +28,13 @@ birb_lib: database dependencies utils
 
 #### Frontend ####
 dep_solver: birb_lib
-	$(CXX) $(CXXFLAGS) $(SRC_DIR)/frontend/dep_solver.cpp -o $(BUILD_DIR)/birb_dep_solver $(BUILD_DIR)/libbirb.a
+	$(CXX) $(CXXFLAGS) -flto=auto $(SRC_DIR)/frontend/dep_solver.cpp -o $(BUILD_DIR)/birb_dep_solver $(BUILD_DIR)/libbirb.a
 
 pkg_search: birb_lib
-	$(CXX) $(CXXFLAGS) $(SRC_DIR)/frontend/pkg_search.cpp -o $(BUILD_DIR)/birb_pkg_search $(BUILD_DIR)/libbirb.a
+	$(CXX) $(CXXFLAGS) -flto=auto $(SRC_DIR)/frontend/pkg_search.cpp -o $(BUILD_DIR)/birb_pkg_search $(BUILD_DIR)/libbirb.a
 
 birb_db: birb_lib
-	$(CXX) $(CXXFLAGS) $(SRC_DIR)/frontend/birb_db.cpp -o $(BUILD_DIR)/birb_db $(BUILD_DIR)/libbirb.a
+	$(CXX) $(CXXFLAGS) -flto=auto $(SRC_DIR)/frontend/birb_db.cpp -o $(BUILD_DIR)/birb_db $(BUILD_DIR)/libbirb.a
 
 
 
