@@ -39,7 +39,7 @@ birb_db: birb_lib
 
 
 install:
-	cp ./birb $(BUILD_DIR)/(birb_dep_solver,birb_pkg_search,birb_db) /usr/bin/
+	cp ./birb $(BUILD_DIR)/{birb_dep_solver,birb_pkg_search,birb_db} /usr/bin/
 	mkdir -p /usr/lib/birb
 	cp ./birb_funcs /usr/lib/birb/
 	cp ./birb.1 /usr/share/man/man1/birb.1
