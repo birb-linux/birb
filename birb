@@ -80,7 +80,7 @@ print_help()
 	echo "      --sync [--force]               sync package repositories"
 	echo "      --list-installed               list all currently installed packages"
 	echo "      --update                       update out-of-date packages"
-	echo "      --upgrade [--debug]            update the birb package manager"
+	echo "      --upgrade [--debug|--test]     update the birb package manager"
 	echo ""
 	echo "If a valid package names are given as the only arguments, birb will attempt"
 	echo "downloading and installing them"
@@ -1182,6 +1182,14 @@ birb_upgrade()
 		make CXXFLAGS="-fprofile-use $RELEASE_CXXFLAGS" -j$(nproc)
 	fi
 
+	if [ "$1" == "test" ]
+	then
+		make CXXFLAGS="$RELEASE_CXXFLAGS" -j$(nproc) test
+
+		# Run the tests and cancel the upgrade if they fail
+		./build/birb_test || { println ERROR "Tests failed! Cancelling the upgrade..."; exit 1; }
+	fi
+
 	make install
 
 	println "Upgrade finished successfully"
@@ -1421,6 +1429,10 @@ while test $# -gt 0; do
 			case $1 in
 				--debug)
 					birb_upgrade debug
+					;;
+
+				--test)
+					birb_upgrade test
 					;;
 
 				*)
