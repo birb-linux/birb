@@ -12,18 +12,18 @@ build_dir:
 	mkdir -p $(BUILD_DIR)
 
 #### Backend ####
-birb: build_dir
-	$(CXX) $(CXXFLAGS) -c $(SRC_DIR)/backend/birb.cpp -o $(BUILD_DIR)/birb.o
+database: build_dir
+	$(CXX) $(CXXFLAGS) -c $(SRC_DIR)/backend/$@.cpp -o $(BUILD_DIR)/$@.o
 
 dependencies: build_dir
-	$(CXX) $(CXXFLAGS) -c $(SRC_DIR)/backend/dependencies.cpp -o $(BUILD_DIR)/dependencies.o
+	$(CXX) $(CXXFLAGS) -c $(SRC_DIR)/backend/$@.cpp -o $(BUILD_DIR)/$@.o
 
 utils: build_dir
-	$(CXX) $(CXXFLAGS) -c $(SRC_DIR)/backend/utils.cpp -o $(BUILD_DIR)/utils.o
+	$(CXX) $(CXXFLAGS) -c $(SRC_DIR)/backend/$@.cpp -o $(BUILD_DIR)/$@.o
 
 
-birb_lib: birb dependencies utils
-	ar -rcs $(BUILD_DIR)/libbirb.a $(BUILD_DIR)/birb.o $(BUILD_DIR)/{dependencies,utils}.o
+birb_lib: database dependencies utils
+	ar -rcs $(BUILD_DIR)/libbirb.a $(BUILD_DIR)/{database,dependencies,utils}.o
 
 
 #### Frontend ####

@@ -2,7 +2,6 @@
 /* Dependency solver for the birb package manager */
 /**************************************************/
 
-#include "Birb.hpp"
 #include "Utils.hpp"
 #include "Dependencies.hpp"
 #include <algorithm>

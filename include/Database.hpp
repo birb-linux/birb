@@ -3,7 +3,7 @@
 #include <unordered_map>
 #include <vector>
 
-#define PKG_SOURCE_CONFIG_PATH "/etc/birb-sources.conf"
+constexpr char PKG_SOURCE_CONFIG_PATH[] = "/etc/birb-sources.conf";
 
 struct pkg_source
 {
@@ -38,6 +38,6 @@ namespace birb
 
 	/* Caching */
 	inline std::unordered_map<std::string, std::string> var_cache;
-	inline std::unordered_map<std::string, pkg_source> pkg_repo_cache;
 	inline std::vector<std::string> installed_packages_cache;
-};
+	inline std::unordered_map<std::string, pkg_source> pkg_repo_cache;
+}

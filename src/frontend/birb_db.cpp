@@ -2,6 +2,7 @@
 /* Version management system for the birb package manager */
 /**********************************************************/
 
+#include "Database.hpp"
 #include "Utils.hpp"
 #include <algorithm>
 #include <cassert>
@@ -14,7 +15,6 @@
 #include <unistd.h>
 #include <unordered_map>
 #include <vector>
-#include "Birb.hpp"
 
 
 constexpr char BIRB_DB_PATH[]       = "/var/lib/birb/birb_db";
