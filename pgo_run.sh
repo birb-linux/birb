@@ -47,6 +47,8 @@ _birb_pkg_search()
 }
 
 # Run the functions
-_birb_db
-_birb_dep_solver
-_birb_pkg_search
+_birb_db &
+_birb_dep_solver &
+_birb_pkg_search &
+
+wait
