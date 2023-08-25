@@ -14,4 +14,4 @@ namespace birb
 	inline std::unordered_map<std::string, std::vector<std::string>> meta_packages;
 	inline std::unordered_map<std::string, std::vector<std::string>> dependency_cache;
 	inline std::unordered_map<std::string, std::vector<std::string>> reverse_dependency_cache;
-};
+}

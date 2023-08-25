@@ -28,8 +28,6 @@ namespace birb
 	/* Check if a package exists and if it does, return the source it was found from */
 	pkg_source locate_pkg_repo(const std::string& pkg_name, const std::vector<pkg_source>& package_sources);
 
-	std::vector<std::string> split_string(std::string text, const std::string& delimiter);
-	std::vector<std::string> read_file(const std::string& file_path);
 	std::string read_pkg_variable(const std::string& pkg_name, const std::string& var_name, const std::string& repo_path);
 
 	/* Returns the raw birb_db file if it exists */

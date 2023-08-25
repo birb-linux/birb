@@ -1,4 +1,5 @@
 #include "Dependencies.hpp"
+#include "Utils.hpp"
 #include <algorithm>
 #include <cassert>
 #include <filesystem>
@@ -248,4 +249,4 @@ namespace birb
 
 		std::cout << "\n";
 	}
-};
+}

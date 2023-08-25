@@ -2,6 +2,7 @@
 /* Version management system for the birb package manager */
 /**********************************************************/
 
+#include "Utils.hpp"
 #include <algorithm>
 #include <cassert>
 #include <filesystem>

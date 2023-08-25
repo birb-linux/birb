@@ -3,6 +3,7 @@
 /**************************************************/
 
 #include "Birb.hpp"
+#include "Utils.hpp"
 #include "Dependencies.hpp"
 #include <algorithm>
 #include <cassert>

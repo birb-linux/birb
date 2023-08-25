@@ -18,8 +18,12 @@ birb: build_dir
 dependencies: build_dir
 	$(CXX) $(CXXFLAGS) -c $(SRC_DIR)/backend/dependencies.cpp -o $(BUILD_DIR)/dependencies.o
 
-birb_lib: birb dependencies
-	ar -rcs $(BUILD_DIR)/libbirb.a $(BUILD_DIR)/birb.o $(BUILD_DIR)/dependencies.o
+utils: build_dir
+	$(CXX) $(CXXFLAGS) -c $(SRC_DIR)/backend/utils.cpp -o $(BUILD_DIR)/utils.o
+
+
+birb_lib: birb dependencies utils
+	ar -rcs $(BUILD_DIR)/libbirb.a $(BUILD_DIR)/birb.o $(BUILD_DIR)/{dependencies,utils}.o
 
 
 #### Frontend ####

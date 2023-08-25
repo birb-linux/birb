@@ -1,4 +1,5 @@
 #include "Birb.hpp"
+#include "Utils.hpp"
 #include <iostream>
 #include <string>
 #include <vector>
