@@ -1171,7 +1171,7 @@ birb_upgrade()
 	make clean
 
 	DEBUG_CXXFLAGS="-g -Weffc++"
-	RELEASE_CXXFLAGS="-O1 -flto=auto -march=native -DNDEBUG"
+	RELEASE_CXXFLAGS="-O1 -march=native -DNDEBUG"
 
 	if [ "$1" == "debug" ]
 	then
