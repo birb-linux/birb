@@ -4,51 +4,66 @@ override CXXFLAGS+=-std=c++20 -static -I./include -pedantic -Wall -Wextra -Wcast
 FRONTEND_CXXFLAGS=-flto=auto -DDOCTEST_CONFIG_DISABLE
 
 SRC_DIR=./src
-BUILD_DIR=./build
 LDFLAGS=-L$(BUILD_DIR) -l:libbirb.a
 
-all: dep_solver pkg_search birb_db
-
-build_dir:
-	mkdir -p $(BUILD_DIR)
+.PHONY: all
+all: birb_dep_solver birb_pkg_search birb_db
 
 #### Backend ####
-database: build_dir
-	$(CXX) $(CXXFLAGS) -DDOCTEST_CONFIG_IMPLEMENT -c $(SRC_DIR)/backend/$@.cpp -o $(BUILD_DIR)/$@.o
+database.o: $(SRC_DIR)/backend/database.cpp
+	$(CXX) $(CXXFLAGS) -DDOCTEST_CONFIG_IMPLEMENT -c $^ -o $@
 
-dependencies: build_dir
-	$(CXX) $(CXXFLAGS) -DDOCTEST_CONFIG_IMPLEMENT -c $(SRC_DIR)/backend/$@.cpp -o $(BUILD_DIR)/$@.o
+dependencies.o: $(SRC_DIR)/backend/dependencies.cpp
+	$(CXX) $(CXXFLAGS) -DDOCTEST_CONFIG_IMPLEMENT -c $^ -o $@
 
-utils: build_dir
-	$(CXX) $(CXXFLAGS) -DDOCTEST_CONFIG_IMPLEMENT -c $(SRC_DIR)/backend/$@.cpp -o $(BUILD_DIR)/$@.o
+utils.o: $(SRC_DIR)/backend/utils.cpp
+	$(CXX) $(CXXFLAGS) -DDOCTEST_CONFIG_IMPLEMENT -c $^ -o $@
 
 
-birb_lib: database dependencies utils
-	ar -rcs $(BUILD_DIR)/libbirb.a $(BUILD_DIR)/{database,dependencies,utils}.o
+libbirb.a: database.o dependencies.o utils.o
+	ar -rcs libbirb.a {database,dependencies,utils}.o
 
 #### Testing ####
-test: utils
-	$(CXX) $(CXXFLAGS) $(SRC_DIR)/birb_test.cpp -o $(BUILD_DIR)/birb_test $(BUILD_DIR)/utils.o
+birb_test.o: $(SRC_DIR)/birb_test.cpp
+	$(CXX) $(CXXFLAGS) -c $^ -o $@
+
+birb_test: birb_test.o utils.o
+	$(CXX) $(CXXFLAGS) birb_test.o -o $@ utils.o
 
 #### Frontend ####
-dep_solver: birb_lib
-	$(CXX) $(CXXFLAGS) $(FRONTEND_CXXFLAGS) $(SRC_DIR)/frontend/dep_solver.cpp -o $(BUILD_DIR)/birb_dep_solver $(BUILD_DIR)/libbirb.a
 
-pkg_search: birb_lib
-	$(CXX) $(CXXFLAGS) $(FRONTEND_CXXFLAGS) $(SRC_DIR)/frontend/pkg_search.cpp -o $(BUILD_DIR)/birb_pkg_search $(BUILD_DIR)/libbirb.a
+# Dependency solver
+birb_dep_solver.o: $(SRC_DIR)/frontend/dep_solver.cpp
+	$(CXX) $(CXXFLAGS) $(FRONTEND_CXXFLAGS) -c $^ -o $@
 
-birb_db: birb_lib
-	$(CXX) $(CXXFLAGS) $(FRONTEND_CXXFLAGS) $(SRC_DIR)/frontend/birb_db.cpp -o $(BUILD_DIR)/birb_db $(BUILD_DIR)/libbirb.a
+birb_dep_solver: libbirb.a birb_dep_solver.o
+	$(CXX) $(CXXFLAGS) $(FRONTEND_CXXFLAGS) birb_dep_solver.o -o $@ libbirb.a
+
+# Package search tool
+birb_pkg_search.o: $(SRC_DIR)/frontend/pkg_search.cpp
+	$(CXX) $(CXXFLAGS) $(FRONTEND_CXXFLAGS) -c $^ -o $@
+
+birb_pkg_search: libbirb.a birb_pkg_search.o
+	$(CXX) $(CXXFLAGS) $(FRONTEND_CXXFLAGS) birb_pkg_search.o -o $@ libbirb.a
+
+# Database tool
+birb_db.o: $(SRC_DIR)/frontend/birb_db.cpp
+	$(CXX) $(CXXFLAGS) $(FRONTEND_CXXFLAGS) -c $^ -o $@
+
+birb_db: libbirb.a birb_db.o
+	$(CXX) $(CXXFLAGS) $(FRONTEND_CXXFLAGS) birb_db.o -o $@ libbirb.a
 
 
-
+.PHONY: install
 install:
-	cp ./birb $(BUILD_DIR)/{birb_dep_solver,birb_pkg_search,birb_db} /usr/bin/
+	cp ./birb {birb_dep_solver,birb_pkg_search,birb_db} /usr/bin/
 	mkdir -p /usr/lib/birb
 	cp ./birb_funcs /usr/lib/birb/
 	cp ./birb.1 /usr/share/man/man1/birb.1
 	[ -f /etc/birb.conf ] || cp ./birb.conf /etc/birb.conf
 	[ -f /etc/birb-sources.conf ] || cp ./birb-sources.conf /etc/birb-sources.conf
 
+.PHONY: clean
 clean:
-	rm -rf $(BUILD_DIR)
+	rm -rf *.o *.a *.gcda
+	rm -f birb_db birb_dep_solver birb_pkg_search

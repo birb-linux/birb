@@ -1179,15 +1179,15 @@ birb_upgrade()
 	else
 		make CXXFLAGS="-fprofile-generate $RELEASE_CXXFLAGS" -j$(nproc)
 		./pgo_run.sh
-		make CXXFLAGS="-fprofile-use $RELEASE_CXXFLAGS" -j$(nproc)
+		make -B CXXFLAGS="-fprofile-use $RELEASE_CXXFLAGS" -j$(nproc)
 	fi
 
 	if [ "$1" == "test" ]
 	then
-		make CXXFLAGS="$RELEASE_CXXFLAGS" -j$(nproc) test
+		make CXXFLAGS="$RELEASE_CXXFLAGS" -j$(nproc) birb_test
 
 		# Run the tests and cancel the upgrade if they fail
-		./build/birb_test || { println ERROR "Tests failed! Cancelling the upgrade..."; exit 1; }
+		./birb_test || { println ERROR "Tests failed! Cancelling the upgrade..."; exit 1; }
 	fi
 
 	make install
