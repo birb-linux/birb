@@ -27,8 +27,8 @@ libbirb.a: database.o dependencies.o utils.o
 birb_test.o: $(SRC_DIR)/birb_test.cpp
 	$(CXX) $(CXXFLAGS) -c $^ -o $@
 
-birb_test: birb_test.o utils.o
-	$(CXX) $(CXXFLAGS) birb_test.o -o $@ utils.o
+birb_test: birb_test.o libbirb.a
+	$(CXX) $(CXXFLAGS) birb_test.o -o $@ libbirb.a
 
 #### Frontend ####
 
