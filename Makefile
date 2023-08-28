@@ -58,6 +58,8 @@ install:
 	cp ./birb {birb_dep_solver,birb_pkg_search,birb_db} /usr/bin/
 	mkdir -p /usr/lib/birb
 	cp ./birb_funcs ./libbirb.a /usr/lib/birb/
+	mkdir -p /usr/include/birb
+	cp ./include/*.hpp /usr/include/birb/
 	cp ./birb.1 /usr/share/man/man1/birb.1
 	[ -f /etc/birb.conf ] || cp ./birb.conf /etc/birb.conf
 	[ -f /etc/birb-sources.conf ] || cp ./birb-sources.conf /etc/birb-sources.conf
