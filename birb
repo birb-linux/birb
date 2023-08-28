@@ -243,6 +243,29 @@ fetch_file()
 	wget -q --show-progress --directory-prefix=$DISTFILES $1 || { println ERROR "Couldn't dowload $1"; exit 1; }
 }
 
+# This function is internal and should only be used by the
+# download_src() function
+download_src_checksum_check()
+{
+	unset SKIP_DOWNLOAD
+
+	if [ -f "$DISTFILES/$TARBALL" ]
+	then
+		echo "Found [$TARBALL] in distcache"
+		if [ "$(checksum_check "$DISTFILES/$TARBALL" "$CHECKSUM")" == "0" ]
+		then
+			# The tarball has already been downloaded and the download can
+			# be skipped without any issues
+			SKIP_DOWNLOAD=true
+			return 0
+		else
+			echo "[$TARBALL] checksum doesn't match the package checksum! The package needs to be re-downloaded"
+			rm -v "$DISTFILES/$TARBALL"
+			return 1
+		fi
+	fi
+}
+
 # Download a tarball for the given package using wget
 # The tarball will be stored to /var/cache/distfiles
 download_src()
@@ -270,19 +293,44 @@ download_src()
 
 	# Check if the package tarball has already been downloaded
 	# and the checksum matches
-	if [ -f "$DISTFILES/$TARBALL" ]
+	download_src_checksum_check
+	[ -n "$SKIP_DOWNLOAD" ] && return 0
+
+	# Try looking for source tarballs with birbd if its installed
+	# This also requires rsync to be installed
+	if [ -f /usr/bin/birbd ] && [ -f /etc/birbd.conf ] && [ -f /usr/bin/rsync ]
 	then
-		echo "Found [$TARBALL] in distcache"
-		if [ "$(checksum_check "$DISTFILES/$TARBALL" "$CHECKSUM")" == "0" ]
+		# Read the birbd configuration file and check if it has
+		# any valid IP-addresses
+		BIRBD_ADDRESSES="$(sed 's/#.*//g; /^[[:space:]]*$/d' /etc/birbd.conf | grep -o "[0-9]*\.[0-9]*\.[0-9]\.[0-9]*")"
+
+		if [ -n "$BIRBD_ADDRESSES" ]
 		then
-			# The tarball has already been downloaded and the download can
-			# be skipped without any issues
-			return 0
-		else
-			echo "[$TARBALL] checksum doesn't match the package checksum! The package needs to be re-downloaded"
-			rm -v "$DISTFILES/$TARBALL"
+			println "Checking birbd servers for tarballs..."
+			for i in $BIRBD_ADDRESSES
+			do
+				# Attempt pinging the birbd server
+				sudo ping -c 1 $i &>/dev/null
+				if [ $? -eq 0 ]
+				then
+					BIRBD_SERVER_ADDRESS="$i"
+
+					# The machine responded, check if it has the tarball
+					BIRBD_RESPONSE="$(birbd $BIRBD_SERVER_ADDRESS "has_package;$TARBALL;$CHECKSUM")"
+
+					if [ "$BIRBD_RESPONSE" == "positive" ]
+					then
+						echo "$BIRBD_SERVER_ADDRESS has the tarball! Downloading it with rsync..."
+						rsync -a --progress birbd@$BIRBD_SERVER_ADDRESS:/var/cache/distfiles/$TARBALL /var/cache/distfiles/
+					fi
+				fi
+			done
 		fi
 	fi
+
+	# Make sure that the tarball we have is the correct one (in case we got it from a birbd server)
+	download_src_checksum_check
+	[ -n "$SKIP_DOWNLOAD" ] && return 0
 
 	for i in {1..3}
 	do
