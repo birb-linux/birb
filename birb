@@ -32,9 +32,13 @@ source $INSTALL_PREFIX/usr/lib/birb/birb_funcs
 set_win_title()
 {
 	# Change the title if X is running
-	if [ -d "$INSTALL_PREFIX/tmp/.X11-unix" ]
+	# This requires pgrep to be installed
+	if [ -f /usr/bin/pgrep ]
 	then
-		echo -en '\033k'birb: $1'\033\\'
+		if [ -n "$(pgrep X)" ]
+		then
+			echo -en '\033k'birb: $1'\033\\'
+		fi
 	fi
 }
 
@@ -66,8 +70,8 @@ print_help()
 	echo ""
 	echo "      --help                         display this help page and exit"
 	echo "      --download PACKAGE(s)          download the source tarball for the given package"
-	echo "      --install [options] PACKAGE(s) install given package(s) to the filesystem"
-	echo "      --uninstall PACKAGE(s)         uninstall given package(s) from the filesystem"
+	echo "  -i  --install [options] PACKAGE(s) install given package(s) to the filesystem"
+	echo "  -u  --uninstall PACKAGE(s)         uninstall given package(s) from the filesystem"
 	echo "      --depclean                     find and uninstall orphan packages"
 	echo "      --relink PACKAGE(s)            re-create symlinks to the package fakeroots"
 	echo "  -s  --search                       search for packages by name"
@@ -76,7 +80,7 @@ print_help()
 	echo "      --sync [--force]               sync package repositories"
 	echo "      --list-installed               list all currently installed packages"
 	echo "      --update                       update out-of-date packages"
-	echo "      --upgrade [--debug]            update the birb package manager"
+	echo "      --upgrade [--debug|--test]     update the birb package manager"
 	echo ""
 	echo "If a valid package names are given as the only arguments, birb will attempt"
 	echo "downloading and installing them"
@@ -1167,7 +1171,7 @@ birb_upgrade()
 	make clean
 
 	DEBUG_CXXFLAGS="-g -Weffc++"
-	RELEASE_CXXFLAGS="-O1 -flto=auto -march=native -DNDEBUG"
+	RELEASE_CXXFLAGS="-O1 -march=native -DNDEBUG"
 
 	if [ "$1" == "debug" ]
 	then
@@ -1175,7 +1179,15 @@ birb_upgrade()
 	else
 		make CXXFLAGS="-fprofile-generate $RELEASE_CXXFLAGS" -j$(nproc)
 		./pgo_run.sh
-		make CXXFLAGS="-fprofile-use $RELEASE_CXXFLAGS" -j$(nproc)
+		make -B CXXFLAGS="-fprofile-use $RELEASE_CXXFLAGS" -j$(nproc)
+	fi
+
+	if [ "$1" == "test" ]
+	then
+		make CXXFLAGS="$RELEASE_CXXFLAGS" -j$(nproc) birb_test
+
+		# Run the tests and cancel the upgrade if they fail
+		./birb_test || { println ERROR "Tests failed! Cancelling the upgrade..."; exit 1; }
 	fi
 
 	make install
@@ -1290,7 +1302,7 @@ while test $# -gt 0; do
 			exit 0
 			;;
 
-		--install)
+		-i|--install)
 			shift
 
 			case $1 in
@@ -1314,7 +1326,7 @@ while test $# -gt 0; do
 			done
 			;;
 
-		--uninstall)
+		-u|--uninstall)
 			shift
 
 			while test $# -gt 0; do
@@ -1417,6 +1429,10 @@ while test $# -gt 0; do
 			case $1 in
 				--debug)
 					birb_upgrade debug
+					;;
+
+				--test)
+					birb_upgrade test
 					;;
 
 				*)

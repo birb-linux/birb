@@ -1,6 +1,6 @@
 #!/bin/bash
 
-BUILD_DIR="$(dirname $0)/build"
+BUILD_DIR="$(dirname $0)"
 BINARIES_TO_RUN="birb_db birb_dep_solver birb_pkg_search"
 
 # Make sure that the build directory exists
@@ -47,6 +47,8 @@ _birb_pkg_search()
 }
 
 # Run the functions
-_birb_db
-_birb_dep_solver
-_birb_pkg_search
+_birb_db &
+_birb_dep_solver &
+_birb_pkg_search &
+
+wait

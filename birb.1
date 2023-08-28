@@ -15,12 +15,12 @@ Output a usage message and exit
 \fB--download \fIPACKAGE(s)\fP
 Download the source tarball for the given package
 .TP
-\fB--install [--test] [--overwrite] \fIPACKAGE(s)\fP
+\fB-i, --install [--test] [--overwrite] \fIPACKAGE(s)\fP
 Install given package(s) to the filesystem. If --test is set, run any tests that the package might contain
 
 If you come across a package that wants to overwrite something, you can use the --overwrite flag to give \fBbirb\fP the permission to delete files from root directories like /usr to attempt solving conflicts. This however can in some cases result in a partially broken system if used carelessly.
 .TP
-\fB--uninstall \fIPACKAGE(s)\fP
+\fB-u, --uninstall \fIPACKAGE(s)\fP
 Uninstall given package(s) from the filesystem
 .TP
 \fB--depclean\fP
@@ -53,8 +53,12 @@ List all currently installed packages
 \fB--update\fP
 Find all packages that are out-of-date and attempt to update them. In most cases you should be able to cancel the update after you have already started it and \fBbirb\fP should be able to restore things back, but if anything goes wrong, you can find (usually) a backup of the package fakeroot from /var/backup/birb/fakeroot_backups.
 .TP
-\fB--upgrade [--debug]\fP
-Update the birb package manager. If --debug is set, build the C++ parts of birb with debug flags enabled and skip PGO and LTO.
+\fB--upgrade [--debug|--test]\fP
+Update the birb package manager.
+
+If --debug is set, build the C++ parts of birb with debug flags enabled and skip PGO and LTO.
+
+If --test is set, compile \fBbirb\fP like normal with all optimizations enabled, but on top of that compile tests and run them. If the tests fail, cancel the upgrade.
 .TP
 \fB--repair\fP
 Attempt to recover a broken system (due to missing packages) by using the package database as a ground truth for what should be installed on the system. This way we can reinstall packages that have their files missing, but the system still thinks that the package is already installed.
