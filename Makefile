@@ -11,13 +11,13 @@ all: birb_dep_solver birb_pkg_search birb_db
 
 #### Backend ####
 database.o: $(SRC_DIR)/backend/database.cpp
-	$(CXX) $(CXXFLAGS) -DDOCTEST_CONFIG_IMPLEMENT -c $^ -o $@
+	$(CXX) $(CXXFLAGS) -c $^ -o $@
 
 dependencies.o: $(SRC_DIR)/backend/dependencies.cpp
-	$(CXX) $(CXXFLAGS) -DDOCTEST_CONFIG_IMPLEMENT -c $^ -o $@
+	$(CXX) $(CXXFLAGS) -c $^ -o $@
 
 utils.o: $(SRC_DIR)/backend/utils.cpp
-	$(CXX) $(CXXFLAGS) -DDOCTEST_CONFIG_IMPLEMENT -c $^ -o $@
+	$(CXX) $(CXXFLAGS) -c $^ -o $@
 
 
 libbirb.a: database.o dependencies.o utils.o

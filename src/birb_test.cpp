@@ -1,3 +1,4 @@
+#ifdef BIRB_TEST
 #define DDOCTEST_CONFIG_IMPLEMENT
 #include <doctest/doctest.h>
 
@@ -17,3 +18,11 @@ int main(int argc, char** argv)
 	int res = context.run();
 	return res;
 }
+#else
+#include <iostream>
+int main(void)
+{
+	std::cerr << "Compile with -DBIRB_TEST to build the tests\n";
+	return 1;
+}
+#endif

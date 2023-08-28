@@ -1184,7 +1184,7 @@ birb_upgrade()
 
 	if [ "$1" == "test" ]
 	then
-		make CXXFLAGS="$RELEASE_CXXFLAGS" -j$(nproc) birb_test
+		make CXXFLAGS="$RELEASE_CXXFLAGS -DBIRB_TEST" -j$(nproc) birb_test
 
 		# Run the tests and cancel the upgrade if they fail
 		./birb_test || { println ERROR "Tests failed! Cancelling the upgrade..."; exit 1; }
