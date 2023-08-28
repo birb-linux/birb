@@ -54,7 +54,6 @@ birb_db: libbirb.a birb_db.o
 	$(CXX) $(CXXFLAGS) $(FRONTEND_CXXFLAGS) birb_db.o -o $@ libbirb.a
 
 
-.PHONY: install
 install:
 	cp ./birb {birb_dep_solver,birb_pkg_search,birb_db} /usr/bin/
 	mkdir -p /usr/lib/birb
@@ -63,7 +62,8 @@ install:
 	[ -f /etc/birb.conf ] || cp ./birb.conf /etc/birb.conf
 	[ -f /etc/birb-sources.conf ] || cp ./birb-sources.conf /etc/birb-sources.conf
 
-.PHONY: clean
 clean:
 	rm -rf *.o *.a *.gcda
 	rm -f birb_db birb_dep_solver birb_pkg_search
+
+.PHONY: clean install
