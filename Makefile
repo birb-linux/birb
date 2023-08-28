@@ -66,6 +66,6 @@ install:
 
 clean:
 	rm -rf *.o *.a *.gcda
-	rm -f birb_db birb_dep_solver birb_pkg_search
+	rm -f birb_db birb_dep_solver birb_pkg_search birb_test
 
 .PHONY: clean install
