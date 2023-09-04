@@ -31,12 +31,11 @@ namespace birb
 		std::vector<std::string> repository_lines = read_file(PKG_SOURCE_CONFIG_PATH);
 
 		std::vector<pkg_source> sources;
-		std::vector<std::string> line(3);
 		for (size_t i = 0; i < repository_lines.size(); ++i)
 		{
-			line = split_string(repository_lines[i], ";");
+			std::vector<std::string> line = split_string(repository_lines[i], ";");
 
-			pkg_source s(line[0], line[1], line[2]);
+			pkg_source s(line.at(0), line.at(1), line.at(2));
 
 			assert(s.name.empty() == false);
 			assert(s.url.empty()  == false);
@@ -64,12 +63,11 @@ namespace birb
 
 		/* Loop through all of the repositories and try to find
 		 * the seed.sh file for the given package */
-		std::string seed_path;
 		for (pkg_source s : package_sources)
 		{
 			assert(s.path.empty() == false);
 
-			seed_path = s.path + "/" + pkg_name + "/seed.sh";
+			std::string seed_path = s.path + "/" + pkg_name + "/seed.sh";
 			if (std::filesystem::exists(seed_path) && std::filesystem::is_regular_file(seed_path))
 			{
 				///* Cache the results */
