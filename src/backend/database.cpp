@@ -148,14 +148,12 @@ namespace birb
 		assert(db_file.empty() == false);
 		assert(pkg_name.empty() == false);
 
-		std::vector<std::string> result(DB_LINE_COLUMN_COUNT);
-
 		for (size_t i = 0; i < db_file.size(); ++i)
 		{
 			/* Split the db line package;version */
-			result = birb::split_string(db_file[i], ";");
+			std::vector<std::string> result = birb::split_string(db_file[i], ";");
 
-			if (result[0] == pkg_name)
+			if (result.at(0) == pkg_name && result.size() == DB_LINE_COLUMN_COUNT)
 				return result;
 		}
 
