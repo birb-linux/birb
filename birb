@@ -439,10 +439,10 @@ flag_warning()
 	FLAG="$1"
 	WARNING="$2"
 
-	if [ -n "$(echo "$FLAGS" | grep -wo "$FLAG")" ]
+	if echo "$FLAGS" | grep -wq "$FLAG"
 	then
 		println WARNING "$WARNING"
-		read -p "Are you sure you want to install it? (y/N): " AGREE_INSTALL_WARNED
+		read -rp "Are you sure you want to install it? (y/N): " AGREE_INSTALL_WARNED
 		case $AGREE_INSTALL_WARNED in
 			y|Y|yes|Yes) ;;
 			*)
@@ -479,7 +479,7 @@ validate_package_name()
 # Args: [package_name]
 add_package_to_nest()
 {
-	if [ -z "$(grep -x $1 $NEST)" ] && [ -z "$IS_DEPENDENCY_PACKAGE" ]
+	if grep -qx "$1" $NEST && [ -z "$IS_DEPENDENCY_PACKAGE" ]
 	then
 		echo "$1" >> $NEST
 	fi
@@ -494,14 +494,14 @@ install_package()
 	export PKG_PATH="$REPO_DIR/$PACKAGE_NAME"
 
 	# Check if a package with this name is in the repositories
-	if [ ! -d $PKG_PATH ]
+	if [ ! -d "$PKG_PATH" ]
 	then
 		println ERROR "There's no package with the name [$PACKAGE_NAME]"
 		exit 1
 	fi
 
 	# Check if the package is already installed
-	if [ "$(birb_db --is-installed $PACKAGE_NAME)" == "yes" ]
+	if [ "$(birb_db --is-installed "$PACKAGE_NAME")" == "yes" ]
 	then
 		# Skip this package is SKIP_INSTALLED_PACKAGES has been set
 		if [ -n "$SKIP_INSTALLED_PACKAGES" ]
@@ -510,7 +510,7 @@ install_package()
 		fi
 
 		echo "$PACKAGE_NAME is already installed"
-		read -p "Force a reinstall? [y/N]: " AGREE_FORCE_REINSTALL
+		read -rp "Force a reinstall? [y/N]: " AGREE_FORCE_REINSTALL
 		case $AGREE_FORCE_REINSTALL in
 			y|Y|yes|Yes)
 				FORCE_REINSTALL="yes"
@@ -527,23 +527,16 @@ install_package()
 
 		# If the package isn't already installed, but a fakeroot for it exists,
 		# delete the fakeroot to avoid any dangling / corrupt files
-		[ -d "$FAKEROOT/$PACKAGE_NAME" ] && println "Deleting an existing fakeroot" && rm -r "$FAKEROOT/$PACKAGE_NAME"
+		[ -d "$FAKEROOT/$PACKAGE_NAME" ] && println "Deleting an existing fakeroot" && rm -r "${FAKEROOT:?}/$PACKAGE_NAME"
 	fi
 
 	# Reset all package variables in-case some package has omitted
 	# a variable or two
-	NAME=""
-	DESC=""
-	VERSION=""
-	SOURCE=""
-	CHECKSUM=""
-	DEPS=""
-	FLAGS=""
-	NOTES=""
+	unset NAME DESC VERSION SOURCE CHECKSUM DEPS FLAGS NOTES
 	unset _post_install
 
 	# Source the package variables and functions
-	source_pkg_seed $PACKAGE_NAME
+	source_pkg_seed "$PACKAGE_NAME"
 
 	# Check if the package is still "work in progress"
 	flag_warning "wip" "This package is still considered 'work in progress' and may not be fully functional!"
@@ -569,7 +562,7 @@ install_package()
 	for i in $RECURSIVE_DEPENDENCIES
 	do
 		# Check if the dependency is installed
-		if [ "$(birb_db --is-installed $i)" == "no" ] #|| [ ! -d "$FAKEROOT/$i" ]
+		if [ "$(birb_db --is-installed "$i")" == "no" ] #|| [ ! -d "$FAKEROOT/$i" ]
 		then
 			HAD_MISSING_DEP="yes"
 			DEPS_TO_INSTALL="$DEPS_TO_INSTALL $i"
@@ -583,7 +576,7 @@ install_package()
 	if [ "$HAD_MISSING_DEP" == "yes" ]
 	then
 		echo "Missing dependencies were found. Would you like to attempt installing them?"
-		read -p "[Y/n]: " AGREE_INSTALL_DEPS
+		read -rp "[Y/n]: " AGREE_INSTALL_DEPS
 		case $AGREE_INSTALL_DEPS in
 			n|N|n*|N*)
 				echo "Cancelled"
@@ -599,12 +592,13 @@ install_package()
 		esac
 
 		println "Attempting to install the following packages: [$DEPS_TO_INSTALL]"
+		# shellcheck disable=SC2086
 		IS_DEPENDENCY_PACKAGE="true" birb $DEPS_TO_INSTALL || { echo "Something went wrong while trying to install dependencies. Cancelling the mission..."; exit 1; }
 	fi
 
 	# Attempt to download the package
 	set_win_title "Installing $PACKAGE_NAME (download)"
-	download_src $PACKAGE_NAME
+	download_src "$PACKAGE_NAME"
 	[ $? -eq 1 ] && echo "Error during downloading [$PACKAGE_NAME]. Aborting the mission..." && exit 1
 
 
@@ -661,7 +655,7 @@ install_package()
 	# Install the package into fakeroot directory
 	println "Installing the package"
 	set_win_title "Installing $PACKAGE_NAME (install)"
-	prepare_fakeroot $FAKEROOT/$PACKAGE_NAME
+	prepare_fakeroot "$FAKEROOT/$PACKAGE_NAME"
 	_install
 
 	if [ -n "$ENABLE_32BIT" ] && [ "$ENABLE_32BIT_PACKAGES" == "yes" ]
@@ -689,7 +683,7 @@ install_package()
 	rm -r $TEMPORARY_BUILD_DIR
 
 	# Remove all empty directories from the fakeroot
-	find $FAKEROOT/$PACKAGE_NAME -type d -empty -delete
+	find "$FAKEROOT/$PACKAGE_NAME" -type d -empty -delete
 
 	# If removing all of the empty directories got rid of the entire
 	# fakeroot, we can assume the following things:
@@ -699,7 +693,7 @@ install_package()
 	# D) The package was misconfigured and the files went to the wrong place
 	#
 	# We'll assume here that this is a C case
-	if [ ! -d $FAKEROOT/$PACKAGE_NAME ]
+	if [ ! -d "$FAKEROOT/$PACKAGE_NAME" ]
 	then
 		println "Hmh... It looks like the package got absorbed into the system with no fakeroot left"
 		echo "Since there's no fakeroot, there's nothing else to install. Also the package cannot be tracked and/or uninstalled, so good luck with that"
@@ -719,9 +713,9 @@ install_package()
 			println "Finding and deleting conflicting files"
 			HAD_CONFLICTS=""
 
-			cd $FAKEROOT
+			cd "$FAKEROOT"
 			set +e
-			FILES_TO_DELETE="$(stow -S -t / -d $FAKEROOT $PACKAGE_NAME &>/dev/stdout | grep "existing target is not owned by stow" | awk -F' ' '{print "/" $9}')"
+			FILES_TO_DELETE="$(stow -S -t / -d "$FAKEROOT" "$PACKAGE_NAME" 2>&1 | grep "existing target is not owned by stow" | awk -F' ' '{print "/" $9}')"
 			set -e
 
 			if [ -n "$FILES_TO_DELETE" ]
@@ -729,6 +723,7 @@ install_package()
 				HAD_CONFLICTS="true"
 				if [ -n "$OVERWRITE_FILES" ]
 				then
+					# shellcheck disable=SC2086
 					rm -f $FILES_TO_DELETE
 				else
 					println WARNING "This package wants to overwite the following files:"
@@ -738,7 +733,7 @@ install_package()
 
 			# Do another round of deletions in case there's some other error
 			set +e
-			FILES_TO_DELETE="$(stow -S -t / -d $FAKEROOT $PACKAGE_NAME &>/dev/stdout | grep "existing target is neither a link nor a directory" | awk -F' ' '{print "/" $11}')"
+			FILES_TO_DELETE="$(stow -S -t / -d "$FAKEROOT" "$PACKAGE_NAME" 2>&1 | grep "existing target is neither a link nor a directory" | awk -F' ' '{print "/" $11}')"
 			set -e
 
 			if [ -n "$FILES_TO_DELETE" ]
@@ -746,6 +741,7 @@ install_package()
 				HAD_CONFLICTS="true"
 				if [ -n "$OVERWRITE_FILES" ]
 				then
+					# shellcheck disable=SC2086
 					rm -f $FILES_TO_DELETE
 				else
 					println WARNING "This package wants to overwite the following files:"
@@ -764,7 +760,7 @@ install_package()
 
 	# Make sure the package doesn't attempt to install the /usr/share/info/dir file
 	# because lots of packages want to write into it and that causes conflicts with stow
-	rm -f $FAKEROOT/$PACKAGE_NAME/usr/share/info/dir
+	rm -f "$FAKEROOT/$PACKAGE_NAME/usr/share/info/dir"
 
 
 	# Skip symlinking if updating
@@ -773,11 +769,11 @@ install_package()
 		if [ -z "$FORCE_REINSTALL" ]
 		then
 			println "Symlinking the package fakeroot to the system root"
-			stow -S -t / -d $FAKEROOT $PACKAGE_NAME
+			stow -S -t / -d "$FAKEROOT" "$PACKAGE_NAME"
 		else
 			println "Re-Symlinking the package fakeroot to the system root"
-			cd $FAKEROOT
-			stow -R -t / -d $FAKEROOT $PACKAGE_NAME
+			cd "$FAKEROOT"
+			stow -R -t / -d "$FAKEROOT" "$PACKAGE_NAME"
 		fi
 	fi
 
@@ -813,7 +809,7 @@ uninstall_package()
 	PACKAGE_NAME="$1"
 	validate_package_name "$PACKAGE_NAME"
 	println "Checking if the package $PACKAGE_NAME is installed"
-	if [ "$(birb_db --is-installed $PACKAGE_NAME)" == "no" ]
+	if [ "$(birb_db --is-installed "$PACKAGE_NAME")" == "no" ]
 	then
 		echo "$PACKAGE_NAME is not installed"
 		return 1
@@ -840,7 +836,7 @@ uninstall_package()
 		echo "without the use of a package manager (and possibly other tools"
 		echo "that aren't available)"
 		echo ""
-		read -p "Continue? [y/N]: " UNINSTALL_PROTECTED_PACKAGE
+		read -rp "Continue? [y/N]: " UNINSTALL_PROTECTED_PACKAGE
 
 		case $UNINSTALL_PROTECTED_PACKAGE in
 			y|Y|yes|Yes)
@@ -856,7 +852,7 @@ uninstall_package()
 
 	# Check if the package would possibly break any dependencies
 	println "Checking dependencies"
-	DEPENDENT_PACKAGES="$(birb_dep_solver -r $PACKAGE_NAME)"
+	DEPENDENT_PACKAGES="$(birb_dep_solver -r "$PACKAGE_NAME")"
 
 	if [ -n "$DEPENDENT_PACKAGES" ] && [ -z "$YOLO" ]
 	then
@@ -864,7 +860,7 @@ uninstall_package()
 		echo -e "$DEPENDENT_PACKAGES" | sed '/^$/d; s/^/ - /'
 		println WARNING "Removing this package might cause trouble"
 
-		read -p "Continue? [y/N]: " UNINSTALL_DEPENDENCY_BREAKING_PACKAGE
+		read -rp "Continue? [y/N]: " UNINSTALL_DEPENDENCY_BREAKING_PACKAGE
 
 		case $UNINSTALL_DEPENDENCY_BREAKING_PACKAGE in
 			y|Y|yes|Yes)
@@ -884,14 +880,14 @@ uninstall_package()
 	# so they need some special treatment
 	if [ -n "$IS_PYTHON_PACKAGE" ]
 	then
-		yes | pip3 uninstall $PACKAGE_NAME
+		yes | pip3 uninstall "$PACKAGE_NAME"
 	fi
 
 	println "Unlinking $PACKAGE_NAME..."
-	stow -D -t / -d $FAKEROOT $PACKAGE_NAME
+	stow -D -t / -d "$FAKEROOT" "$PACKAGE_NAME"
 
 	println "Removing fakeroot"
-	rm -r $FAKEROOT/$PACKAGE_NAME
+	rm -r "${FAKEROOT:?}/$PACKAGE_NAME"
 
 	# If the package is a font, run fc-cache
 	[ -n "$PACKAGE_IS_FONT" ] && fc-cache
@@ -910,7 +906,7 @@ relink_package()
 	println "Restoring symlinks for $1"
 
 	# Validate the package name
-	if [ -n "$(echo "$1" | grep "[./!&\\]")" ]
+	if echo "$1" | grep -q "[./!&\\]"
 	then
 		println ERROR "The package name '$1' isn't valid"
 		exit 1
@@ -924,7 +920,7 @@ relink_package()
 	fi
 
 	# Check if the package exists
-	if [ -z "$(birb_pkg_search $1)" ]
+	if [ -z "$(birb_pkg_search "$1")" ]
 	then
 		println WARNING "There's no package with the name $1"
 	fi
@@ -936,17 +932,17 @@ cancel_update()
 {
 	println "Update cancelled!"
 
-	if [ ! -d $FAKEROOT/$PKG_UPDATE_IN_PROGRESS ]
+	if [ ! -d "$FAKEROOT/$PKG_UPDATE_IN_PROGRESS" ]
 	then
 		echo "Restoring fakeroot backup"
-		cp -r $FAKEROOT_BACKUP_PATH/$PKG_UPDATE_IN_PROGRESS $FAKEROOT/$PKG_UPDATE_IN_PROGRESS
+		cp -r "${FAKEROOT_BACKUP_PATH:?}/$PKG_UPDATE_IN_PROGRESS" "$FAKEROOT/$PKG_UPDATE_IN_PROGRESS"
 
 		echo "Transferring symlinks back to the original fakeroot"
-		stow -D -t / -d $FAKEROOT_BACKUP_PATH $PKG_UPDATE_IN_PROGRESS
-		stow -S -t / -d $FAKEROOT $PKG_UPDATE_IN_PROGRESS
+		stow -D -t / -d "$FAKEROOT_BACKUP_PATH" "$PKG_UPDATE_IN_PROGRESS"
+		stow -S -t / -d "$FAKEROOT" "$PKG_UPDATE_IN_PROGRESS"
 
 		echo "Marking the package as installed"
-		birb_db --update $PKG_UPDATE_IN_PROGRESS $OLD_VERSION
+		birb_db --update "$PKG_UPDATE_IN_PROGRESS" "$OLD_VERSION"
 	fi
 }
 
@@ -966,16 +962,16 @@ update_packages()
 	echo "$PKGS" | awk -F';' '{print $1 ";" $2 ";->;" $3}' | column -s ';' -t
 
 	echo ""
-	read -p "Proceed with the update? (y/r/N): " SELECTED_UPDATE_OPTION
+	read -rp "Proceed with the update? (y/r/N): " SELECTED_UPDATE_OPTION
 
 	case $SELECTED_UPDATE_OPTION in
 		y|Y) ;;
 		r|R)
-			read -p "Regex: " REGEX_PATTERN
+			read -rp "Regex: " REGEX_PATTERN
 
 			echo -e "\e[1;33mThe following packages will be updated:\e[0m"
 			echo "$PKGS" | cut -d ';' -f1 | awk "/$REGEX_PATTERN/"
-			read -p "Proceed with the update? (y/N): " AGREE_REGEX_UPDATE
+			read -rp "Proceed with the update? (y/N): " AGREE_REGEX_UPDATE
 			case $AGREE_REGEX_UPDATE in
 				y|Y) ;;
 				*)
@@ -1002,7 +998,7 @@ update_packages()
 	# if some of the packages have really long compiling times
 	for PKG in $UPDATE_QUEUE
 	do
-		download_src $PKG
+		download_src "$PKG"
 	done
 
 	# The system might get borked if anything goes wrong
@@ -1021,10 +1017,10 @@ update_packages()
 	do
 		# Store the PKG variable for the update cancel function trap
 		PKG_UPDATE_IN_PROGRESS="$PKG"
-		OLD_VERSION="$(birb_db --version $PKG)"
+		OLD_VERSION="$(birb_db --version "$PKG")"
 
 		println "Backing up $PKG fakeroot"
-		if [ -d $FAKEROOT_BACKUP_PATH/$PKG ]
+		if [ -d "$FAKEROOT_BACKUP_PATH/$PKG" ]
 		then
 			println ERROR "An existing fakeroot backup seems to exist for package $PKG"
 			echo "This could mean that the previous update was cancelled prematurely"
@@ -1037,29 +1033,29 @@ update_packages()
 			echo "remove the backup fakeroot and try to run this update again"
 			exit 1
 		fi
-		cp -r $FAKEROOT/$PKG $FAKEROOT_BACKUP_PATH/$PKG
+		cp -r "${FAKEROOT:?}/$PKG" "${FAKEROOT_BACKUP_PATH:?}/$PKG"
 
 		println "Transferring symlinks to the backup copy of $PKG"
-		stow -D -t / -d $FAKEROOT $PKG
-		stow -S -t / -d $FAKEROOT_BACKUP_PATH $PKG
+		stow -D -t / -d "$FAKEROOT" "$PKG"
+		stow -S -t / -d "$FAKEROOT_BACKUP_PATH" "$PKG"
 
 		println "Removing the fakeroot for $PKG"
-		rm -r $FAKEROOT/$PKG
+		rm -r "${FAKEROOT:?}/$PKG"
 
 		# Trick birb into thinking that the package isn't installed
-		birb_db --remove $PKG
+		birb_db --remove "$PKG"
 
 		# Update the package by installing as usual, but skip the symlink
 		# part at the end of the installation process. We'll do that here
 		# by transferring the symlinks back from the backup
-		BIRB_PKG_UPDATE="true" birb --install $PKG
+		BIRB_PKG_UPDATE="true" birb --install "$PKG"
 
 		println "Transferring symlinks from the backup copy of $PKG back to the real fakeroot"
-		stow -D -t / -d $FAKEROOT_BACKUP_PATH $PKG
-		stow -S -t / -d $FAKEROOT $PKG
+		stow -D -t / -d "$FAKEROOT_BACKUP_PATH" "$PKG"
+		stow -S -t / -d "$FAKEROOT" "$PKG"
 
 		println "Removing the backup fakeroot"
-		rm -r $FAKEROOT_BACKUP_PATH/$PKG
+		rm -r "${FAKEROOT_BACKUP_PATH:?}/$PKG"
 
 		println "$PKG updated successfully"
 	done
@@ -1072,9 +1068,10 @@ search_package()
 	RESULTS="$(grep "$1" $PACKAGE_LIST)"
 
 	# Print result names with their descriptions
+	# shellcheck disable=SC2086
 	RESULT_TABLE="$(birb_pkg_search $RESULTS)"
 
-	let COLS=$(tput cols)-3
+	COLS=$(("$(tput cols)"-3))
 	echo -e "$RESULT_TABLE" | column -s ";" -t -T 3 -c $COLS
 }
 
@@ -1092,6 +1089,7 @@ browse_packages()
 cache_package_list()
 {
 	println "Caching the package lists"
+	# shellcheck disable=SC2046
 	find $(birb_db --list-repositories | cut -d';' -f3) -maxdepth 1 -not -path '*/[@.]*' -type d -printf "%f\n" | sed '/^pkg$/d' > $PACKAGE_LIST
 }
 
@@ -1100,7 +1098,7 @@ cache_package_list()
 birb_update_check()
 {
 	println "Checking if birb is up-to-date"
-	cd $BIRB_DIST
+	cd "$BIRB_DIST"
 
 	git fetch
 	BIRB_BRANCH_STATUS="$(git status | grep "Your branch is behind")"
@@ -1128,22 +1126,22 @@ sync_packages()
 	# Loop through the repositories and sync them
 	for REPO in $REPO_LIST
 	do
-		REPOSITORY_NAME="$(echo $REPO | cut -d';' -f1)"
-		REPOSITORY_URL="$(echo $REPO | cut -d';' -f2)"
-		REPOSITORY_PATH="$(echo $REPO | cut -d';' -f3)"
+		REPOSITORY_NAME="$(echo "$REPO" | cut -d';' -f1)"
+		REPOSITORY_URL="$(echo "$REPO" | cut -d';' -f2)"
+		REPOSITORY_PATH="$(echo "$REPO" | cut -d';' -f3)"
 
 		println "Syncing $REPOSITORY_NAME"
 
 		# Check if the repository exists
-		if [ ! -d $REPOSITORY_PATH ]
+		if [ ! -d "$REPOSITORY_PATH" ]
 		then
 			# The repository doesn't seem to exist
 			# Clone the repository
 			println WARNING "The repo $REPOSITORY_NAME was missing. Cloning it..."
-			git clone $REPOSITORY_URL $REPOSITORY_PATH
+			git clone "$REPOSITORY_URL" "$REPOSITORY_PATH"
 		fi
 
-		cd $REPOSITORY_PATH
+		cd "$REPOSITORY_PATH"
 
 		if [ "$1" == "force" ]
 		then
@@ -1179,9 +1177,9 @@ birb_upgrade()
 	if [ ! -d "$BIRB_DIST" ]
 	then
 		# Ensure that the distfiles directory exists
-		mkdir -p $DISTFILES
+		mkdir -p "$DISTFILES"
 
-		cd $DISTFILES
+		cd "$DISTFILES"
 		println "Cloning birb sources"
 		git clone $BIRB_REMOTE
 	fi
@@ -1192,7 +1190,7 @@ birb_upgrade()
 	# Avoid breaking the package manager
 	set -e
 
-	cd $BIRB_DIST
+	cd "$BIRB_DIST"
 
 	# Check if we are in the correct branch
 	CURRENT_BIRB_BRANCH="$(git status | head -n1 | cut -d' ' -f3)"
@@ -1229,14 +1227,14 @@ birb_upgrade()
 	then
 		make CXXFLAGS="$DEBUG_CXXFLAGS"
 	else
-		make CXXFLAGS="-fprofile-generate $RELEASE_CXXFLAGS" -j$(nproc)
+		make CXXFLAGS="-fprofile-generate $RELEASE_CXXFLAGS" "-j$(nproc)"
 		./pgo_run.sh
-		make -B CXXFLAGS="-fprofile-use $RELEASE_CXXFLAGS" -j$(nproc)
+		make -B CXXFLAGS="-fprofile-use $RELEASE_CXXFLAGS" "-j$(nproc)"
 	fi
 
 	if [ "$1" == "test" ]
 	then
-		make CXXFLAGS="$RELEASE_CXXFLAGS -DBIRB_TEST" -j$(nproc) birb_test
+		make CXXFLAGS="$RELEASE_CXXFLAGS -DBIRB_TEST" "-j$(nproc)" birb_test
 
 		# Run the tests and cancel the upgrade if they fail
 		./birb_test || { println ERROR "Tests failed! Cancelling the upgrade..."; exit 1; }
@@ -1250,17 +1248,17 @@ birb_upgrade()
 
 install_meta_package()
 {
-	validate_package_name $1
-	META_PACKAGE_RESULT="$(awk "/^$1:/" $REPO_DIR/meta_packages)"
+	validate_package_name "$1"
+	META_PACKAGE_RESULT="$(awk "/^$1:/" "$REPO_DIR/meta_packages")"
 	if [ -n "$META_PACKAGE_RESULT" ]
 	then
 		# If a result was found, expand the meta package into a list
 		# of packages to install
-		PACKAGES_TO_INSTALL="$(awk -F':' "/^$1/ {print \$2}" $REPO_DIR/meta_packages)"
+		PACKAGES_TO_INSTALL="$(awk -F':' "/^$1/ {print \$2}" "$REPO_DIR/meta_packages")"
 
 		echo -e "The following packages will be installed:\n$PACKAGES_TO_INSTALL\n"
 		echo "Packages that are already installed will be skipped"
-		read -p "Do you want to process? [Y/n]: " AGREE_INSTALL_META_PACKAGES
+		read -rp "Do you want to process? [Y/n]: " AGREE_INSTALL_META_PACKAGES
 		case $AGREE_INSTALL_META_PACKAGES in
 			n|N|n*|N*)
 				echo "Cancelled"
@@ -1303,11 +1301,14 @@ fakeroot_repair()
 	# Loop through the packages and check if their fakeroots exist
 	for i in $INSTALLED_PACKAGES
 	do
-		if [ ! -d $FAKEROOT/$i ]
+		if [ ! -d "$FAKEROOT/$i" ]
 		then
 			# Force reinstall the package
-			yes | birb --install $i
-			[ "$?" != "0" ] && echo "Non-zero exit status from birb! Stopping..." && exit 1
+			if yes | birb --install "$i"
+			then
+				echo "Non-zero exit status from birb! Stopping..."
+				exit 1
+			fi
 		fi
 	done
 }
@@ -1326,7 +1327,7 @@ fi
 
 
 # Check if the first argument is a valid meta package
-install_meta_package $1 && shift
+install_meta_package "$1" && shift
 
 # Go through all of the arguments
 while test $# -gt 0; do
@@ -1347,7 +1348,7 @@ while test $# -gt 0; do
 			shift
 
 			while test $# -gt 0; do
-				download_src $1
+				download_src "$1"
 				shift
 			done
 
@@ -1373,7 +1374,7 @@ while test $# -gt 0; do
 			while test $# -gt 0; do
 				# First attempt to install the package as a meta package
 				# If one doesn't exist, try to install it as a normal package
-				install_meta_package $1 || install_package "$1"
+				install_meta_package "$1" || install_package "$1"
 				shift
 			done
 			;;
@@ -1382,7 +1383,7 @@ while test $# -gt 0; do
 			shift
 
 			while test $# -gt 0; do
-				uninstall_package $1
+				uninstall_package "$1"
 				shift
 			done
 
@@ -1393,7 +1394,7 @@ while test $# -gt 0; do
 			shift
 
 			while test $# -gt 0; do
-				relink_package $1
+				relink_package "$1"
 				shift
 			done
 
@@ -1408,7 +1409,7 @@ while test $# -gt 0; do
 
 		-s|--search)
 			shift
-			search_package $1
+			search_package "$1"
 			shift
 			;;
 
@@ -1420,7 +1421,7 @@ while test $# -gt 0; do
 		--source)
 			shift
 			root_check
-			cd $REPO_DIR
+			cd "$REPO_DIR"
 			case $1 in
 				status)
 					BRANCH="$(git status | awk '/^On branch/ {print $3}')"
@@ -1491,7 +1492,6 @@ while test $# -gt 0; do
 					birb_upgrade
 					;;
 			esac
-			exit 0
 			;;
 
 		--repair)
