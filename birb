@@ -717,7 +717,7 @@ install_package()
 
 			cd $FAKEROOT
 			set +e
-			FILES_TO_DELETE="$(stow -S -t / -d $FAKEROOT $PACKAGE_NAME &>/dev/stdout | grep "existing target is not owned by stow" | awk -F' ' '{print "/" $9}')"
+			FILES_TO_DELETE="$(stow -S -t / -d $FAKEROOT $PACKAGE_NAME | tee /dev/stdout | grep "existing target is not owned by stow" | awk -F' ' '{print "/" $9}')"
 			set -e
 
 			if [ -n "$FILES_TO_DELETE" ]
@@ -734,7 +734,7 @@ install_package()
 
 			# Do another round of deletions in case there's some other error
 			set +e
-			FILES_TO_DELETE="$(stow -S -t / -d $FAKEROOT $PACKAGE_NAME &>/dev/stdout | grep "existing target is neither a link nor a directory" | awk -F' ' '{print "/" $11}')"
+			FILES_TO_DELETE="$(stow -S -t / -d $FAKEROOT $PACKAGE_NAME | tee /dev/stdout | grep "existing target is neither a link nor a directory" | awk -F' ' '{print "/" $11}')"
 			set -e
 
 			if [ -n "$FILES_TO_DELETE" ]
