@@ -26,7 +26,8 @@ export ACLOCAL_PATH=/usr/share/aclocal
 BIRB_DIST="$DISTFILES/birb"
 
 # Source misc. functions from /usr/lib/birb/birb_funcs
-source $INSTALL_PREFIX/usr/lib/birb/birb_funcs
+# shellcheck source=/usr/lib/birb/birb_funcs
+source "$INSTALL_PREFIX/usr/lib/birb/birb_funcs"
 
 
 set_win_title()
@@ -37,7 +38,7 @@ set_win_title()
 	then
 		if [ -n "$(pgrep X)" ]
 		then
-			echo -en '\033k'birb: $1'\033\\'
+			echo -en "\033kbirb: $1\033\\"
 		fi
 	fi
 }
@@ -59,6 +60,7 @@ BIRB_REPO_LIST_PATH="$INSTALL_PREFIX/etc/birb-sources.conf"
 # Load the configuration file (if it exists)
 if [ -f "$BIRB_CFG_PATH" ]
 then
+	# shellcheck source=/etc/birb.conf
 	source "$BIRB_CFG_PATH"
 fi
 
@@ -89,7 +91,7 @@ print_help()
 	echo "with the 'man birb' command"
 }
 
-if [ -z $1 ]
+if [ -z "$1" ]
 then
 	print_help
 	exit 0
@@ -104,11 +106,11 @@ checksum_check()
 	FILE_PATH="$1"
 	GOAL_CHECKSUM="$2"
 
-	FILE_CHECKSUM="$(md5sum $DISTFILES/$TARBALL | cut -d' ' -f1)"
+	FILE_CHECKSUM="$(md5sum "$FILE_PATH" | cut -d' ' -f1)"
 
 	# Make sure that either of the checksums aren't empty
-	[ -z $GOAL_CHECKSUM ] && echo "1"
-	[ -z $FILE_CHECKSUM ] && echo "1"
+	[ -z "$GOAL_CHECKSUM" ] && echo "1"
+	[ -z "$FILE_CHECKSUM" ] && echo "1"
 
 	[ "$GOAL_CHECKSUM" == "$FILE_CHECKSUM" ] && echo "0" || echo "1"
 }
@@ -136,7 +138,7 @@ kernel_check()
 	CONFIG_ERROR=""
 	for i in $REQUIRED_FLAGS
 	do
-		if [ -z "$(grep -o "^${i}=[ym]" $KERNEL_CONFIG_PATH)" ]
+		if ! grep -q "^${i}=[ym]" $KERNEL_CONFIG_PATH
 		then
 			if [ -z "$CONFIG_ERROR" ]
 			then
@@ -171,7 +173,8 @@ source_pkg_seed()
 	# Make sure that the seed file exists
 	[ ! -f "$REPO_DIR/$1/seed.sh" ] && echo "Invalid seed file: $1" && exit 1
 
-	source $REPO_DIR/$1/seed.sh
+	# shellcheck source=/var/db/pkg/vim/seed.sh
+	source "$REPO_DIR/$1/seed.sh"
 }
 
 # Figure out what repository to use with birb_db
@@ -197,13 +200,13 @@ remove_orphan_dependencies()
 	println "Looking for orphan packages..."
 
 	ORPHAN_TMP_FILE="$(mktemp /tmp/XXXXXX)"
-	birb_dep_solver -o 2> $ORPHAN_TMP_FILE
+	birb_dep_solver -o 2> "$ORPHAN_TMP_FILE"
 
 	# Read in the orphan list
-	ORPHAN_PACKAGES=$(<$ORPHAN_TMP_FILE)
+	ORPHAN_PACKAGES=$(<"$ORPHAN_TMP_FILE")
 
 	# Remove the temporary file
-	rm $ORPHAN_TMP_FILE
+	rm "$ORPHAN_TMP_FILE"
 
 	if [ -z "$ORPHAN_PACKAGES" ]
 	then
@@ -213,7 +216,7 @@ remove_orphan_dependencies()
 		echo -e "$ORPHAN_PACKAGES\n"
 	fi
 
-	read -p "Would you like to remove them? (y/N): " AGREE_UNINSTALL_WARNED
+	read -rp "Would you like to remove them? (y/N): " AGREE_UNINSTALL_WARNED
 	case $AGREE_UNINSTALL_WARNED in
 		y|Y|yes|Yes) ;;
 		*)
@@ -224,11 +227,13 @@ remove_orphan_dependencies()
 
 	root_check
 
-	cd $FAKEROOT
+	cd "$FAKEROOT"
+	# shellcheck disable=SC2086
 	RECLAIMED_SPACE="$(du -shc $ORPHAN_PACKAGES)"
 
 	# Uninstall packages while not caring about reverse dependencies (should be safe)
-	YOLO=true birb --uninstall $ORPHAN_PACKAGES && echo -e "Orphan removal finished!\nReclaimed storage:\n$RECLAIMED_SPACE" || println ERROR "Something went wrong during orphan removal..."
+	# shellcheck disable=SC2086
+	{ YOLO=true birb --uninstall $ORPHAN_PACKAGES && echo -e "Orphan removal finished!\nReclaimed storage:\n$RECLAIMED_SPACE"; } || println ERROR "Something went wrong during orphan removal..."
 }
 
 # A wrapper around wget with some error checking and output formatting
@@ -240,7 +245,7 @@ fetch_file()
 	# Check if wget is installed
 	[ ! -f /usr/bin/wget ] && println ERROR "wget isn't installed! Birb cannot download anything without it (╯°□°)╯︵ ┻━┻" && exit 1
 
-	wget -q --show-progress --directory-prefix=$DISTFILES $1 || { println ERROR "Couldn't dowload $1"; exit 1; }
+	wget -q --show-progress --directory-prefix="$DISTFILES" "$1" || { println ERROR "Couldn't dowload $1"; exit 1; }
 }
 
 # This function is internal and should only be used by the
@@ -274,14 +279,14 @@ download_src()
 	PKG_PATH="$REPO_DIR/$1"
 
 	# Check if a package with this name is in the repositories
-	if [ ! -d $PKG_PATH ]
+	if [ ! -d "$PKG_PATH" ]
 	then
 		println ERROR "There's no package with the name [$1]"
 		exit 1
 	fi
 
 	# Source the package variables
-	source_pkg_seed $1
+	source_pkg_seed "$1"
 
 	# Make sure that the package has a checksum
 	[ -z "$CHECKSUM" ] && println ERROR "Package [$NAME] doesn't define a checksum! The package won't be downloaded." && return 1
@@ -310,18 +315,17 @@ download_src()
 			for i in $BIRBD_ADDRESSES
 			do
 				# Attempt pinging the birbd server
-				sudo ping -c 1 $i &>/dev/null
-				if [ $? -eq 0 ]
+				if sudo ping -c 1 "$i" &>/dev/null
 				then
 					BIRBD_SERVER_ADDRESS="$i"
 
 					# The machine responded, check if it has the tarball
-					BIRBD_RESPONSE="$(birbd $BIRBD_SERVER_ADDRESS "has_package;$TARBALL;$CHECKSUM")"
+					BIRBD_RESPONSE="$(birbd "$BIRBD_SERVER_ADDRESS" "has_package;$TARBALL;$CHECKSUM")"
 
 					if [ "$BIRBD_RESPONSE" == "positive" ]
 					then
 						echo "$BIRBD_SERVER_ADDRESS has the tarball! Downloading it with rsync..."
-						rsync -a --progress birbd@$BIRBD_SERVER_ADDRESS:/var/cache/distfiles/$TARBALL /var/cache/distfiles/
+						rsync -a --progress "birbd@$BIRBD_SERVER_ADDRESS:/var/cache/distfiles/$TARBALL" /var/cache/distfiles/
 					fi
 				fi
 			done
@@ -341,8 +345,8 @@ download_src()
 		if [ "$(checksum_check "$DISTFILES/$TARBALL" "$CHECKSUM")" == "1" ]
 		then
 			println WARNING "There was a checksum mismatch. The downloaded archive will be removed to prevent installing a possibly corrupt package. Please re-try downloading it"
-			md5sum $DISTFILES/$TARBALL
-			rm -v $DISTFILES/$TARBALL
+			md5sum "$DISTFILES/$TARBALL"
+			rm -v "$DISTFILES/$TARBALL"
 		else
 			return 0
 		fi
@@ -360,11 +364,11 @@ download_additional()
 
 	while test $# -gt 0
 	do
-		ADDITIONAL_URL="$(echo $1 | cut -d':' -f1)"
-		ADDITIONAL_CHECKSUM="$(echo $1 | cut -d':' -f2)"
+		ADDITIONAL_URL="$(echo "$1" | cut -d':' -f1)"
+		ADDITIONAL_CHECKSUM="$(echo "$1" | cut -d':' -f2)"
 		shift
 
-		ADDITIONAL_FILE="$(basename $ADDITIONAL_URL)"
+		ADDITIONAL_FILE="$(basename "$ADDITIONAL_URL")"
 
 		# Check if the file is already downloaded
 		[ -f "$DISTFILES/$ADDITIONAL_FILE" ] && continue
@@ -372,13 +376,13 @@ download_additional()
 		for i in {1..3}
 		do
 			# Download the file
-			fetch_file $ADDITIONAL_URL
+			fetch_file "$ADDITIONAL_URL"
 
 			# Verify the checksum
 			if [ "$(checksum_check "$DISTFILES/$ADDITIONAL_FILE" "$ADDITIONAL_CHECKSUM")" == "1" ]
 			then
 				pritnln WARNING "Checksum mismatch! Re-downloading $ADDITIONAL_FILE..."
-				rm -v $DISTFILES/$ADDITIONAL_FILE
+				rm -v "$DISTFILES/$ADDITIONAL_FILE"
 			else
 				# Download was successful, break the download loop
 				break
@@ -392,10 +396,10 @@ download_additional()
 # and gets confused
 prepare_fakeroot()
 {
-	mkdir -p $1/{usr/{lib/bfd-plugins,lib32,share/{doc,man/man{1..8}},bin,sbin,include},etc,sbin}
-	mkdir -p $1/usr/share/fonts/TTF
-	mkdir -p $1/usr/share/applications
-	mkdir -p $1/etc/X11/app-defaults
+	mkdir -p "$1"/{usr/{lib/bfd-plugins,lib32,share/{doc,man/man{1..8}},bin,sbin,include},etc,sbin}
+	mkdir -p "$1"/usr/share/fonts/TTF
+	mkdir -p "$1"/usr/share/applications
+	mkdir -p "$1"/etc/X11/app-defaults
 }
 
 # Returns whether the use flag is enabled
@@ -405,7 +409,7 @@ has_use()
 {
 	# Check if a useflag is set by using grep
 	HAS_FLAG="$(echo "$USE_FLAGS" | grep -wo "$1")"
-	return $([ -n "$HAS_FLAG" ])
+	return "$([ -n "$HAS_FLAG" ])"
 }
 
 # If the use flag has been set in the config file, expand it into some command
@@ -419,7 +423,7 @@ expand_use()
 
 	# If the flag had been specified, expand it into the OUTPUT
 	# text
-	if has_use $PKG_FLAG
+	if has_use "$PKG_FLAG"
 	then
 		echo "$OUTPUT"
 	else
