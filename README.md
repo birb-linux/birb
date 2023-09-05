@@ -1,6 +1,8 @@
 # birb
 Package manager used for [BirbOS](https://github.com/birb-linux/BirbOS). Package repository available at https://github.com/birb-linux/BirbOS-packages
 
+[![Linting checks](https://github.com/birb-linux/birb/actions/workflows/linting.yml/badge.svg)](https://github.com/birb-linux/birb/actions/workflows/linting.yml)
+
 > **Warning**
 > Please don't use this (outside of [BirbOS](https://github.com/birb-linux/BirbOS) of course). It will cause nuclear war and your computer will catch fire. **You have been warned!**
 
