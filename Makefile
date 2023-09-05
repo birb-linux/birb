@@ -62,6 +62,17 @@ check_sh:
 	shellcheck -x -s bash ./birb
 	shellcheck -x -s bash ./birb ./birb_funcs ./pgo_run.sh
 
+valgrind:
+	valgrind --error-exitcode=10 ./birb_dep_solver birb-utils
+	valgrind --error-exitcode=11 ./birb_dep_solver -r ncurses
+	valgrind --error-exitcode=12 ./birb_dep_solver -o
+	valgrind --error-exitcode=20 ./birb_db --is-installed ncurses
+	valgrind --error-exitcode=21 ./birb_db --list
+	valgrind --error-exitcode=22 ./birb_db --version ncurses
+	valgrind --error-exitcode=23 ./birb_db --help
+	valgrind --error-exitcode=30 ./birb_pkg_search ncurses
+	valgrind --error-exitcode=31 ./birb_pkg_search vim firefox
+
 install:
 	cp ./birb {birb_dep_solver,birb_pkg_search,birb_db} /usr/bin/
 	mkdir -p /usr/lib/birb
@@ -76,4 +87,4 @@ clean:
 	rm -rf *.o *.a *.gcda
 	rm -f birb_db birb_dep_solver birb_pkg_search birb_test
 
-.PHONY: check_cpp check_sh clean install
+.PHONY: check_cpp check_sh valgrind clean install
