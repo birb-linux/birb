@@ -53,6 +53,14 @@ birb_db.o: $(SRC_DIR)/frontend/birb_db.cpp
 birb_db: libbirb.a birb_db.o
 	$(CXX) $(CXXFLAGS) $(FRONTEND_CXXFLAGS) birb_db.o -o $@ libbirb.a
 
+check: check_sh check_cpp
+
+check_cpp:
+	cppcheck --suppress="syntaxError" ${SRC_DIR}
+
+check_sh:
+	shellcheck -x -s bash ./birb
+	shellcheck -x -s bash ./birb ./birb_funcs ./pgo_run.sh
 
 install:
 	cp ./birb {birb_dep_solver,birb_pkg_search,birb_db} /usr/bin/
@@ -68,4 +76,4 @@ clean:
 	rm -rf *.o *.a *.gcda
 	rm -f birb_db birb_dep_solver birb_pkg_search birb_test
 
-.PHONY: clean install
+.PHONY: check_cpp check_sh clean install
