@@ -315,7 +315,7 @@ download_src()
 			for i in $BIRBD_ADDRESSES
 			do
 				# Attempt pinging the birbd server
-				if sudo ping -c 1 "$i" &>/dev/null
+				if timeout 0.2 ping -c 1 "$i" &>/dev/null
 				then
 					BIRBD_SERVER_ADDRESS="$i"
 
