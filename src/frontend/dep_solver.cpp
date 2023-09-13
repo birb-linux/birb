@@ -87,7 +87,6 @@ int main(int argc, char** argv)
 	/* Loop through all repos to get all meta_packages */
 	assert(repos.size() > 0);
 	std::vector<std::string> tmp_meta;
-	std::string meta_path;
 	for (pkg_source s : repos)
 	{
 		assert(s.path.empty() == false);
@@ -96,7 +95,7 @@ int main(int argc, char** argv)
 		assert(s.is_valid()   == true);
 
 		/* Check if the repo has a meta_package file */
-		meta_path = s.path + "/meta_packages";
+		std::string meta_path = s.path + "/meta_packages";
 		if (!std::filesystem::exists(meta_path))
 			continue;
 
