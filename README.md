@@ -5,8 +5,8 @@ Package manager used for [BirbOS](https://github.com/birb-linux/BirbOS). Package
 
 | Branch | Checks |
 | ------ | ------ |
-| Main   | [![Linting checks](https://github.com/birb-linux/birb/actions/workflows/linting.yml/badge.svg?branch=main)](https://github.com/birb-linux/birb/actions/workflows/linting.yml) |
-| Dev    | [![Linting checks](https://github.com/birb-linux/birb/actions/workflows/linting.yml/badge.svg?branch=dev)](https://github.com/birb-linux/birb/actions/workflows/linting.yml) |
+| Main   | [![Linting checks](https://github.com/birb-linux/birb/actions/workflows/linting.yml/badge.svg?branch=main)](https://github.com/birb-linux/birb/actions/workflows/linting.yml) [![Build](https://github.com/birb-linux/birb/actions/workflows/build.yml/badge.svg?branch=main)](https://github.com/birb-linux/birb/actions/workflows/build.yml) |
+| Dev    | [![Linting checks](https://github.com/birb-linux/birb/actions/workflows/linting.yml/badge.svg?branch=dev)](https://github.com/birb-linux/birb/actions/workflows/linting.yml) [![Build](https://github.com/birb-linux/birb/actions/workflows/build.yml/badge.svg?branch=dev)](https://github.com/birb-linux/birb/actions/workflows/build.yml) |
 
 > **Warning**
 > Please don't use this (outside of [BirbOS](https://github.com/birb-linux/BirbOS) of course). It will cause nuclear war and your computer will catch fire. **You have been warned!**
