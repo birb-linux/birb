@@ -22,7 +22,7 @@ jobs:
     - name: Install default configs
       run: sudo mkdir -p /etc && sudo cp -v birb.conf birb-sources.conf /etc/
     - name: Clone the core package repository
-      run: sudo mkdir -p /var/db && git clone --depth 1 https://github.com/birb-linux/birb /var/db/pkg
+      run: sudo mkdir -p /var/db && sudo git clone --depth 1 https://github.com/birb-linux/birb /var/db/pkg
     - name: ShellCheck
       run: make check_sh
     - name: CppCheck
