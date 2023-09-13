@@ -479,7 +479,7 @@ validate_package_name()
 # Args: [package_name]
 add_package_to_nest()
 {
-	if grep -qx "$1" $NEST && [ -z "$IS_DEPENDENCY_PACKAGE" ]
+	if ! grep -qx "$1" $NEST && [ -z "$IS_DEPENDENCY_PACKAGE" ]
 	then
 		echo "$1" >> $NEST
 	fi
