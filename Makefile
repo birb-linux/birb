@@ -1,7 +1,7 @@
 CXX=g++
 
 override CXXFLAGS+=-std=c++20 -static -I./include -pedantic -Wall -Wextra -Wcast-align -Wcast-qual -Wdisabled-optimization -Wformat=2 -Winit-self -Wlogical-op -Wmissing-declarations -Wmissing-include-dirs -Wnoexcept -Woverloaded-virtual -Wsign-promo -Wstrict-null-sentinel -Wundef -Werror -Wno-unused
-FRONTEND_CXXFLAGS=-flto=auto -DDOCTEST_CONFIG_DISABLE
+FRONTEND_CXXFLAGS=-DDOCTEST_CONFIG_DISABLE
 
 SRC_DIR=./src
 LDFLAGS=-L$(BUILD_DIR) -l:libbirb.a
