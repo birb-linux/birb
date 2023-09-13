@@ -132,8 +132,9 @@ int main(int argc, char** argv)
 		std::unordered_map<std::string, std::string> pkgs = birb::get_repo_versions();
 
 		/* Transform the unordered_map into a std::string vector with the required format */
-		for (auto& pkg : pkgs)
-			db_file.push_back(pkg.first + ";" + pkg.second);
+		std::transform(pkgs.begin(), pkgs.end(), std::back_inserter(db_file), [](const std::pair<std::string, std::string>& pkg) {
+			return pkg.first + ";" + pkg.second;
+		});
 
 		update_db = true;
 	}

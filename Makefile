@@ -11,17 +11,17 @@ all: birb_dep_solver birb_pkg_search birb_db
 
 #### Backend ####
 database.o: $(SRC_DIR)/backend/database.cpp
-	$(CXX) $(CXXFLAGS) -DDOCTEST_CONFIG_IMPLEMENT -c $^ -o $@
+	$(CXX) $(CXXFLAGS) -c $^ -o $@
 
 dependencies.o: $(SRC_DIR)/backend/dependencies.cpp
-	$(CXX) $(CXXFLAGS) -DDOCTEST_CONFIG_IMPLEMENT -c $^ -o $@
+	$(CXX) $(CXXFLAGS) -c $^ -o $@
 
 utils.o: $(SRC_DIR)/backend/utils.cpp
-	$(CXX) $(CXXFLAGS) -DDOCTEST_CONFIG_IMPLEMENT -c $^ -o $@
+	$(CXX) $(CXXFLAGS) -c $^ -o $@
 
 
 libbirb.a: database.o dependencies.o utils.o
-	ar -rcs libbirb.a {database,dependencies,utils}.o
+	ar -rcs $@ $^
 
 #### Testing ####
 birb_test.o: $(SRC_DIR)/birb_test.cpp
@@ -53,17 +53,38 @@ birb_db.o: $(SRC_DIR)/frontend/birb_db.cpp
 birb_db: libbirb.a birb_db.o
 	$(CXX) $(CXXFLAGS) $(FRONTEND_CXXFLAGS) birb_db.o -o $@ libbirb.a
 
+check: check_sh check_cpp
 
-.PHONY: install
+check_cpp:
+	cppcheck --suppress="syntaxError" ${SRC_DIR}
+
+check_sh:
+	shellcheck -x -s bash ./birb
+	shellcheck -x -s bash ./birb ./birb_funcs ./pgo_run.sh
+
+valgrind:
+	valgrind --error-exitcode=10 ./birb_dep_solver birb-utils
+	valgrind --error-exitcode=11 ./birb_dep_solver -r ncurses
+	valgrind --error-exitcode=12 ./birb_dep_solver -o
+	valgrind --error-exitcode=20 ./birb_db --is-installed ncurses
+	valgrind --error-exitcode=21 ./birb_db --list
+	valgrind --error-exitcode=22 ./birb_db --version ncurses
+	valgrind --error-exitcode=23 ./birb_db --help
+	valgrind --error-exitcode=30 ./birb_pkg_search ncurses
+	valgrind --error-exitcode=31 ./birb_pkg_search vim firefox
+
 install:
 	cp ./birb {birb_dep_solver,birb_pkg_search,birb_db} /usr/bin/
 	mkdir -p /usr/lib/birb
 	cp ./birb_funcs ./libbirb.a /usr/lib/birb/
+	mkdir -p /usr/include/birb
+	cp ./include/*.hpp /usr/include/birb/
 	cp ./birb.1 /usr/share/man/man1/birb.1
 	[ -f /etc/birb.conf ] || cp ./birb.conf /etc/birb.conf
 	[ -f /etc/birb-sources.conf ] || cp ./birb-sources.conf /etc/birb-sources.conf
 
-.PHONY: clean
 clean:
 	rm -rf *.o *.a *.gcda
-	rm -f birb_db birb_dep_solver birb_pkg_search
+	rm -f birb_db birb_dep_solver birb_pkg_search birb_test
+
+.PHONY: check_cpp check_sh valgrind clean install

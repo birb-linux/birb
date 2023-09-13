@@ -1,4 +1,7 @@
+#ifdef BIRB_TEST
+#define DOCTEST_CONFIG_IMPLEMENT
 #include <doctest/doctest.h>
+#endif /* BIRB_TEST */
 #include "Utils.hpp"
 #include <cassert>
 #include <fstream>
@@ -50,6 +53,7 @@ namespace birb
 		return result;
 	}
 
+#ifdef BIRB_TEST
 	TEST_CASE("split_string()")
 	{
 		SUBCASE("One char delimiter")
@@ -82,6 +86,7 @@ namespace birb
 			CHECK(A[1] == "world!");
 		}
 	}
+#endif
 
 	std::vector<std::string> read_file(const std::string& file_path)
 	{

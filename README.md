@@ -1,6 +1,13 @@
 # birb
 Package manager used for [BirbOS](https://github.com/birb-linux/BirbOS). Package repository available at https://github.com/birb-linux/BirbOS-packages
 
+**Automated checks**
+
+| Branch | Checks |
+| ------ | ------ |
+| Main   | [![Linting checks](https://github.com/birb-linux/birb/actions/workflows/linting.yml/badge.svg?branch=main)](https://github.com/birb-linux/birb/actions/workflows/linting.yml) [![Build](https://github.com/birb-linux/birb/actions/workflows/build.yml/badge.svg?branch=main)](https://github.com/birb-linux/birb/actions/workflows/build.yml) |
+| Dev    | [![Linting checks](https://github.com/birb-linux/birb/actions/workflows/linting.yml/badge.svg?branch=dev)](https://github.com/birb-linux/birb/actions/workflows/linting.yml) [![Build](https://github.com/birb-linux/birb/actions/workflows/build.yml/badge.svg?branch=dev)](https://github.com/birb-linux/birb/actions/workflows/build.yml) |
+
 > **Warning**
 > Please don't use this (outside of [BirbOS](https://github.com/birb-linux/BirbOS) of course). It will cause nuclear war and your computer will catch fire. **You have been warned!**
 
@@ -19,6 +26,10 @@ For usage instructions, please check the manual either by running `man birb` in 
     - [Search for packages](#search-for-packages)
 - [Feature checklist](#feature-checklist)
 - [Project structure](#project-structure)
+- [Packaging guidelines](#packaging-guidelines)
+    - [Variables](#variables)
+    - [Functions](#functions)
+    - [Package naming conventions](#package-naming-conventions)
 - [Releases](#releases)
 - [Notes on stability](#notes-on-stability)
 
@@ -141,6 +152,147 @@ The output will list all packages that match the search query. The output will a
     - Orphan package finder
 - birb_pkg_search
     - Package finder/browser
+
+
+## Packaging guidelines
+Birb packages are bash compatible shell scripts. When a package is installed, the seed.sh for that package gets sourced by birb and the setup, compiling and installation functions are called in a specific order.
+
+Here is the basic minimal skeleton for a birb package
+```sh
+NAME=""
+DESC=""
+VERSION=""
+SOURCE=""
+CHECKSUM=""
+DEPS=""
+FLAGS=""
+
+_setup()
+{
+	tar -xf $DISTFILES/$(basename $SOURCE)
+	cd ${NAME}-${VERSION}
+}
+
+_build()
+{
+	# make -j${BUILD_JOBS}
+}
+
+_install()
+{
+	# make DESTDIR=$FAKEROOT/$NAME install
+}
+```
+There are more functions available if needed (for running tests, compiling 32bit versions of the package etc.), but the minimal skeleton above is the minimum required at the moment. There's a chance that it will be slimmed down in the future however, since not all packages need the \_build() function.
+
+To make creating packages easier, the [Birb core package repository](https://github.com/birb-linux/BirbOS-packages) contains a [script](https://github.com/birb-linux/BirbOS-packages/blob/master/create_package.sh) that can be used to create package templates to a repository. It also attempts to spot obvious errors in the package that may cause it to malfunction.
+
+### Variables
+Each package should contain **at least** a name, description, version, source and a checksum. The rest are optional and not always needed. Due to the way that some of the variables are parsed, **variables can't be more than one line each in length**. The length of that line doesn't matter.
+
+#### NAME
+Name of the package, should match the parent directory name of the seed.sh file and conform to the [package naming conventions](#package-naming-conventions)
+
+#### DESC
+A description that describes what the programs / libraries contained in the package do. The description length shouldn't go too much over 80 characters in length, but there's no limit to it. The description however will be truncated if it doesn't fit to one terminal line in the package browsing commands.
+
+#### VERSION
+A version string that repeats in the package source URL and possibly in file names. It is used to see if there are updates available for the package and it should also make it easier to bump the package version without modifying other parts of the package (with the exception of updating the checksum of course).
+
+If there are different shorter forms of the version string in parts of the package, you can use the following functions to automatically truncate the version string (replace the [version] part with the *VERSION* variable):
+- **short_version [version]** Transform a version string X.X.X to X.X taking out the patch number
+- **major_version [version]** Transform a version string X.X.X to X leaving only the major version. This will also convert version X.X to X
+
+#### SOURCE
+URL that points to the source code tarball or other compressed form of release that is downloaded
+
+#### CHECKSUM
+MD5 hash of the file that is downloaded from the [SOURCE](#SOURCE) URL. **This checksum isn't meant to signify any sort of trust or integrity and it is only used for checking if the file downloaded is corrupted or not**. If integrity and trust are needed, that should be achieved with better hashing algorithms (like SHA256, SHA512 etc.) and/or GPG keys.
+
+#### DEPS
+Build time and runtime dependencies that are required for using and building the package. This doesn't have to include things like the compiler, linker and/or lower level things that are assumed to be always on the system. Multiple dependencies can be defined in a whitespace separated list on one line. You can leave out any dependencies that get pulled in by one of the other dependencies, since birb solves the dependencies of the dependencies you add recursively.
+
+#### FLAGS
+The flags variable controls how birb sees the package.
+
+There are several flags available:
+- **32bit** Enables the running of \_build32() and \_install32() functions. You can use them to build and install 32-bit libraries for the package
+- **test32** Enables the running of \_test32(). It is called after \_build32() and is meant to be used for running tests
+- **font** Marks the package as a font. Causes birb to run fc-cache after finishing the installation to update the font cache
+- **important** Marks the package as system critical and important. Important packages won't be found as orphan packages and also when attempting to uninstall them, there's a separate warning
+- **proprietary** Marks the package as proprietary, as in it contains binary blobs. This flag should be used for binary releases too even if there's source code available online. Attempting to install a package marked as proprietary will produce a warning message
+- **python** Marks the package as a python package. Birb will internally use pip when uninstalling these packages
+- **test** Enables the running of \_test(). It is called after \_build() and is meant to be used for running tests
+- **wip** Marks the package was "work in progress", i.e. not ready to be used. Attempting to install a package marked as wip produces a warning. Generally packages that might not be fully functional yet and/or fail to compile repeatedly should be marked as wip
+
+#### NOTES
+Optional variable that can be used to print out a highlighted message at the end of the package installation. This could include instructions on what to do after installing the package, like adding your user to some specific group for example.
+
+### Functions
+When a package is installed, birb will call pre-defined functions in a specific order. Some of the functions require flags before they get run, but this may change in the future to simplify the flag usage.
+
+The following functions should exist in all packages:
+- \_setup
+- \_build
+- \_install
+
+There are also some optional functions that might also require flags to be used:
+- \_test
+- \_build32
+- \_test32
+- \_install32
+- \_post_install
+
+The package functions will be called in the following order:
+1. \_setup
+2. \_build
+3. \_test
+4. \_install
+5. \_build32
+6. \_test32
+7. \_install32
+8. \_post_install
+
+#### _setup
+The setup function extracts the source tarball/archive and enters the extracted directory. Usually this function doesn't need to be changed at all and the default generated by the create_package script is fine
+
+#### _build
+Build the 64bit (or possibly multilib in some cases) libraries and binaries. If the package doesn't involve building anything this function can be left empty with a simple `printf ""` call for example that does nothing. This function may become optional in the future.
+
+#### _test
+Run included test suites. Requires the *test* [flag](#FLAGS).
+
+#### _install
+Install the package and/or copy compiled binary files to the fakeroot directory. You can also create any needed directories in the root file system, but avoid dropping files outside of the package fakeroot.
+
+The installation step may also include creating any default configuration files or creating user groups etc. Basically anything needed to use the program/library/file after birb has finished installing it.
+
+#### _build32
+Build 32bit binaries/libraries. Requires the *32bit* [flag](#FLAGS).
+
+#### _test32
+Run included test suites against the 32bit binaries/libraries. Requires the *test32* [flag](#FLAGS).
+
+#### _install32
+Install the compiled 32bit binaries/libraries. This usually requires a bit more manual installation so that the libraries go to their correct places like */usr/lib32* instead of */usr/lib* for example. Requires the *32bit* [flag](#FLAGS).
+
+#### _post_install
+An optional function that doesn't require any flags and can be used to run commands after birb has finished installing the package. This may be useful in cases where you need to execute something that isn't available on the system before the installation has been fully completed.
+
+### Package naming conventions
+There aren't any hard coded "requirements" on the package names when it comes to the meaning, but there are some limitations on the formatting.
+
+The package name may only include the following things:
+- Lowercase letters a-z
+- Numbers
+- Underscores
+- Lines
+- Plus signs
+
+There may be more characters allowed in the future and the current list is there mainly to make finding and installing packages easier. Due to the nature of the programming languages used, avoiding special characters also gets rid of a lot of bugs related to shell expansions and file globbing.
+
+If you can echo your package name through this grep command: `grep -w '^[0-9a-z_+-]*$'`, birb should allow it.
+
 
 ## Releases
 Updates to birb come in a rolling release manner. However if you are in a need of some stable point, you can use release tarballs from [here](https://github.com/birb-linux/birb/releases). However if you are using a release tarball, make sure that you are using a matching birb-core repository version from [here](https://github.com/birb-linux/BirbOS-packages/releases). As a general rule of thumb, if the major versions match, the repository should be fully compatible with the package manager.

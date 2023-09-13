@@ -95,10 +95,9 @@ namespace birb
 		std::vector<std::string> installed_packages = birb::get_installed_packages();
 
 		/* Get the reverse dependencies for the package with no recursion */
-		std::vector<std::string> temp_deps;
 		for (size_t i = 0; i < installed_packages.size(); ++i)
 		{
-			temp_deps = get_dependencies(installed_packages[i], repos, 0);
+			std::vector<std::string> temp_deps = get_dependencies(installed_packages[i], repos, 0);
 
 			/* Check if the package had this package we are inspecting in
 			 * its dependency list */
@@ -173,11 +172,10 @@ namespace birb
 		std::vector<std::string> clean_reverse_deps;
 
 		constexpr int max_passes = 256;
-		bool clean_run = true;
 
 		for (int pass = 0; pass < max_passes; ++pass)
 		{
-			clean_run = true;
+			bool clean_run = true;
 			for (size_t i = 0; i < orphan_candidates.size(); ++i)
 			{
 				std::cout << "\rScanning... [Pass: " << pass + 1 << "] [" << i + 1 << "/" << orphan_candidates.size() << "]" << std::flush;

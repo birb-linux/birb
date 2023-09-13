@@ -17,6 +17,12 @@ jobs:
       with:
         packages: cppcheck shellcheck
         version: 1.0
+    - name: Install birb funcs
+      run: sudo mkdir -p /usr/lib/birb && sudo cp -v birb_funcs /usr/lib/birb/
+    - name: Install default configs
+      run: sudo mkdir -p /etc && sudo cp -v birb.conf birb-sources.conf /etc/
+    - name: Download the vim package seed used with shellcheck
+      run: sudo mkdir -p /var/db/pkg/vim && sudo curl -o /var/db/pkg/vim/seed.sh https://raw.githubusercontent.com/birb-linux/BirbOS-packages/master/vim/seed.sh
     - name: ShellCheck
       run: make check_sh
     - name: CppCheck
