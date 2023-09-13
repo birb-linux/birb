@@ -17,8 +17,10 @@ jobs:
       with:
         packages: cppcheck shellcheck
         version: 1.0
-    - name: Install birb
-      run: make && make install
+    - name: Install birb funcs
+      run: sudo mkdir -p /usr/lib/birb && sudo cp -v birb_funcs /usr/lib/birb/
+    - name: Install default configs
+      run: sudo mkdir -p /etc && sudo cp -v birb.conf birb-sources.conf /usr/lib/birb/
     - name: ShellCheck
       run: make check_sh
     - name: CppCheck
