@@ -21,7 +21,7 @@ utils.o: $(SRC_DIR)/backend/utils.cpp
 
 
 libbirb.a: database.o dependencies.o utils.o
-	ar -rcs $@ $^
+	gcc-ar -rcs $@ $^
 
 #### Testing ####
 birb_test.o: $(SRC_DIR)/birb_test.cpp
