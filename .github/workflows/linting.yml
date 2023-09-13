@@ -20,7 +20,7 @@ jobs:
     - name: Install birb funcs
       run: sudo mkdir -p /usr/lib/birb && sudo cp -v birb_funcs /usr/lib/birb/
     - name: Install default configs
-      run: sudo mkdir -p /etc && sudo cp -v birb.conf birb-sources.conf /usr/lib/birb/
+      run: sudo mkdir -p /etc && sudo cp -v birb.conf birb-sources.conf /etc/
     - name: ShellCheck
       run: make check_sh
     - name: CppCheck
