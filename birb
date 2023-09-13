@@ -472,7 +472,7 @@ invalid_package_name_error()
 # like '/' and '.', because they can cause a lot of trouble
 validate_package_name()
 {
-	echo "$1" | grep -q '[\./,!?]' && invalid_package_name_error "$1"
+	echo "$1" | grep -wq '^[0-9a-z_+-]*$' || invalid_package_name_error "$1"
 }
 
 # Add a package to nest if it was installed by the user
