@@ -17,6 +17,8 @@ jobs:
       with:
         packages: cppcheck shellcheck
         version: 1.0
+    - name: Install birb
+      run: make && make install
     - name: ShellCheck
       run: make check_sh
     - name: CppCheck
