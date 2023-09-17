@@ -136,6 +136,7 @@ The output will list all packages that match the search query. The output will a
 - [x] Package search
 - [ ] Compile time statistics
 - [ ] Verify source code integrity with GPG where possible
+- [ ] Recommend rebuilding already installed software in cases of circular dependencies
 
 
 ## Project structure
