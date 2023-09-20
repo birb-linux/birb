@@ -542,7 +542,7 @@ install_package()
 	flag_warning "wip" "This package is still considered 'work in progress' and may not be fully functional!"
 
 	# Check if the package is marked as proprietary
-	flag_warning "proprietary" "This package contains proprietary binary blobs!"
+	flag_warning "proprietary" "This package contains binary blobs! Source code may or may not be available. Proceed with caution."
 
 	# Export env variables used for installing Xorg related packages
 	export XORG_PREFIX="$FAKEROOT/$NAME/usr"
