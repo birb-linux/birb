@@ -47,9 +47,12 @@ int main(int argc, char** argv)
 			continue;
 		}
 
+		std::string version 	= birb::read_pkg_variable(argv[i], "VERSION", repo.path);
+		std::string description = birb::read_pkg_variable(argv[i], "DESC", repo.path);
+
 		std::cout << argv[i] << ";";
-		std::cout << birb::read_pkg_variable(argv[i], "VERSION", repo.path) << ";";
-		std::cout << birb::read_pkg_variable(argv[i], "DESC", repo.path) << ";";
+		std::cout << version << ";";
+		std::cout << description << ";";
 
 		/* Check if the package is installed */
 		for (std::string package : installed_packages)

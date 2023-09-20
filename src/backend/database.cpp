@@ -113,7 +113,11 @@ namespace birb
 			}
 		}
 
-		assert(var_line.size() > var_name.size() + 2 && "The var_line result is too short");
+		if (var_line.size() <= var_name.size() + 2)
+		{
+			std::cerr << "Package " << pkg_name << " is corrupted! Please check the formatting for variable '" << var_name << "' in " << repo_path << "/" << pkg_name << "/seed.sh\n";
+			exit(1);
+		}
 
 		/* We are done with the file, stop reading it */
 		pkg_file.close();
