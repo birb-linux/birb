@@ -778,7 +778,7 @@ install_package()
 	fi
 
 	# If the package is a font, run fc-cache
-	[ -n "$PACKAGE_IS_FONT" ] && fc-cache
+	[ -n "$PACKAGE_IS_FONT" ] && println "Updating font cache" && fc-cache
 
 	# Add the package into the nest file if the installation was successful
 	add_package_to_nest "$PACKAGE_NAME"
