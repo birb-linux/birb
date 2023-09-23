@@ -397,7 +397,7 @@ download_additional()
 prepare_fakeroot()
 {
 	mkdir -p "$1"/{usr/{lib/bfd-plugins,lib32,share/{doc,man/man{1..8}},bin,sbin,include},etc,sbin}
-	mkdir -p "$1"/usr/share/fonts/TTF
+	mkdir -p "$1"/usr/share/fonts/{TTF,OTF}
 	mkdir -p "$1"/usr/share/applications
 	mkdir -p "$1"/etc/X11/app-defaults
 }
