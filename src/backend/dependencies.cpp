@@ -120,6 +120,10 @@ namespace birb
 		if (dependencies.empty())
 			return result;
 
+		/* Use the dependency cache to approximately guess the final size of the result vector
+		 * so that there wouldn't be any vector resizes */
+		result.reserve(dependency_cache.size() * 2);
+
 		std::unordered_set<std::string> exists_in_results;
 
 		/* Start from the end of the list and add each package
