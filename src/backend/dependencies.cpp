@@ -75,6 +75,7 @@ namespace birb
 			deps = meta_packages[pkg];
 		}
 
+
 		/* Get dependencies of the dependencies of this package, if any */
 		const size_t deps_size = deps.size();
 		for (size_t i = 0; i < deps_size; ++i)
@@ -87,6 +88,10 @@ namespace birb
 
 		/* Cache the results */
 		dependency_cache[pkg] = deps;
+
+		/* Deduplicate */
+		deps = deduplicated_dep_list(deps);
+
 
 		return deps;
 	}
@@ -126,9 +131,9 @@ namespace birb
 
 		std::unordered_set<std::string> exists_in_results;
 
-		/* Start from the end of the list and add each package
+		/* Start from the start of the list and add each package
 		 * to the list only once */
-		for (int i = dependencies.size() - 1; i >= 0; --i)
+		for (size_t i = 0; i < dependencies.size(); ++i)
 		{
 			/* Skip meta-packages */
 			if (meta_packages.contains(dependencies[i]))
