@@ -22,7 +22,7 @@ int main(int argc, char** argv)
 	 * so check for that before continuing with the rest of the program */
 	if (birb::argcmp(argv[1], argc, "--locate-package", 1))
 	{
-		std::vector<pkg_source> repo_list = birb::get_pkg_sources();
+		const std::vector<pkg_source> repo_list = birb::get_pkg_sources();
 		pkg_source repo = birb::locate_pkg_repo(argv[2], repo_list);
 
 		if (repo.is_valid())
@@ -41,7 +41,7 @@ int main(int argc, char** argv)
 	/* Also this command doesn't need the package database */
 	if (birb::argcmp(argv[1], argc, "--list-repositories", 0))
 	{
-		std::vector<std::string> repository_list = birb::get_pkg_source_list();
+		const std::vector<std::string> repository_list = birb::get_pkg_source_list();
 
 		/* Print out the repositories */
 		for (std::string r : repository_list)
@@ -58,7 +58,7 @@ int main(int argc, char** argv)
 
 	if (birb::argcmp(argv[1], argc, "--diff", 0))
 	{
-		std::unordered_map<std::string, std::string> repo_data = birb::get_repo_versions();
+		const std::unordered_map<std::string, std::string> repo_data = birb::get_repo_versions();
 
 		/* Go through the installed packages and list out packages with differing versions */
 		std::vector<std::string> db_entry(DB_LINE_COLUMN_COUNT);
@@ -67,18 +67,18 @@ int main(int argc, char** argv)
 			db_entry = birb::split_string(p, ";");
 
 			/* Skip packages that aren't in the pkg repo */
-			if (repo_data[db_entry[0]].empty())
+			if (repo_data.at(db_entry.at(0)).empty())
 				continue;
 
 			/* Compare the versions */
-			if (repo_data[db_entry[0]] != db_entry[1])
-				std::cout << p << ";" << repo_data[db_entry[0]] << "\n";
+			if (repo_data.at(db_entry.at(0)) != db_entry.at(1))
+				std::cout << p << ";" << repo_data.at(db_entry.at(0)) << "\n";
 		}
 	}
 
 	if (birb::argcmp(argv[1], argc, "--is-installed", 1))
 	{
-		std::vector<std::string> db_entry = birb::find_db_entry(db_file, argv[2]);
+		const std::vector<std::string> db_entry = birb::find_db_entry(db_file, argv[2]);
 
 		if (db_entry.empty())
 			std::cout << "no\n";
@@ -129,7 +129,7 @@ int main(int argc, char** argv)
 		db_file.clear();
 
 		/* Get list of all packages in the fakeroot */
-		std::unordered_map<std::string, std::string> pkgs = birb::get_repo_versions();
+		const std::unordered_map<std::string, std::string> pkgs = birb::get_repo_versions();
 
 		/* Transform the unordered_map into a std::string vector with the required format */
 		std::transform(pkgs.begin(), pkgs.end(), std::back_inserter(db_file), [](const std::pair<std::string, std::string>& pkg) {
@@ -181,7 +181,7 @@ int main(int argc, char** argv)
 	if (birb::argcmp(argv[1], argc, "--version", 1))
 	{
 		/* Check the installed version */
-		std::vector<std::string> db_entry = birb::find_db_entry(db_file, argv[2]);
+		const std::vector<std::string> db_entry = birb::find_db_entry(db_file, argv[2]);
 
 		if (db_entry.empty())
 			return 1;
