@@ -86,7 +86,7 @@ namespace birb
 		dependency_cache[pkg] = deps;
 
 		/* Deduplicate */
-		deps = deduplicated_dep_list(deps);
+		//deps = deduplicated_dep_list(deps);
 
 
 		return deps;
@@ -127,9 +127,9 @@ namespace birb
 
 		std::unordered_set<std::string> exists_in_results;
 
-		/* Start from the start of the list and add each package
+		/* Start from the end of the list and add each package
 		 * to the list only once */
-		for (size_t i = 0; i < dependencies.size(); ++i)
+		for (int i = dependencies.size() - 1; i >= 0; --i)
 		{
 			/* Skip meta-packages */
 			if (meta_packages.contains(dependencies[i]))
