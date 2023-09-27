@@ -19,10 +19,6 @@ namespace birb
 
 		std::vector<std::string> deps;
 
-		/* Reserve some memory beforehand to avoid too unnecessary std::vector
-		 * resizes with packages that have lots of dependencies */
-		deps.reserve(100000);
-
 		/* Avoid dependency loops and infinite (or unnecessary) recursion */
 		if (depth < 0)
 			return deps;
