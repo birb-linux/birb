@@ -67,7 +67,7 @@ int main(int argc, char** argv)
 			db_entry = birb::split_string(p, ";");
 
 			/* Skip packages that aren't in the pkg repo */
-			if (repo_data.at(db_entry.at(0)).empty())
+			if (!repo_data.contains(db_entry.at(0)))
 				continue;
 
 			/* Compare the versions */
