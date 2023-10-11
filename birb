@@ -409,7 +409,7 @@ has_use()
 {
 	# Check if a useflag is set by using grep
 	HAS_FLAG="$(echo "$USE_FLAGS" | grep -wo "$1")"
-	return "$([ -n "$HAS_FLAG" ])"
+	[[ -n "$HAS_FLAG" ]] && return 0 || return 1
 }
 
 # If the use flag has been set in the config file, expand it into some command
