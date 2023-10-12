@@ -305,6 +305,10 @@ download_src()
 	# This also requires rsync to be installed
 	if [ -f /usr/bin/birbd ] && [ -f /etc/birbd.conf ] && [ -f /usr/bin/rsync ]
 	then
+		# Make sure that later parts of the program can use the BIRBD_RESPONSE
+		# variable even if no tarball was found
+		unset BIRBD_RESPONSE
+
 		# Read the birbd configuration file and check if it has
 		# any valid IP-addresses
 		BIRBD_ADDRESSES="$(sed 's/#.*//g; /^[[:space:]]*$/d' /etc/birbd.conf | grep -o "[0-9]*\.[0-9]*\.[0-9]\.[0-9]*")"
@@ -792,6 +796,14 @@ install_package()
 		_post_install
 	fi
 
+	# Remove the package tarball if it was gotten from a local birbd server
+	# This is to save space. The tarball isn't really needed locally as it can be
+	# quickly re-fetched if needed
+	if [ "$BIRBD_RESPONSE" == "positive" ]
+	then
+		println "Removing a tarball that was fetched with birbd"
+		rm -v "$DISTFILES/$TARBALL"
+	fi
 
 	echo "$PACKAGE_NAME installation finished"
 	set +e
