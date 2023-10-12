@@ -73,6 +73,10 @@ valgrind:
 	valgrind --error-exitcode=30 ./birb_pkg_search ncurses
 	valgrind --error-exitcode=31 ./birb_pkg_search vim firefox
 
+install-lib:
+	mkdir -p /usr/lib/birb
+	cp ./birb_funcs /usr/lib/birb/
+
 install:
 	cp ./birb {birb_dep_solver,birb_pkg_search,birb_db} /usr/bin/
 	mkdir -p /usr/lib/birb
@@ -87,4 +91,4 @@ clean:
 	rm -rf *.o *.a *.gcda
 	rm -f birb_db birb_dep_solver birb_pkg_search birb_test
 
-.PHONY: check_cpp check_sh valgrind clean install
+.PHONY: check_cpp check_sh valgrind clean install install-lib
