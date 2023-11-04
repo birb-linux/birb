@@ -1,8 +1,5 @@
 #!/bin/bash
 
-# URL where birb gets its source code from
-BIRB_REMOTE="https://github.com/birb-linux/birb"
-
 # Check if the LFS variable is set
 # If it isn't empty, it means that we are installing
 # BirbOS and the LFS variable should be used as the
@@ -56,6 +53,10 @@ BIRB_REPO_LIST_PATH="$INSTALL_PREFIX/etc/birb-sources.conf"
 [ -z "$ENABLE_LTO" ] && ENABLE_LTO=yes
 [ -z "$BUILD_JOBS" ] && BUILD_JOBS="$(nproc)"
 [ -z "$ENABLE_32BIT_PACKAGES" ] && ENABLE_32BIT_PACKAGES=yes
+
+# URL where birb gets its source code from
+[ -z "$BIRB_REMOTE" ] && BIRB_REMOTE="https://github.com/birb-linux/birb"
+
 
 # Load the configuration file (if it exists)
 if [ -f "$BIRB_CFG_PATH" ]
