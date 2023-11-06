@@ -174,6 +174,11 @@ source_pkg_seed()
 	# Make sure that the seed file exists
 	[ ! -f "$REPO_DIR/$1/seed.sh" ] && echo "Invalid seed file: $1" && exit 1
 
+	# Reset all package variables in-case some package has omitted
+	# a variable or two
+	unset NAME DESC VERSION SOURCE CHECKSUM DEPS FLAGS NOTES
+	unset _post_install
+
 	# shellcheck source=/var/db/pkg/vim/seed.sh
 	source "$REPO_DIR/$1/seed.sh"
 }
@@ -246,7 +251,19 @@ fetch_file()
 	# Check if wget is installed
 	[ ! -f /usr/bin/wget ] && println ERROR "wget isn't installed! Birb cannot download anything without it (╯°□°)╯︵ ┻━┻" && exit 1
 
-	wget -q --show-progress --directory-prefix="$DISTFILES" "$1" || { println ERROR "Couldn't dowload $1"; exit 1; }
+	# Handle .onion addresses with torsocks if required
+	TORSOCKS_COMMAND=""
+	if onion_check "$1"
+	then
+		# The package has an onion source URL, check if tor is installed and running
+		tor_check || exit 1
+
+		# Make wget use torsocks
+		TORSOCKS_COMMAND="torsocks"
+		echo "Downloading the package through Tor from $1"
+	fi
+
+	"$TORSOCKS_COMMAND" wget -q --show-progress --directory-prefix="$DISTFILES" "$1" || { println ERROR "Couldn't dowload $1"; exit 1; }
 }
 
 # This function is internal and should only be used by the
@@ -490,6 +507,27 @@ add_package_to_nest()
 	fi
 }
 
+# Check if the package has a source URL that points to an .onion address
+# Args: [url]
+onion_check()
+{
+	grep -q "http://[A-Za-z2-7]*d.onion" <<< "$1"
+}
+
+# Check if tor is installed and running. Also make sure that torsocks is installed
+tor_check()
+{
+	println "Checking if Tor is installed and running..."
+	[ ! -f /usr/bin/tor ] && println ERROR "Tor isn't installed! Birb cannot download packages from .onion addresses without it (＞﹏＜)" && exit 1
+	[ ! -f /usr/bin/torsocks ] && println ERROR "torsocks isn't installed! Birb cannot download packages from .onion addresses without it (」＞＜)」" && exit 1
+
+	if ! pgrep -x tor &>/dev/null
+	then
+		println ERROR "Tor isn't running! Birb cannot download packages from .onion addresses without it (ﾉω･､)"
+		exit 1
+	fi
+}
+
 install_package()
 {
 	root_check
@@ -534,11 +572,6 @@ install_package()
 		# delete the fakeroot to avoid any dangling / corrupt files
 		[ -d "$FAKEROOT/$PACKAGE_NAME" ] && println "Deleting an existing fakeroot" && rm -r "${FAKEROOT:?}/$PACKAGE_NAME"
 	fi
-
-	# Reset all package variables in-case some package has omitted
-	# a variable or two
-	unset NAME DESC VERSION SOURCE CHECKSUM DEPS FLAGS NOTES
-	unset _post_install
 
 	# Source the package variables and functions
 	source_pkg_seed "$PACKAGE_NAME"
@@ -595,6 +628,27 @@ install_package()
 				exit 1
 				;;
 		esac
+
+		# Check if there are any dependencies that have special requirements
+		# Those would be better to solve before starting to compile anything, because otherwise
+		# the installation might cancel out midway into a long installation process
+		println "Checking dependency requirements"
+		unset ONION_DEPENDENCY
+		for i in $DEPS_TO_INSTALL
+		do
+			# Check if the dependency has an .onion source URL
+			if onion_check
+			then
+				ONION_DEPENDENCY="true"
+				break
+			fi
+		done
+
+		# Check if Tor is running if there was an onion dependency found
+		if [ "$ONION_DEPENDENCY" == "true" ]
+		then
+			tor_check || { println ERROR "A dependency was found that requires Tor to be running and it wasn't. Quitting..."; exit 1; }
+		fi
 
 		println "Attempting to install the following packages: [$DEPS_TO_INSTALL]"
 		# shellcheck disable=SC2086
