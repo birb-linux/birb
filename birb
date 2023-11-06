@@ -422,6 +422,7 @@ prepare_fakeroot()
 	mkdir -p "$1"/usr/share/fonts/{TTF,OTF}
 	mkdir -p "$1"/usr/share/applications
 	mkdir -p "$1"/etc/X11/app-defaults
+	mkdir -p "$1"/etc/rc.d/{init.d,rc{0..6}.d,rcS.d}
 }
 
 # Returns whether the use flag is enabled
