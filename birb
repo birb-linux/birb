@@ -508,27 +508,6 @@ add_package_to_nest()
 	fi
 }
 
-# Check if the package has a source URL that points to an .onion address
-# Args: [url]
-onion_check()
-{
-	grep -q "http://[A-Za-z2-7]*d.onion" <<< "$1"
-}
-
-# Check if tor is installed and running. Also make sure that torsocks is installed
-tor_check()
-{
-	println "Checking if Tor is installed and running..."
-	[ ! -f /usr/bin/tor ] && println ERROR "Tor isn't installed! Birb cannot download packages from .onion addresses without it (＞﹏＜)" && exit 1
-	[ ! -f /usr/bin/torsocks ] && println ERROR "torsocks isn't installed! Birb cannot download packages from .onion addresses without it (」＞＜)」" && exit 1
-
-	if ! pgrep -x tor &>/dev/null
-	then
-		println ERROR "Tor isn't running! Birb cannot download packages from .onion addresses without it (ﾉω･､)"
-		exit 1
-	fi
-}
-
 install_package()
 {
 	root_check
