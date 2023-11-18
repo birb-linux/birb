@@ -8,11 +8,7 @@ labels:
 ---
 
 **Problem**
-<!---
-What problem needs to be solved or what is the missing feature?
--->
+<textarea label="Problem" description="What problem needs to be solved or what is the missing feature?"></textarea>
 
 **Solution**
-<!---
-What kind of feature would solve the problem listed above?
--->
+<textarea label="Solution" description="What kind of feature would solve the problem listed above?"></textarea>
