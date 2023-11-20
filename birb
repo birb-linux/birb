@@ -76,6 +76,7 @@ print_help()
 	echo "  -i  --install [options] PACKAGE(s) install given package(s) to the filesystem"
 	echo "  -u  --uninstall PACKAGE(s)         uninstall given package(s) from the filesystem"
 	echo "      --depclean                     find and uninstall orphan packages"
+	echo "      --distclean                    clear the distcache"
 	echo "      --relink PACKAGE(s)            re-create symlinks to the package fakeroots"
 	echo "  -s  --search                       search for packages by name"
 	echo "  -b  --browse                       browse packages and their descriptions with fzf"
@@ -240,6 +241,27 @@ remove_orphan_dependencies()
 	# Uninstall packages while not caring about reverse dependencies (should be safe)
 	# shellcheck disable=SC2086
 	{ YOLO=true birb --uninstall $ORPHAN_PACKAGES && echo -e "Orphan removal finished!\nReclaimed storage:\n$RECLAIMED_SPACE"; } || println ERROR "Something went wrong during orphan removal..."
+}
+
+# Delete all files in /var/cache/distfiles
+# This function will leave the birb source code alone though as a precaution
+clear_distcache()
+{
+	root_check
+
+	# Check how much space will be reclaimed
+	du --exclude="birb" -shc "$DISTFILES/"
+
+	read -rp "Clean distcache? (Y/n): " AGREE_CLEAN_DISTCACHE
+	case $AGREE_CLEAN_DISTCACHE in
+		n|N|no|No)
+			echo "Cancelled"
+			exit 1
+			;;
+		*) ;;
+	esac
+
+	find "$DISTFILES" -maxdepth 1 -type f -delete && echo "Distcache cleared ヽ(*・ω・)ﾉ" || echo "Something went wrong (*/ω＼)"
 }
 
 # A wrapper around wget with some error checking and output formatting
@@ -1388,6 +1410,12 @@ while test $# -gt 0; do
 		--depclean)
 			shift
 			remove_orphan_dependencies
+			exit 0
+			;;
+
+		--distclean)
+			shift
+			clear_distcache
 			exit 0
 			;;
 
