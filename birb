@@ -273,19 +273,24 @@ fetch_file()
 	# Check if wget is installed
 	[ ! -f /usr/bin/wget ] && println ERROR "wget isn't installed! Birb cannot download anything without it (╯°□°)╯︵ ┻━┻" && exit 1
 
+	local URL="$1"
+
+	# Handle alternative download mirrors
+	URL="$(echo "$URL" | sed "$ALT_SOURCES")"
+
 	# Handle .onion addresses with torsocks if required
 	TORSOCKS_COMMAND=""
-	if onion_check "$1"
+	if onion_check "$URL"
 	then
 		# The package has an onion source URL, check if tor is installed and running
 		tor_check || exit 1
 
 		# Make wget use torsocks
 		TORSOCKS_COMMAND="torsocks"
-		echo "Downloading the package through Tor from $1"
+		echo "Downloading the package through Tor from $URL"
 	fi
 
-	$TORSOCKS_COMMAND wget -q --show-progress --directory-prefix="$DISTFILES" "$1" || { println ERROR "Couldn't dowload $1"; exit 1; }
+	$TORSOCKS_COMMAND wget -q --show-progress --directory-prefix="$DISTFILES" "$URL" || { println ERROR "Couldn't dowload $URL"; exit 1; }
 }
 
 # This function is internal and should only be used by the
