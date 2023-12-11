@@ -1255,7 +1255,7 @@ birb_upgrade()
 
 		cd "$DISTFILES"
 		println "Cloning birb sources"
-		git clone $BIRB_REMOTE
+		git clone "$BIRB_REMOTE"
 	fi
 
 	# If the package list cache doesn't exist yet, create it
