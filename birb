@@ -84,6 +84,7 @@ print_help()
 	echo "      --sync [--force]               sync package repositories"
 	echo "      --list-installed               list all currently installed packages"
 	echo "      --update                       update out-of-date packages"
+	echo "      --restore PACKAGE              restore a fakeroot backup"
 	echo "      --upgrade [--debug|--test]     update the birb package manager"
 	echo ""
 	echo "If a valid package names are given as the only arguments, birb will attempt"
@@ -1107,6 +1108,11 @@ update_packages()
 			echo "remove the backup fakeroot and try to run this update again"
 			exit 1
 		fi
+
+		println "Cleaning out empty directories from the fakeroot"
+		find "$FAKEROOT/$PKG_UPDATE_IN_PROGRESS" -type d -empty -delete
+
+		# Take a backup copy of the fakeroot
 		cp -r "${FAKEROOT:?}/$PKG" "${FAKEROOT_BACKUP_PATH:?}/$PKG"
 
 		println "Transferring symlinks to the backup copy of $PKG"
@@ -1387,6 +1393,42 @@ fakeroot_repair()
 	done
 }
 
+# Restore and relink a fakeroot from the
+# /var/backup/birb/fakeroot_backups directory.
+fakeroot_restore()
+{
+	root_check
+
+	local PKG_NAME="$1"
+	if [ ! -d "$FAKEROOT_BACKUP_PATH/$PKG_NAME" ]
+	then
+		println ERROR "There's no fakeroot backup for $PKG_NAME"
+		exit 1
+	fi
+
+	println "Deleting empty directories from the fakeroot backup"
+	find "$FAKEROOT_BACKUP_PATH/$PKG_NAME" -type d -empty -delete
+
+	println "Restoring fakeroot for $PKG_NAME from fakeroot backups"
+
+	set -e
+
+	cp -r "$FAKEROOT_BACKUP_PATH/$PKG_NAME" "$FAKEROOT/"
+
+	println "Removing backup symlinks"
+	stow -D -t / -d "$FAKEROOT_BACKUP_PATH" "$PKG_NAME"
+
+	relink_package "$PKG_NAME"
+
+	println "Deleting the fakeroot backup"
+	rm -r "${FAKEROOT_BACKUP_PATH:?}/$PKG_NAME"
+
+	println "Marking the package as installed with an unknown version"
+	birb_db --update "$PKG_NAME" "0.0.0"
+
+	set +e
+}
+
 
 # Check if the first argument is a valid package name
 if [ -d "$REPO_DIR/$1" ]
@@ -1577,6 +1619,16 @@ while test $# -gt 0; do
 		--repair)
 			shift
 			fakeroot_repair
+			;;
+
+		--restore)
+			shift
+			if test $# -gt 0; then
+				fakeroot_restore "$1"
+			else
+				println ERROR "Missing argument: package_name"
+			fi
+			exit 0
 			;;
 
 		-*)
