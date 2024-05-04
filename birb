@@ -291,7 +291,7 @@ fetch_file()
 		echo "Downloading the package through Tor from $URL"
 	fi
 
-	$TORSOCKS_COMMAND wget -q --show-progress --directory-prefix="$DISTFILES" "$URL" || { println ERROR "Couldn't dowload $URL"; exit 1; }
+	$TORSOCKS_COMMAND wget -q --show-progress --directory-prefix="$DISTFILES" "$URL" || { println ERROR "Couldn't download $URL"; exit 1; }
 }
 
 # This function is internal and should only be used by the
