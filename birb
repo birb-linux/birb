@@ -851,12 +851,18 @@ install_package()
 	add_package_to_nest "$PACKAGE_NAME"
 	birb_db --update "$PACKAGE_NAME" "$VERSION"
 
-	# Run a post-install hook if the package has specified the _post_install() function
-	if [ "$(type -t _post_install)" == "function" ]
+	# Skip processing post install stuff if we are updating
+	if [ "$BIRB_PKG_UPDATE" == "true" ]
 	then
-		println "Running a post-install commands"
-		set_win_title "Installing $PACKAGE_NAME (post-install)"
-		_post_install
+		println "Skipping post-install since we are updating"
+	else
+		# Run a post-install hook if the package has specified the _post_install() function
+		if [ "$(type -t _post_install)" == "function" ]
+		then
+			println "Running a post-install commands"
+			set_win_title "Installing $PACKAGE_NAME (post-install)"
+			_post_install
+		fi
 	fi
 
 	# Remove the package tarball if it was gotten from a local birbd server
