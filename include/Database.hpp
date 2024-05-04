@@ -17,8 +17,8 @@ struct pkg_source
 	std::string url  = "";
 	std::string path = "";
 
-	void print();
-	bool is_valid();
+	void print() const;
+	bool is_valid() const;
 };
 
 namespace birb

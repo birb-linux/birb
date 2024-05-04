@@ -53,6 +53,9 @@ List all currently installed packages
 \fB--update\fP
 Find all packages that are out-of-date and attempt to update them. In most cases you should be able to cancel the update after you have already started it and \fBbirb\fP should be able to restore things back, but if anything goes wrong, you can find (usually) a backup of the package fakeroot from /var/backup/birb/fakeroot_backups.
 .TP
+\fB--restore \fIPACKAGE\fP
+Restore a fakeroot backup created by a failed update. This option will cause the package to be uninstalled for a moment, so be careful with using this option if the package is important to the system stability.
+.TP
 \fB--upgrade [--debug|--test]\fP
 Update the birb package manager.
 

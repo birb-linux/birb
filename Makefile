@@ -1,7 +1,7 @@
 CXX=g++
 
 override CXXFLAGS+=-std=c++20 -static -I./include -pedantic -Wall -Wextra -Wcast-align -Wcast-qual -Wdisabled-optimization -Wformat=2 -Winit-self -Wlogical-op -Wmissing-declarations -Wmissing-include-dirs -Wnoexcept -Woverloaded-virtual -Wsign-promo -Wstrict-null-sentinel -Wundef -Werror -Wno-unused
-FRONTEND_CXXFLAGS=-flto=auto -DDOCTEST_CONFIG_DISABLE
+FRONTEND_CXXFLAGS=-DDOCTEST_CONFIG_DISABLE
 
 SRC_DIR=./src
 LDFLAGS=-L$(BUILD_DIR) -l:libbirb.a
@@ -21,7 +21,7 @@ utils.o: $(SRC_DIR)/backend/utils.cpp
 
 
 libbirb.a: database.o dependencies.o utils.o
-	ar -rcs $@ $^
+	gcc-ar -rcs $@ $^
 
 #### Testing ####
 birb_test.o: $(SRC_DIR)/birb_test.cpp
@@ -73,6 +73,10 @@ valgrind:
 	valgrind --error-exitcode=30 ./birb_pkg_search ncurses
 	valgrind --error-exitcode=31 ./birb_pkg_search vim firefox
 
+install-lib:
+	mkdir -p /usr/lib/birb
+	cp ./birb_funcs /usr/lib/birb/
+
 install:
 	cp ./birb {birb_dep_solver,birb_pkg_search,birb_db} /usr/bin/
 	mkdir -p /usr/lib/birb
@@ -87,4 +91,4 @@ clean:
 	rm -rf *.o *.a *.gcda
 	rm -f birb_db birb_dep_solver birb_pkg_search birb_test
 
-.PHONY: check_cpp check_sh valgrind clean install
+.PHONY: check_cpp check_sh valgrind clean install install-lib

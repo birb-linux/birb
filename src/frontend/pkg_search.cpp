@@ -14,7 +14,7 @@ constexpr char PACKAGE_LIST_PATH[] = "/var/lib/birb/packages";
 int main(int argc, char** argv)
 {
 	/* Read in the list of all existing packages */
-	std::vector<std::string> packages = birb::read_file(PACKAGE_LIST_PATH);
+	const std::vector<std::string> packages = birb::read_file(PACKAGE_LIST_PATH);
 	if (packages.empty())
 	{
 		std::cout << "ERROR: Empty package cache\n";
@@ -22,10 +22,10 @@ int main(int argc, char** argv)
 	}
 
 	/* Read in the list of installed packages */
-	std::vector<std::string> installed_packages = birb::get_installed_packages();
+	const std::vector<std::string> installed_packages = birb::get_installed_packages();
 
 	/* Get the list of repositories */
-	std::vector<pkg_source> pkg_sources = birb::get_pkg_sources();
+	const std::vector<pkg_source> pkg_sources = birb::get_pkg_sources();
 	if (pkg_sources.empty())
 	{
 		std::cout << "ERROR: No valid package repositories were found\n";
@@ -39,7 +39,7 @@ int main(int argc, char** argv)
 	for (int i = 1; i < argc; ++i)
 	{
 		/* Make sure that the package exists */
-		pkg_source repo = birb::locate_pkg_repo(argv[i], pkg_sources);
+		const pkg_source repo = birb::locate_pkg_repo(argv[i], pkg_sources);
 		if (!repo.is_valid())
 		{
 			std::cout << "Package " << argv[i] << " doesn't exist" << std::endl;
@@ -47,12 +47,15 @@ int main(int argc, char** argv)
 			continue;
 		}
 
+		const std::string version 		= birb::read_pkg_variable(argv[i], "VERSION", repo.path);
+		const std::string description 	= birb::read_pkg_variable(argv[i], "DESC", repo.path);
+
 		std::cout << argv[i] << ";";
-		std::cout << birb::read_pkg_variable(argv[i], "VERSION", repo.path) << ";";
-		std::cout << birb::read_pkg_variable(argv[i], "DESC", repo.path) << ";";
+		std::cout << version << ";";
+		std::cout << description << ";";
 
 		/* Check if the package is installed */
-		for (std::string package : installed_packages)
+		for (const std::string& package : installed_packages)
 			if (argv[i] == package)
 				std::cout << "[installed]";
 

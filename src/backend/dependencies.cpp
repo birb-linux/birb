@@ -45,7 +45,7 @@ namespace birb
 			size_t pos = 0;
 			while ((pos = dep_line.find(" ")) != std::string::npos)
 			{
-				std::string dep = dep_line.substr(0, pos);
+				const std::string dep = dep_line.substr(0, pos);
 
 				/* Check if the dependency is a meta package and should be expanded */
 				if (meta_packages.contains(dep))
@@ -71,11 +71,12 @@ namespace birb
 			deps = meta_packages[pkg];
 		}
 
+
 		/* Get dependencies of the dependencies of this package, if any */
-		size_t deps_size = deps.size();
+		const size_t deps_size = deps.size();
 		for (size_t i = 0; i < deps_size; ++i)
 		{
-			std::vector<std::string> sub_deps = get_dependencies(deps[i], repos, depth - 1);
+			const std::vector<std::string> sub_deps = get_dependencies(deps[i], repos, depth - 1);
 			deps.insert(deps.end(), sub_deps.begin(), sub_deps.end());
 		}
 
@@ -83,6 +84,10 @@ namespace birb
 
 		/* Cache the results */
 		dependency_cache[pkg] = deps;
+
+		/* Deduplicate */
+		//deps = deduplicated_dep_list(deps);
+
 
 		return deps;
 	}
@@ -92,12 +97,12 @@ namespace birb
 		std::vector<std::string> dependencies;
 
 		/* Get list of installed packages */
-		std::vector<std::string> installed_packages = birb::get_installed_packages();
+		const std::vector<std::string> installed_packages = birb::get_installed_packages();
 
 		/* Get the reverse dependencies for the package with no recursion */
 		for (size_t i = 0; i < installed_packages.size(); ++i)
 		{
-			std::vector<std::string> temp_deps = get_dependencies(installed_packages[i], repos, 0);
+			const std::vector<std::string> temp_deps = get_dependencies(installed_packages[i], repos, 0);
 
 			/* Check if the package had this package we are inspecting in
 			 * its dependency list */
@@ -115,6 +120,10 @@ namespace birb
 		/* Don't do anything if there are no dependencies */
 		if (dependencies.empty())
 			return result;
+
+		/* Use the dependency cache to approximately guess the final size of the result vector
+		 * so that there wouldn't be any vector resizes */
+		result.reserve(dependency_cache.size() * 2);
 
 		std::unordered_set<std::string> exists_in_results;
 
@@ -142,10 +151,10 @@ namespace birb
 		std::unordered_set<std::string> result;
 
 		/* Read in the list of packages installed by the user */
-		std::vector<std::string> nest = birb::read_file("/var/lib/birb/nest");
+		const std::vector<std::string> nest = birb::read_file("/var/lib/birb/nest");
 
 		/* Get the list of all installed applications */
-		std::vector<std::string> installed_packages = birb::get_installed_packages();
+		const std::vector<std::string> installed_packages = birb::get_installed_packages();
 
 		/* Orphan candidates are packages that are installed but aren't in the nest */
 		std::vector<std::string> orphan_candidates;

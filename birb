@@ -1,8 +1,5 @@
 #!/bin/bash
 
-# URL where birb gets its source code from
-BIRB_REMOTE="https://github.com/birb-linux/birb"
-
 # Check if the LFS variable is set
 # If it isn't empty, it means that we are installing
 # BirbOS and the LFS variable should be used as the
@@ -57,6 +54,10 @@ BIRB_REPO_LIST_PATH="$INSTALL_PREFIX/etc/birb-sources.conf"
 [ -z "$BUILD_JOBS" ] && BUILD_JOBS="$(nproc)"
 [ -z "$ENABLE_32BIT_PACKAGES" ] && ENABLE_32BIT_PACKAGES=yes
 
+# URL where birb gets its source code from
+[ -z "$BIRB_REMOTE" ] && BIRB_REMOTE="https://github.com/birb-linux/birb"
+
+
 # Load the configuration file (if it exists)
 if [ -f "$BIRB_CFG_PATH" ]
 then
@@ -75,6 +76,7 @@ print_help()
 	echo "  -i  --install [options] PACKAGE(s) install given package(s) to the filesystem"
 	echo "  -u  --uninstall PACKAGE(s)         uninstall given package(s) from the filesystem"
 	echo "      --depclean                     find and uninstall orphan packages"
+	echo "      --distclean                    clear the distcache"
 	echo "      --relink PACKAGE(s)            re-create symlinks to the package fakeroots"
 	echo "  -s  --search                       search for packages by name"
 	echo "  -b  --browse                       browse packages and their descriptions with fzf"
@@ -82,6 +84,7 @@ print_help()
 	echo "      --sync [--force]               sync package repositories"
 	echo "      --list-installed               list all currently installed packages"
 	echo "      --update                       update out-of-date packages"
+	echo "      --restore PACKAGE              restore a fakeroot backup"
 	echo "      --upgrade [--debug|--test]     update the birb package manager"
 	echo ""
 	echo "If a valid package names are given as the only arguments, birb will attempt"
@@ -173,6 +176,11 @@ source_pkg_seed()
 	# Make sure that the seed file exists
 	[ ! -f "$REPO_DIR/$1/seed.sh" ] && echo "Invalid seed file: $1" && exit 1
 
+	# Reset all package variables in-case some package has omitted
+	# a variable or two
+	unset NAME DESC VERSION SOURCE CHECKSUM DEPS FLAGS NOTES
+	unset _post_install
+
 	# shellcheck source=/var/db/pkg/vim/seed.sh
 	source "$REPO_DIR/$1/seed.sh"
 }
@@ -236,6 +244,27 @@ remove_orphan_dependencies()
 	{ YOLO=true birb --uninstall $ORPHAN_PACKAGES && echo -e "Orphan removal finished!\nReclaimed storage:\n$RECLAIMED_SPACE"; } || println ERROR "Something went wrong during orphan removal..."
 }
 
+# Delete all files in /var/cache/distfiles
+# This function will leave the birb source code alone though as a precaution
+clear_distcache()
+{
+	root_check
+
+	# Check how much space will be reclaimed
+	du --exclude="birb" -shc "$DISTFILES/"
+
+	read -rp "Clean distcache? (Y/n): " AGREE_CLEAN_DISTCACHE
+	case $AGREE_CLEAN_DISTCACHE in
+		n|N|no|No)
+			echo "Cancelled"
+			exit 1
+			;;
+		*) ;;
+	esac
+
+	find "$DISTFILES" -maxdepth 1 -type f -delete && echo "Distcache cleared ヽ(*・ω・)ﾉ" || echo "Something went wrong (*/ω＼)"
+}
+
 # A wrapper around wget with some error checking and output formatting
 # All files are downloaded to /var/cache/distfiles
 #
@@ -245,7 +274,24 @@ fetch_file()
 	# Check if wget is installed
 	[ ! -f /usr/bin/wget ] && println ERROR "wget isn't installed! Birb cannot download anything without it (╯°□°)╯︵ ┻━┻" && exit 1
 
-	wget -q --show-progress --directory-prefix="$DISTFILES" "$1" || { println ERROR "Couldn't dowload $1"; exit 1; }
+	local URL="$1"
+
+	# Handle alternative download mirrors
+	URL="$(echo "$URL" | sed "$ALT_SOURCES")"
+
+	# Handle .onion addresses with torsocks if required
+	TORSOCKS_COMMAND=""
+	if onion_check "$URL"
+	then
+		# The package has an onion source URL, check if tor is installed and running
+		tor_check || exit 1
+
+		# Make wget use torsocks
+		TORSOCKS_COMMAND="torsocks"
+		echo "Downloading the package through Tor from $URL"
+	fi
+
+	$TORSOCKS_COMMAND wget -q --show-progress --directory-prefix="$DISTFILES" "$URL" || { println ERROR "Couldn't download $URL"; exit 1; }
 }
 
 # This function is internal and should only be used by the
@@ -305,6 +351,10 @@ download_src()
 	# This also requires rsync to be installed
 	if [ -f /usr/bin/birbd ] && [ -f /etc/birbd.conf ] && [ -f /usr/bin/rsync ]
 	then
+		# Make sure that later parts of the program can use the BIRBD_RESPONSE
+		# variable even if no tarball was found
+		unset BIRBD_RESPONSE
+
 		# Read the birbd configuration file and check if it has
 		# any valid IP-addresses
 		BIRBD_ADDRESSES="$(sed 's/#.*//g; /^[[:space:]]*$/d' /etc/birbd.conf | grep -o "[0-9]*\.[0-9]*\.[0-9]\.[0-9]*")"
@@ -397,9 +447,10 @@ download_additional()
 prepare_fakeroot()
 {
 	mkdir -p "$1"/{usr/{lib/bfd-plugins,lib32,share/{doc,man/man{1..8}},bin,sbin,include},etc,sbin}
-	mkdir -p "$1"/usr/share/fonts/TTF
+	mkdir -p "$1"/usr/share/fonts/{TTF,OTF}
 	mkdir -p "$1"/usr/share/applications
 	mkdir -p "$1"/etc/X11/app-defaults
+	mkdir -p "$1"/etc/rc.d/{init.d,rc{0..6}.d,rcS.d}
 }
 
 # Returns whether the use flag is enabled
@@ -409,7 +460,7 @@ has_use()
 {
 	# Check if a useflag is set by using grep
 	HAS_FLAG="$(echo "$USE_FLAGS" | grep -wo "$1")"
-	return "$([ -n "$HAS_FLAG" ])"
+	[[ -n "$HAS_FLAG" ]] && return 0 || return 1
 }
 
 # If the use flag has been set in the config file, expand it into some command
@@ -530,11 +581,6 @@ install_package()
 		[ -d "$FAKEROOT/$PACKAGE_NAME" ] && println "Deleting an existing fakeroot" && rm -r "${FAKEROOT:?}/$PACKAGE_NAME"
 	fi
 
-	# Reset all package variables in-case some package has omitted
-	# a variable or two
-	unset NAME DESC VERSION SOURCE CHECKSUM DEPS FLAGS NOTES
-	unset _post_install
-
 	# Source the package variables and functions
 	source_pkg_seed "$PACKAGE_NAME"
 
@@ -542,7 +588,7 @@ install_package()
 	flag_warning "wip" "This package is still considered 'work in progress' and may not be fully functional!"
 
 	# Check if the package is marked as proprietary
-	flag_warning "proprietary" "This package contains proprietary binary blobs!"
+	flag_warning "proprietary" "This package contains binary blobs! Source code may or may not be available. Proceed with caution."
 
 	# Export env variables used for installing Xorg related packages
 	export XORG_PREFIX="$FAKEROOT/$NAME/usr"
@@ -590,6 +636,27 @@ install_package()
 				exit 1
 				;;
 		esac
+
+		# Check if there are any dependencies that have special requirements
+		# Those would be better to solve before starting to compile anything, because otherwise
+		# the installation might cancel out midway into a long installation process
+		println "Checking dependency requirements"
+		unset ONION_DEPENDENCY
+		for i in $DEPS_TO_INSTALL
+		do
+			# Check if the dependency has an .onion source URL
+			if onion_check
+			then
+				ONION_DEPENDENCY="true"
+				break
+			fi
+		done
+
+		# Check if Tor is running if there was an onion dependency found
+		if [ "$ONION_DEPENDENCY" == "true" ]
+		then
+			tor_check || { println ERROR "A dependency was found that requires Tor to be running and it wasn't. Quitting..."; exit 1; }
+		fi
 
 		println "Attempting to install the following packages: [$DEPS_TO_INSTALL]"
 		# shellcheck disable=SC2086
@@ -778,7 +845,7 @@ install_package()
 	fi
 
 	# If the package is a font, run fc-cache
-	[ -n "$PACKAGE_IS_FONT" ] && fc-cache
+	[ -n "$PACKAGE_IS_FONT" ] && println "Updating font cache" && fc-cache
 
 	# Add the package into the nest file if the installation was successful
 	add_package_to_nest "$PACKAGE_NAME"
@@ -792,6 +859,14 @@ install_package()
 		_post_install
 	fi
 
+	# Remove the package tarball if it was gotten from a local birbd server
+	# This is to save space. The tarball isn't really needed locally as it can be
+	# quickly re-fetched if needed
+	if [ "$BIRBD_RESPONSE" == "positive" ]
+	then
+		println "Removing a tarball that was fetched with birbd"
+		rm -v "$DISTFILES/$TARBALL"
+	fi
 
 	echo "$PACKAGE_NAME installation finished"
 	set +e
@@ -1033,6 +1108,11 @@ update_packages()
 			echo "remove the backup fakeroot and try to run this update again"
 			exit 1
 		fi
+
+		println "Cleaning out empty directories from the fakeroot"
+		find "$FAKEROOT/$PKG_UPDATE_IN_PROGRESS" -type d -empty -delete
+
+		# Take a backup copy of the fakeroot
 		cp -r "${FAKEROOT:?}/$PKG" "${FAKEROOT_BACKUP_PATH:?}/$PKG"
 
 		println "Transferring symlinks to the backup copy of $PKG"
@@ -1181,7 +1261,7 @@ birb_upgrade()
 
 		cd "$DISTFILES"
 		println "Cloning birb sources"
-		git clone $BIRB_REMOTE
+		git clone "$BIRB_REMOTE"
 	fi
 
 	# If the package list cache doesn't exist yet, create it
@@ -1221,7 +1301,7 @@ birb_upgrade()
 	make clean
 
 	DEBUG_CXXFLAGS="-g -Weffc++"
-	RELEASE_CXXFLAGS="-O1 -march=native -DNDEBUG"
+	RELEASE_CXXFLAGS="-O1 -flto=auto -march=native -DNDEBUG"
 
 	if [ "$1" == "debug" ]
 	then
@@ -1313,6 +1393,42 @@ fakeroot_repair()
 	done
 }
 
+# Restore and relink a fakeroot from the
+# /var/backup/birb/fakeroot_backups directory.
+fakeroot_restore()
+{
+	root_check
+
+	local PKG_NAME="$1"
+	if [ ! -d "$FAKEROOT_BACKUP_PATH/$PKG_NAME" ]
+	then
+		println ERROR "There's no fakeroot backup for $PKG_NAME"
+		exit 1
+	fi
+
+	println "Deleting empty directories from the fakeroot backup"
+	find "$FAKEROOT_BACKUP_PATH/$PKG_NAME" -type d -empty -delete
+
+	println "Restoring fakeroot for $PKG_NAME from fakeroot backups"
+
+	set -e
+
+	cp -r "$FAKEROOT_BACKUP_PATH/$PKG_NAME" "$FAKEROOT/"
+
+	println "Removing backup symlinks"
+	stow -D -t / -d "$FAKEROOT_BACKUP_PATH" "$PKG_NAME"
+
+	relink_package "$PKG_NAME"
+
+	println "Deleting the fakeroot backup"
+	rm -r "${FAKEROOT_BACKUP_PATH:?}/$PKG_NAME"
+
+	println "Marking the package as installed with an unknown version"
+	birb_db --update "$PKG_NAME" "0.0.0"
+
+	set +e
+}
+
 
 # Check if the first argument is a valid package name
 if [ -d "$REPO_DIR/$1" ]
@@ -1341,6 +1457,12 @@ while test $# -gt 0; do
 		--depclean)
 			shift
 			remove_orphan_dependencies
+			exit 0
+			;;
+
+		--distclean)
+			shift
+			clear_distcache
 			exit 0
 			;;
 
@@ -1497,6 +1619,16 @@ while test $# -gt 0; do
 		--repair)
 			shift
 			fakeroot_repair
+			;;
+
+		--restore)
+			shift
+			if test $# -gt 0; then
+				fakeroot_restore "$1"
+			else
+				println ERROR "Missing argument: package_name"
+			fi
+			exit 0
 			;;
 
 		-*)

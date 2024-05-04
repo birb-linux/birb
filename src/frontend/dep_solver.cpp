@@ -87,8 +87,7 @@ int main(int argc, char** argv)
 	/* Loop through all repos to get all meta_packages */
 	assert(repos.size() > 0);
 	std::vector<std::string> tmp_meta;
-	std::string meta_path;
-	for (pkg_source s : repos)
+	for (const pkg_source& s : repos)
 	{
 		assert(s.path.empty() == false);
 		assert(s.name.empty() == false);
@@ -96,7 +95,7 @@ int main(int argc, char** argv)
 		assert(s.is_valid()   == true);
 
 		/* Check if the repo has a meta_package file */
-		meta_path = s.path + "/meta_packages";
+		const std::string meta_path = s.path + "/meta_packages";
 		if (!std::filesystem::exists(meta_path))
 			continue;
 
@@ -104,10 +103,10 @@ int main(int argc, char** argv)
 		meta_package_list.insert(meta_package_list.end(), tmp_meta.begin(), tmp_meta.end());
 	}
 
-	for (std::string line : meta_package_list)
+	for (const std::string& line : meta_package_list)
 	{
 		/* Find the delimiter */
-		size_t pos = line.find(":");
+		const size_t pos = line.find(":");
 
 		/* Skip the line if the delimiter couldn't be found */
 		if (pos == std::string::npos)
@@ -142,7 +141,7 @@ int main(int argc, char** argv)
 			break;
 	};
 
-	for (std::string d : dependencies)
+	for (const std::string& d : dependencies)
 		std::cout << d << "\n";
 
 	return 0;

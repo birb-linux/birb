@@ -11,14 +11,14 @@ pkg_source::pkg_source(const std::string& name, const std::string& url, const st
 :name(name), url(url), path(path)
 {}
 
-void pkg_source::print()
+void pkg_source::print() const
 {
 	std::cout 	<< "Name: \t" 	<< name << "\n"
 				<< "URL: \t" 	<< url 	<< "\n"
 				<< "Path: \t" 	<< path << "\n";
 }
 
-bool pkg_source::is_valid()
+bool pkg_source::is_valid() const
 {
 	return (!name.empty() && !url.empty() && !path.empty());
 }
@@ -28,7 +28,7 @@ namespace birb
 	std::vector<pkg_source> get_pkg_sources()
 	{
 		/* Read the birb-sources.conf file line by line */
-		std::vector<std::string> repository_lines = read_file(PKG_SOURCE_CONFIG_PATH);
+		const std::vector<std::string> repository_lines = read_file(PKG_SOURCE_CONFIG_PATH);
 
 		std::vector<pkg_source> sources;
 		for (size_t i = 0; i < repository_lines.size(); ++i)
@@ -67,7 +67,7 @@ namespace birb
 		{
 			assert(s.path.empty() == false);
 
-			std::string seed_path = s.path + "/" + pkg_name + "/seed.sh";
+			const std::string seed_path = s.path + "/" + pkg_name + "/seed.sh";
 			if (std::filesystem::exists(seed_path) && std::filesystem::is_regular_file(seed_path))
 			{
 				///* Cache the results */
@@ -87,11 +87,11 @@ namespace birb
 		assert(repo_path.empty() == false);
 
 		/* Check if the result is already in the cache*/
-		std::string key = pkg_name + var_name;
+		const std::string key = pkg_name + var_name;
 		if (var_cache.contains(key))
 			return var_cache[key];
 
-		std::string pkg_path = repo_path + "/" + pkg_name + "/seed.sh";
+		const std::string pkg_path = repo_path + "/" + pkg_name + "/seed.sh";
 
 		/* Read data from the package file */
 		std::string var_line;
@@ -103,17 +103,22 @@ namespace birb
 			return "";
 		}
 
+		const std::string var_line_beginning = var_name + "=\"";
 		while (std::getline(pkg_file, var_line))
 		{
 			/* Check if we have located the dependency line */
-			if (var_line.substr(0, var_name.size() + 2) == var_name + "=\"")
+			if (var_line.substr(0, var_name.size() + 2) == var_line_beginning)
 			{
 				/* Break the file reading loop */
 				break;
 			}
 		}
 
-		assert(var_line.size() > var_name.size() + 2 && "The var_line result is too short");
+		if (var_line.size() <= var_name.size() + 2)
+		{
+			std::cerr << "Package " << pkg_name << " is corrupted! Please check the formatting for variable '" << var_name << "' in " << repo_path << "/" << pkg_name << "/seed.sh\n";
+			exit(1);
+		}
 
 		/* We are done with the file, stop reading it */
 		pkg_file.close();
@@ -166,7 +171,7 @@ namespace birb
 		if (!installed_packages_cache.empty())
 			return installed_packages_cache;
 
-		std::vector<std::string> birb_db = read_birb_db();
+		const std::vector<std::string> birb_db = read_birb_db();
 
 		/* Split the strings to get package names */
 		std::vector<std::string> pkg_names;
@@ -183,7 +188,7 @@ namespace birb
 	std::unordered_map<std::string, std::string> get_repo_versions()
 	{
 		/* Repository list */
-		std::vector<pkg_source> pkg_sources = birb::get_pkg_sources();
+		const std::vector<pkg_source> pkg_sources = birb::get_pkg_sources();
 		assert(pkg_sources.size() > 0 && "Package sources couldn't be found");
 
 		std::unordered_map<std::string, std::string> pkgs;

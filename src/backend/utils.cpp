@@ -54,6 +54,13 @@ namespace birb
 	}
 
 #ifdef BIRB_TEST
+
+/* Make cppcheck happy */
+#ifndef TEST_CASE
+#define TEST_CASE
+#define SUBCASE
+#endif
+
 	TEST_CASE("split_string()")
 	{
 		SUBCASE("One char delimiter")
