@@ -782,7 +782,7 @@ install_package()
 
 			cd "$FAKEROOT"
 			set +e
-			FILES_TO_DELETE="$(stow -S -t / -d "$FAKEROOT" "$PACKAGE_NAME" 2>&1 | grep "existing target is not owned by stow" | awk -F' ' '{print "/" $9}')"
+			FILES_TO_DELETE="$(xstow-static -t / -d "$FAKEROOT" "$PACKAGE_NAME" 2>&1 | grep "existing target is not owned by stow" | awk -F' ' '{print "/" $9}')"
 			set -e
 
 			if [ -n "$FILES_TO_DELETE" ]
@@ -800,7 +800,7 @@ install_package()
 
 			# Do another round of deletions in case there's some other error
 			set +e
-			FILES_TO_DELETE="$(stow -S -t / -d "$FAKEROOT" "$PACKAGE_NAME" 2>&1 | grep "existing target is neither a link nor a directory" | awk -F' ' '{print "/" $11}')"
+			FILES_TO_DELETE="$(xstow-static -t / -d "$FAKEROOT" "$PACKAGE_NAME" 2>&1 | grep "existing target is neither a link nor a directory" | awk -F' ' '{print "/" $11}')"
 			set -e
 
 			if [ -n "$FILES_TO_DELETE" ]
@@ -836,11 +836,11 @@ install_package()
 		if [ -z "$FORCE_REINSTALL" ]
 		then
 			println "Symlinking the package fakeroot to the system root"
-			stow -S -t / -d "$FAKEROOT" "$PACKAGE_NAME"
+			xstow-static -t / -d "$FAKEROOT" "$PACKAGE_NAME"
 		else
 			println "Re-Symlinking the package fakeroot to the system root"
 			cd "$FAKEROOT"
-			stow -R -t / -d "$FAKEROOT" "$PACKAGE_NAME"
+			xstow-static -R -t / -d "$FAKEROOT" "$PACKAGE_NAME"
 		fi
 	fi
 
@@ -851,12 +851,18 @@ install_package()
 	add_package_to_nest "$PACKAGE_NAME"
 	birb_db --update "$PACKAGE_NAME" "$VERSION"
 
-	# Run a post-install hook if the package has specified the _post_install() function
-	if [ "$(type -t _post_install)" == "function" ]
+	# Skip processing post install stuff if we are updating
+	if [ "$BIRB_PKG_UPDATE" == "true" ]
 	then
-		println "Running a post-install commands"
-		set_win_title "Installing $PACKAGE_NAME (post-install)"
-		_post_install
+		println "Skipping post-install since we are updating"
+	else
+		# Run a post-install hook if the package has specified the _post_install() function
+		if [ "$(type -t _post_install)" == "function" ]
+		then
+			println "Running a post-install commands"
+			set_win_title "Installing $PACKAGE_NAME (post-install)"
+			_post_install
+		fi
 	fi
 
 	# Remove the package tarball if it was gotten from a local birbd server
@@ -959,7 +965,7 @@ uninstall_package()
 	fi
 
 	println "Unlinking $PACKAGE_NAME..."
-	stow -D -t / -d "$FAKEROOT" "$PACKAGE_NAME"
+	xstow-static -D -t / -d "$FAKEROOT" "$PACKAGE_NAME"
 
 	println "Removing fakeroot"
 	rm -r "${FAKEROOT:?}/$PACKAGE_NAME"
@@ -1000,7 +1006,7 @@ relink_package()
 		println WARNING "There's no package with the name $1"
 	fi
 
-	stow -R -t / -d "$FAKEROOT" "$1"
+	xstow-static -R -t / -d "$FAKEROOT" "$1"
 }
 
 cancel_update()
@@ -1013,8 +1019,8 @@ cancel_update()
 		cp -r "${FAKEROOT_BACKUP_PATH:?}/$PKG_UPDATE_IN_PROGRESS" "$FAKEROOT/$PKG_UPDATE_IN_PROGRESS"
 
 		echo "Transferring symlinks back to the original fakeroot"
-		stow -D -t / -d "$FAKEROOT_BACKUP_PATH" "$PKG_UPDATE_IN_PROGRESS"
-		stow -S -t / -d "$FAKEROOT" "$PKG_UPDATE_IN_PROGRESS"
+		xstow-static -D -t / -d "$FAKEROOT_BACKUP_PATH" "$PKG_UPDATE_IN_PROGRESS"
+		xstow-static -t / -d "$FAKEROOT" "$PKG_UPDATE_IN_PROGRESS"
 
 		echo "Marking the package as installed"
 		birb_db --update "$PKG_UPDATE_IN_PROGRESS" "$OLD_VERSION"
@@ -1116,8 +1122,8 @@ update_packages()
 		cp -r "${FAKEROOT:?}/$PKG" "${FAKEROOT_BACKUP_PATH:?}/$PKG"
 
 		println "Transferring symlinks to the backup copy of $PKG"
-		stow -D -t / -d "$FAKEROOT" "$PKG"
-		stow -S -t / -d "$FAKEROOT_BACKUP_PATH" "$PKG"
+		xstow-static -D -t / -d "$FAKEROOT" "$PKG"
+		xstow-static -t / -d "$FAKEROOT_BACKUP_PATH" "$PKG"
 
 		println "Removing the fakeroot for $PKG"
 		rm -r "${FAKEROOT:?}/$PKG"
@@ -1131,8 +1137,8 @@ update_packages()
 		BIRB_PKG_UPDATE="true" birb --install "$PKG"
 
 		println "Transferring symlinks from the backup copy of $PKG back to the real fakeroot"
-		stow -D -t / -d "$FAKEROOT_BACKUP_PATH" "$PKG"
-		stow -S -t / -d "$FAKEROOT" "$PKG"
+		xstow-static -D -t / -d "$FAKEROOT_BACKUP_PATH" "$PKG"
+		xstow-static -t / -d "$FAKEROOT" "$PKG"
 
 		println "Removing the backup fakeroot"
 		rm -r "${FAKEROOT_BACKUP_PATH:?}/$PKG"
@@ -1416,7 +1422,7 @@ fakeroot_restore()
 	cp -r "$FAKEROOT_BACKUP_PATH/$PKG_NAME" "$FAKEROOT/"
 
 	println "Removing backup symlinks"
-	stow -D -t / -d "$FAKEROOT_BACKUP_PATH" "$PKG_NAME"
+	xstow-static -D -t / -d "$FAKEROOT_BACKUP_PATH" "$PKG_NAME"
 
 	relink_package "$PKG_NAME"
 
