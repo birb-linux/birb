@@ -178,7 +178,7 @@ source_pkg_seed()
 
 	# Reset all package variables in-case some package has omitted
 	# a variable or two
-	unset NAME DESC VERSION SOURCE CHECKSUM DEPS FLAGS NOTES
+	unset NAME DESC VERSION SOURCE CHECKSUM DEPS FLAGS NOTES CONFLICTS
 	unset _post_install
 
 	# shellcheck source=/var/db/pkg/vim/seed.sh
@@ -594,6 +594,27 @@ install_package()
 	export XORG_PREFIX="$FAKEROOT/$NAME/usr"
 	export XORG_CONFIG="--prefix=$XORG_PREFIX --sysconfdir=/etc \
 		--localstatedir=/var --disable-static"
+
+	# Check if there are any conflicting packages
+	if [ -n "$CONFLICTS" ]
+	then
+		local HAS_CONFLICT=false
+
+		for i in $CONFLICTS
+		do
+			if [ "$(birb_db --is-installed "$i")" == "yes" ]
+			then
+				println ERROR "A conflicting package is installed: $i"
+				HAS_CONFLICT=true
+			fi
+		done
+
+		if [ "$HAS_CONFLICT" == true ]
+		then
+			println "Cancelling the installation due to conflicting packages"
+			exit 1
+		fi
+	fi
 
 	# Check if the dependency requirements are met
 	println "Checking dependencies"

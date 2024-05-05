@@ -229,6 +229,9 @@ There are several flags available:
 #### NOTES
 Optional variable that can be used to print out a highlighted message at the end of the package installation. This could include instructions on what to do after installing the package, like adding your user to some specific group for example.
 
+#### CONFLICTS
+Optional variable that lists conflicting packages. If a package that is in the conflict list is installed, the installation gets aborted with a message telling about the conflict.
+
 ### Functions
 When a package is installed, birb will call pre-defined functions in a specific order. Some of the functions require flags before they get run, but this may change in the future to simplify the flag usage.
 
