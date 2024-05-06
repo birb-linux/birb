@@ -694,6 +694,7 @@ install_package()
 	set -e
 
 	# Extract the package sources and do any required setup
+	export XML_CATALOG_FILES="/etc/xml/catalog"
 	export GOPATH="/usr/share/go"
 	export PYTHON_PREFIX="$FAKEROOT/$NAME/$PYTHON_DIST"
 	export PKG_CONFIG_PATH="/usr/lib/pkgconfig:/usr/share/pkgconfig:/usr/lib32/pkgconfig"
