@@ -536,6 +536,35 @@ add_package_to_nest()
 	fi
 }
 
+# Delete files from the fakeroot that already exist on the system
+# This is done by simulating an installation and deleting files
+# that xstow reports as problematic
+# Args: [package_name] [overwrite (true/false)]
+delete_existing_files()
+{
+	println "Finding file conflicts"
+
+	local FILES_TO_SKIP
+	FILES_TO_SKIP="$(xstow-static -s -f -t / -d "$FAKEROOT" "$1" 2>&1 | awk '/^The file will be skipped.*already exist$/ { print $7 }')"
+	FILES_TO_SKIP="$FILES_TO_SKIP $(xstow-static -s -f -t / -d "$FAKEROOT" "$1" 2>&1 | awk '/^xstow.*already exist$/ { print $3 }')"
+
+	if [ "$2" == false ]
+	then
+		println "Deleting conflicting files from the fakeroot"
+		for file in $FILES_TO_SKIP
+		do
+			rm -v "$file"
+		done
+	else
+		println "Overwriting conflicting system files"
+		local PACKAGE_FAKEROOT_PATH="$FAKEROOT/$1"
+		for file in $FILES_TO_SKIP
+		do
+			rm -v "${file/$PACKAGE_FAKEROOT_PATH/}"
+		done
+	fi
+}
+
 install_package()
 {
 	root_check
@@ -694,6 +723,7 @@ install_package()
 	set -e
 
 	# Extract the package sources and do any required setup
+	export XML_CATALOG_FILES="/etc/xml/catalog"
 	export GOPATH="/usr/share/go"
 	export PYTHON_PREFIX="$FAKEROOT/$NAME/$PYTHON_DIST"
 	export PKG_CONFIG_PATH="/usr/lib/pkgconfig:/usr/share/pkgconfig:/usr/lib32/pkgconfig"
@@ -774,54 +804,11 @@ install_package()
 	# Skip the file deletion part when reinstalling or updating
 	if [ "$BIRB_PKG_UPDATE" != "true" ]
 	then
-		if [ -z "$FORCE_REINSTALL" ]
+		if [ -n "$OVERWRITE_FILES" ]
 		then
-			# Stow the fakeroot directory to the root directory
-			println "Finding and deleting conflicting files"
-			HAD_CONFLICTS=""
-
-			cd "$FAKEROOT"
-			set +e
-			FILES_TO_DELETE="$(xstow-static -t / -d "$FAKEROOT" "$PACKAGE_NAME" 2>&1 | grep "existing target is not owned by stow" | awk -F' ' '{print "/" $9}')"
-			set -e
-
-			if [ -n "$FILES_TO_DELETE" ]
-			then
-				HAD_CONFLICTS="true"
-				if [ -n "$OVERWRITE_FILES" ]
-				then
-					# shellcheck disable=SC2086
-					rm -f $FILES_TO_DELETE
-				else
-					println WARNING "This package wants to overwite the following files:"
-					echo "$FILES_TO_DELETE"
-				fi
-			fi
-
-			# Do another round of deletions in case there's some other error
-			set +e
-			FILES_TO_DELETE="$(xstow-static -t / -d "$FAKEROOT" "$PACKAGE_NAME" 2>&1 | grep "existing target is neither a link nor a directory" | awk -F' ' '{print "/" $11}')"
-			set -e
-
-			if [ -n "$FILES_TO_DELETE" ]
-			then
-				HAD_CONFLICTS="true"
-				if [ -n "$OVERWRITE_FILES" ]
-				then
-					# shellcheck disable=SC2086
-					rm -f $FILES_TO_DELETE
-				else
-					println WARNING "This package wants to overwite the following files:"
-					echo "$FILES_TO_DELETE"
-				fi
-			fi
-
-			# Quit if there were any conflicts and overwrite wasn't specified
-			if [ -z "$OVERWRITE_FILES" ] && [ -n "$HAD_CONFLICTS" ]
-			then
-				println ERROR "Cancelling installation due to conflicts"
-				exit 1
-			fi
+			delete_existing_files "$PACKAGE_NAME" true
+		else
+			delete_existing_files "$PACKAGE_NAME" false
 		fi
 	fi
 
