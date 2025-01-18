@@ -2,6 +2,7 @@
 #include <cstdlib>
 #include <filesystem>
 #include <iostream>
+#include <unistd.h>
 #include <vector>
 
 #include "Logging.hpp"
@@ -40,8 +41,14 @@ struct path_settings
 
 struct opts
 {
-	exec_mode mode;
-	bool force;
+	exec_mode mode{exec_mode::help};
+
+	// force certain actions through even though it might be risky
+	bool force{false};
+
+	// act as if we were running as root
+	bool pretend{false};
+
 	std::vector<std::string> packages;
 };
 
@@ -90,8 +97,10 @@ int main(int argc, char** argv)
 
 				clipp::option("--upgrade").set(o.mode, exec_mode::upgrade)
 				% "update the birb package manager"
-			) |
-			clipp::values("packages", o.packages).set(o.mode, exec_mode::install) % "install a list of packages"
+			) | clipp::values("packages", o.packages).set(o.mode, exec_mode::install) % "install a list of packages",
+
+			clipp::option("--pretend").set(o.pretend)
+			% "act as if we were running with root privileges"
 		);
 
 	if (!clipp::parse(argc, argv, cli) || o.mode == exec_mode::help)
@@ -105,6 +114,13 @@ int main(int argc, char** argv)
 			return 1;
 
 		return 0;
+	}
+
+	// check if we are running as the root user
+	if (strcmp(getlogin(), "root") && !o.pretend)
+	{
+		error("This command needs to be run with root privileges (￢_￢;) (use the --pretend flag to get around this error if necessary)");
+		return 1;
 	}
 
 	path_settings path_set;
