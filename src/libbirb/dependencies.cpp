@@ -1,4 +1,7 @@
+#include "Database.hpp"
 #include "Dependencies.hpp"
+#include "PackageInfo.hpp"
+
 #include "Utils.hpp"
 #include <algorithm>
 #include <cassert>
@@ -8,6 +11,33 @@
 
 namespace birb
 {
+	std::vector<std::string> resolve_dependencies(const std::vector<std::string>& packages)
+	{
+		std::vector<std::string> full_package_list;
+		const std::vector<pkg_source> repos = get_pkg_sources();
+
+		for (const std::string& pkg_name : packages)
+		{
+			const std::vector<std::string> deps = get_dependencies(pkg_name, repos, 512);
+			full_package_list.insert(full_package_list.end(), deps.begin(), deps.end());
+
+			// if the package is a font, add fontconfig as a dependency before the package
+			const std::optional<pkg_source> repo = locate_package(pkg_name);
+			assert(repo.has_value());
+			std::unordered_set<pkg_flag> flags = get_pkg_flags(pkg_name, repo.value());
+
+			if (flags.contains(pkg_flag::font))
+				full_package_list.emplace_back("fontconfig");
+
+			full_package_list.push_back(pkg_name);
+		}
+
+		// deduplicate the list
+		full_package_list = deduplicated_dep_list(full_package_list);
+
+		return full_package_list;
+	}
+
 	std::vector<std::string> get_dependencies(const std::string& pkg, const std::vector<pkg_source>& repos, int depth)
 	{
 		assert(pkg.empty() == false);

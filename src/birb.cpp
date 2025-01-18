@@ -5,7 +5,9 @@
 #include <unistd.h>
 #include <vector>
 
+#include "Install.hpp"
 #include "Logging.hpp"
+#include "Utils.hpp"
 
 enum class exec_mode
 {
@@ -22,21 +24,6 @@ enum class exec_mode
 	update,
 	restore,
 	upgrade
-};
-
-struct path_settings
-{
-	std::string repo_dir{"/var/db/pkg"};
-	std::string db_dir{"/var/lib/birb"};
-	std::string nest{db_dir + "/nest"};
-	std::string package_list{db_dir + "/packages"};
-	std::string build_dir{"/var/tmp/birb"};
-	std::string fakeroot_backup{"/var/backup/birb/fakeroot_backups"};
-	std::string distfiles{"/var/cache/distfiles"};
-	std::string fakeroot{"/var/db/fakeroot"};
-	std::string birb_dist{distfiles + "/birb"};
-	std::string birb_cfg{"/etc/birb.conf"};
-	std::string birb_repo_list{"/etc/birb-sources.conf"};
 };
 
 struct opts
@@ -117,20 +104,21 @@ int main(int argc, char** argv)
 	}
 
 	// check if we are running as the root user
-	if (strcmp(getlogin(), "root") && !o.pretend)
+	if (!birb::root_check() && !o.pretend)
 	{
-		error("This command needs to be run with root privileges (￢_￢;) (use the --pretend flag to get around this error if necessary)");
+		birb::error("This command needs to be run with root privileges (￢_￢;) (use the --pretend flag to get around this error if necessary)");
 		return 1;
 	}
 
 	path_settings path_set;
+	birb_config config;
 
 	// override certain paths if we are installing BirbOS
 	// we know that this is the case if the LFS env variable is set
 	const char* const env_lfs = getenv("LFS");
 	if (env_lfs)
 	{
-		log("LFS variable is defined (we are probably installing)");
+		birb::log("LFS variable is defined (we are probably installing)");
 		path_set.repo_dir.insert(0, env_lfs);
 		path_set.distfiles.insert(0, env_lfs);
 		path_set.fakeroot.insert(0, env_lfs);
@@ -140,13 +128,17 @@ int main(int argc, char** argv)
 
 	// verify that the configuration files exist
 	if (!std::filesystem::exists(path_set.birb_cfg))
-		warning(path_set.birb_cfg, " is missing, please reinstall birb with 'birb --upgrade");
+		birb::warning(path_set.birb_cfg, " is missing, please reinstall birb with 'birb --upgrade");
 
 	if (!std::filesystem::exists(path_set.birb_repo_list))
-		error(path_set.birb_repo_list, " is missing. Check the TROUBLESHOOTING section in 'man birb' for instructions on how to fix this issue");
+		birb::error(path_set.birb_repo_list, " is missing. Check the TROUBLESHOOTING section in 'man birb' for instructions on how to fix this issue");
 
 	switch (o.mode)
 	{
+		case exec_mode::install:
+			birb::install(o.packages, path_set, config);
+			break;
+
 		default:
 			std::cout << "option not implemented yet\n";
 			abort();

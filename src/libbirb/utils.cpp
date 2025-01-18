@@ -2,8 +2,13 @@
 #define DOCTEST_CONFIG_IMPLEMENT
 #include <doctest/doctest.h>
 #endif /* BIRB_TEST */
+
+#include "Logging.hpp"
 #include "Utils.hpp"
+
 #include <cassert>
+#include <filesystem>
+#include <format>
 #include <fstream>
 #include <iostream>
 #include <string.h>
@@ -12,15 +17,21 @@
 
 namespace birb
 {
-	/* Quit and spit out and error if the command wasn't run
-	 * as the root user */
-	void root_check()
+	bool root_check()
 	{
-		if (getuid() != 0)
-		{
-			std::cout << "This command needs to be run as the root user!\n";
-			exit(1);
-		}
+		return getuid() == 0;
+	}
+
+	void exec_shell_cmd(const std::string& cmd)
+	{
+		assert(!cmd.empty());
+
+		FILE* const bash_pipe = popen("bash", "w");
+		if (!bash_pipe)
+			error("Can't open a pipe to bash");
+
+		fputs(cmd.c_str(), bash_pipe);
+		pclose(bash_pipe);
 	}
 
 	bool argcmp(char* arg, int argc, const std::string& option, int required_arg_count)
@@ -123,5 +134,28 @@ namespace birb
 		file.close();
 
 		return lines;
+	}
+
+	bool is_process_running(const std::string& process_name)
+	{
+		assert(!process_name.empty());
+		for (const auto& dir : std::filesystem::directory_iterator("/proc"))
+		{
+			// read the command
+			std::ifstream file(std::format("{}/comm", dir.path().string()));
+
+			// if the file could not be opened for reading, the directory
+			// is probably for something other than a process PID
+			if (!file.is_open())
+				continue;
+
+			std::string command;
+			file >> command;
+
+			if (command == process_name)
+				return true;
+		}
+
+		return false;
 	}
 }

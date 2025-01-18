@@ -13,7 +13,7 @@ all: birb birb_dep_solver birb_pkg_search birb_db
 %.o: $(SRC_DIR)/libbirb/%.cpp
 	$(CXX) $(CXXFLAGS) -c $< -o $@
 
-libbirb.a: database.o dependencies.o utils.o
+libbirb.a: database.o dependencies.o utils.o install.o package_info.o cli.o
 	gcc-ar -rcs $@ $^
 
 #### Testing ####
