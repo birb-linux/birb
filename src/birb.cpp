@@ -127,10 +127,7 @@ int main(int argc, char** argv)
 		warning(path_set.birb_cfg, " is missing, please reinstall birb with 'birb --upgrade");
 
 	if (!std::filesystem::exists(path_set.birb_repo_list))
-	{
 		error(path_set.birb_repo_list, " is missing. Check the TROUBLESHOOTING section in 'man birb' for instructions on how to fix this issue");
-		return 1;
-	}
 
 	switch (o.mode)
 	{
