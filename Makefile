@@ -7,7 +7,7 @@ SRC_DIR=./src
 LDFLAGS=-L$(BUILD_DIR) -l:libbirb.a
 
 .PHONY: all
-all: birb_dep_solver birb_pkg_search birb_db
+all: birb birb_dep_solver birb_pkg_search birb_db
 
 #### Backend ####
 %.o: $(SRC_DIR)/libbirb/%.cpp
@@ -21,6 +21,10 @@ birb_test: libbirb.a
 	$(CXX) $(CXXFLAGS) $(SRC_DIR)/birb_test.cpp -o $@ $^
 
 #### Frontend ####
+
+# Package manager
+birb: $(SRC_DIR)/birb.cpp libbirb.a
+	$(CXX) $(CXXFLAGS) $(FRONTEND_CXXFLAGS) -o $@ $^
 
 # Dependency solver
 birb_dep_solver: $(SRC_DIR)/dep_solver.cpp libbirb.a
