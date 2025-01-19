@@ -33,4 +33,12 @@ namespace birb
 		std::cout << "\033[0m\n";
 		exit(1);
 	}
+
+	template<typename... Args>
+	void non_fatal_error(Args... args)
+	{
+		std::cerr << "\033[31mERROR: ";
+		(std::cerr << ... << args);
+		std::cout << "\033[0m\n";
+	}
 }

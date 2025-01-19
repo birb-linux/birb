@@ -56,7 +56,9 @@ int main(int argc, char** argv)
 				(clipp::option("--download").set(o.mode, exec_mode::download) & clipp::values("package(s)").set(o.packages))
 				% "download the source tarball for the given package",
 
-				(clipp::option("-i", "--install").set(o.mode, exec_mode::install) & clipp::values("package(s)").set(o.packages))
+				(clipp::option("-i", "--install").set(o.mode, exec_mode::install)
+				 & clipp::option("--force").set(o.force)
+				 & clipp::values("package(s)").set(o.packages))
 				% "install given package(s) to the filesystem",
 
 				(clipp::option("-u", "--uninstall").set(o.mode, exec_mode::uninstall) & clipp::values("package(s)").set(o.packages))
@@ -149,7 +151,7 @@ int main(int argc, char** argv)
 
 		case exec_mode::install:
 			check_root_privileges();
-			birb::install(o.packages, path_set, config);
+			birb::install(o.packages, path_set, config, o.force);
 			break;
 
 		case exec_mode::uninstall:

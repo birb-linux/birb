@@ -43,7 +43,7 @@ const static std::unordered_map<install_phase, std::string> install_phase_str = 
 
 namespace birb
 {
-	void install(const std::vector<std::string>& packages, const path_settings& paths, const birb_config& config)
+	void install(const std::vector<std::string>& packages, const path_settings& paths, const birb_config& config, const bool force_install)
 	{
 		assert(!packages.empty());
 
@@ -119,7 +119,7 @@ namespace birb
 
 			log("Dowloading sources"); // download_package doesn't print this so do it here
 			download_package(pkg_name, paths, xorg_is_running);
-			install_package(pkg_name, flags, paths, config, xorg_is_running);
+			install_package(pkg_name, flags, paths, config, xorg_is_running, force_install);
 
 			// mark the package as installed
 
@@ -171,8 +171,7 @@ namespace birb
 		log("Done!");
 	}
 
-	void install_package(const std::string& pkg_name, const std::unordered_set<pkg_flag>& pkg_flags,
-			const path_settings& paths, const birb_config& config, const bool xorg_running)
+	void install_package(const std::string& pkg_name, const std::unordered_set<pkg_flag>& pkg_flags, const path_settings& paths, const birb_config& config, const bool xorg_running, const bool force_install)
 	{
 		assert(!pkg_name.empty());
 		log("Starting the compiling process");
@@ -298,11 +297,10 @@ namespace birb
 
 		std::filesystem::remove_all(build_dir_path);
 
-		log("Symlinking the package fakeroot to the system root");
 		if (xorg_running)
 			set_win_title(std::format("installing {} (symlink)", pkg_name));
 
-		link_package(pkg_name, paths);
+		link_package(pkg_name, paths, force_install);
 	}
 
 	void prepare_fakeroot(const std::string& pkg_name, const path_settings& paths)
