@@ -80,13 +80,13 @@ namespace birb
 
 			assert(!repo.value().path.empty());
 
-			if (read_pkg_variable(pkg_name, "NAME", repo.value().path).empty())
+			if (read_pkg_variable(pkg_name, pkg_variable::name, repo.value().path).empty())
 				error("Package [", pkg_name, "] does not define a name");
 
-			if (read_pkg_variable(pkg_name, "SOURCE", repo.value().path).empty())
+			if (read_pkg_variable(pkg_name, pkg_variable::source, repo.value().path).empty())
 				error("Package [", pkg_name, "] does not define a source");
 
-			if (read_pkg_variable(pkg_name, "CHECKSUM", repo.value().path).empty())
+			if (read_pkg_variable(pkg_name, pkg_variable::checksum, repo.value().path).empty())
 				error("Package [", pkg_name, "] does not define a checksum");
 
 			// fetch package flags
@@ -126,7 +126,7 @@ namespace birb
 					return false;
 				});
 
-			const std::string version_str = read_pkg_variable(pkg_name, "VERSION", repo.value().path);
+			const std::string version_str = read_pkg_variable(pkg_name, pkg_variable::version, repo.value().path);
 
 			// if no results were found, add a new entry
 			if (db_entry == db_file.end())

@@ -5,6 +5,17 @@
 #include <fstream>
 #include <iostream>
 
+const static inline std::unordered_map<pkg_variable, std::string> pkg_variable_str = {
+	{ pkg_variable::name, "NAME" },
+	{ pkg_variable::desc, "DESC" },
+	{ pkg_variable::version, "VERSION" },
+	{ pkg_variable::source, "SOURCE" },
+	{ pkg_variable::checksum, "CHECKSUM" },
+	{ pkg_variable::deps, "DEPS" },
+	{ pkg_variable::flags, "FLAGS" },
+	{ pkg_variable::notes, "NOTES" }
+};
+
 pkg_source::pkg_source() {}
 
 pkg_source::pkg_source(const std::string& name, const std::string& url, const std::string& path)
@@ -80,11 +91,12 @@ namespace birb
 		return pkg_source("", "", "");
 	}
 
-	std::string read_pkg_variable(const std::string& pkg_name, const std::string& var_name, const std::string& repo_path)
+	std::string read_pkg_variable(const std::string& pkg_name, const pkg_variable var, const std::string& repo_path)
 	{
 		assert(pkg_name.empty() == false);
-		assert(var_name.empty() == false);
 		assert(repo_path.empty() == false);
+
+		const std::string& var_name = pkg_variable_str.at(var);
 
 		/* Check if the result is already in the cache*/
 		const std::string key = pkg_name + var_name;
@@ -200,7 +212,7 @@ namespace birb
 			{
 				/* Iterate through the package source repositories and get the version
 				 * from the first repository that has the package in it */
-				pkgs[p.path().filename().string()] = birb::read_pkg_variable(p.path().filename().string(), "VERSION", BIRB_PKG_PATH);
+				pkgs[p.path().filename().string()] = birb::read_pkg_variable(p.path().filename().string(), pkg_variable::version, BIRB_PKG_PATH);
 			}
 		}
 

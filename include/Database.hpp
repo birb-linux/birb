@@ -21,6 +21,18 @@ struct pkg_source
 	bool is_valid() const;
 };
 
+enum class pkg_variable
+{
+	name,
+	desc,
+	version,
+	source,
+	checksum,
+	deps,
+	flags,
+	notes
+};
+
 namespace birb
 {
 	std::vector<pkg_source> get_pkg_sources();
@@ -32,7 +44,7 @@ namespace birb
 	/* Check if a package exists and if it does, return the source it was found from */
 	pkg_source locate_pkg_repo(const std::string& pkg_name, const std::vector<pkg_source>& package_sources);
 
-	std::string read_pkg_variable(const std::string& pkg_name, const std::string& var_name, const std::string& repo_path);
+	std::string read_pkg_variable(const std::string& pkg_name, const pkg_variable var, const std::string& repo_path);
 
 	/* Returns the raw birb_db file if it exists */
 	std::vector<std::string> read_birb_db();

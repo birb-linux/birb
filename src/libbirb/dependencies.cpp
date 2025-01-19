@@ -64,7 +64,7 @@ namespace birb
 		if (!meta_packages.contains(pkg))
 		{
 			/* Read data from the package file */
-			std::string dep_line = birb::read_pkg_variable(pkg, "DEPS", repo.path);
+			std::string dep_line = birb::read_pkg_variable(pkg, pkg_variable::deps, repo.path);
 
 			/* Return empty dependency list if the dep_line is empty
 			 * The line could be empty for example when the package doesn't exist or is invalid etc. */
@@ -229,7 +229,7 @@ namespace birb
 
 				/* Check if the package is "important" and should be skipped */
 				repo      = birb::locate_pkg_repo(orphan_candidates[i], repos);
-				flags_var = birb::read_pkg_variable(orphan_candidates[i], "FLAGS", repo.path);
+				flags_var = birb::read_pkg_variable(orphan_candidates[i], pkg_variable::flags, repo.path);
 
 				if (!flags_var.empty())
 				{

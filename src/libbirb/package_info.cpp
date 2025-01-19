@@ -38,7 +38,7 @@ namespace birb
 
 	std::unordered_set<pkg_flag> get_pkg_flags(const std::string& pkg_name, const pkg_source& repo)
 	{
-		const std::string flag_str = read_pkg_variable(pkg_name, "FLAGS", repo.path);
+		const std::string flag_str = read_pkg_variable(pkg_name, pkg_variable::flags, repo.path);
 
 		// if the flag_str is empty, there are no flags
 		if (flag_str.empty())

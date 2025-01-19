@@ -47,8 +47,8 @@ int main(int argc, char** argv)
 			continue;
 		}
 
-		const std::string version 		= birb::read_pkg_variable(argv[i], "VERSION", repo.path);
-		const std::string description 	= birb::read_pkg_variable(argv[i], "DESC", repo.path);
+		const std::string version 		= birb::read_pkg_variable(argv[i], pkg_variable::version, repo.path);
+		const std::string description 	= birb::read_pkg_variable(argv[i], pkg_variable::desc, repo.path);
 
 		std::cout << argv[i] << ";";
 		std::cout << version << ";";
