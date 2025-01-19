@@ -7,13 +7,13 @@ SRC_DIR=./src
 LDFLAGS=-L$(BUILD_DIR) -l:libbirb.a
 
 .PHONY: all
-all: birb birb_dep_solver birb_db
+all: birb birb_db
 
 #### Backend ####
 %.o: $(SRC_DIR)/libbirb/%.cpp
 	$(CXX) $(CXXFLAGS) -c $< -o $@
 
-libbirb.a: database.o dependencies.o utils.o install.o package_info.o cli.o symlink.o download.o uninstall.o pkg_search.o distclean.o
+libbirb.a: database.o dependencies.o utils.o install.o package_info.o cli.o symlink.o download.o uninstall.o pkg_search.o distclean.o depclean.o
 	gcc-ar -rcs $@ $^
 
 #### Testing ####
