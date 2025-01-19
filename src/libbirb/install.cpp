@@ -18,6 +18,29 @@
 #include <unistd.h>
 #include <unordered_set>
 
+enum class install_phase
+{
+	setup,
+	build,
+	install,
+	test,
+	build32,
+	test32,
+	install32,
+	post_install
+};
+
+const static std::unordered_map<install_phase, std::string> install_phase_str = {
+	{ install_phase::setup, "_setup" },
+	{ install_phase::build, "_build" },
+	{ install_phase::install, "_install" },
+	{ install_phase::test, "_test" },
+	{ install_phase::build32, "_build32" },
+	{ install_phase::test32, "_test32" },
+	{ install_phase::install32, "_install32" },
+	{ install_phase::post_install, "_post_install" }
+};
+
 namespace birb
 {
 	void install(const std::vector<std::string>& packages, const path_settings& paths, const birb_config& config)
@@ -223,7 +246,7 @@ namespace birb
 		// remove the old pwd restoring file
 		std::filesystem::remove(pwd_restore_file_path);
 
-		const auto exec_seed_phase = [&seed_file_path, &pwd_restore_file_path](const std::string& phase)
+		const auto exec_seed_phase = [&seed_file_path, &pwd_restore_file_path](const install_phase phase)
 		{
 			// if the pwd restoring file exists, restore the working directory state
 			if (std::filesystem::exists(pwd_restore_file_path))
@@ -238,20 +261,20 @@ namespace birb
 				chdir(path.c_str());
 			}
 
-			exec_shell_cmd(std::format("source {} ; {} ; echo -n $? > /tmp/birb_ret ; pwd > {}", seed_file_path, phase, pwd_restore_file_path));
+			exec_shell_cmd(std::format("source {} ; {} ; echo -n $? > /tmp/birb_ret ; pwd > {}", seed_file_path, install_phase_str.at(phase), pwd_restore_file_path));
 			const u8 ret = shell_return_value();
 			if (ret)
-				error("Something went wrong during ", phase, ", ret: ", (i32)ret);
+				error("Something went wrong during ", install_phase_str.at(phase), ", ret: ", (i32)ret);
 		};
 
 		// call the _setup function in the seed.sh file
-		exec_seed_phase("_setup");
+		exec_seed_phase(install_phase::setup);
 
 		// TODO: make it possible to customize CFLAGS and CXXFLAGS
 		log("Building the package");
 		if (xorg_running)
 			set_win_title(std::format("installing {} (compile)", pkg_name));
-		exec_seed_phase("_build");
+		exec_seed_phase(install_phase::build);
 
 		// run tests if the package has them and test running is enabled
 		if (config.enable_tests && pkg_flags.contains(pkg_flag::test))
@@ -259,7 +282,7 @@ namespace birb
 			log("Running tests");
 			if (xorg_running)
 				set_win_title(std::format("installing {} (test)", pkg_name));
-			exec_seed_phase("_test");
+			exec_seed_phase(install_phase::test);
 		}
 
 		log("Installing the package");
@@ -267,7 +290,7 @@ namespace birb
 			set_win_title(std::format("installing {} (install)", pkg_name));
 
 		prepare_fakeroot(pkg_name, paths);
-		exec_seed_phase("_install");
+		exec_seed_phase(install_phase::install);
 
 		log("Cleaning up");
 		if (xorg_running)
