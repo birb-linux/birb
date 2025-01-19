@@ -195,7 +195,6 @@ namespace birb
 		const std::string XORG_PREFIX = std::format("{}/{}/usr", paths.fakeroot, pkg_name);
 		const std::string PYTHON_DIST = "usr/python_dist";
 		const std::string build_dir_path = std::format("{}/birb_package_build-{}", paths.build_dir, pkg_name);
-		info("Build directory: ", build_dir_path);
 
 		assert(!build_dir_path.empty());
 		assert(build_dir_path != "/birb_package_build-");
