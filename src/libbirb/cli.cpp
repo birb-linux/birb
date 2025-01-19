@@ -16,18 +16,18 @@ namespace birb
 		{
 			const char answer = std::tolower(std::cin.get());
 
+			if (answer == '\n')
+				return default_answer;
+
+			std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+
 			if (answer == 'y')
 				return true;
 
 			if (answer == 'n')
 				return false;
 
-			if (answer == '\n')
-				return default_answer;
-
 			std::cout << "invalid answer, try again: ";
-			std::cin.clear();
-			std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
 		}
 	}
 

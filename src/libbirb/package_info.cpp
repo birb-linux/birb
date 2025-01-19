@@ -12,7 +12,7 @@ namespace birb
 {
 	bool validate_package(const std::string& pkg_name)
 	{
-		return is_valid_package_name(pkg_name) && locate_package(pkg_name)->is_valid();
+		return is_valid_package_name(pkg_name) && locate_package(pkg_name)->is_valid() && !pkg_name.empty();
 	}
 
 	bool is_valid_package_name(const std::string& pkg_name)

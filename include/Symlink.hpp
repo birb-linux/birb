@@ -7,5 +7,5 @@
 namespace birb
 {
 	void link_package(const std::string& pkg_name, const path_settings& paths);
-	void unlink_package();
+	void unlink_package(const std::string& pkg_name, const path_settings& paths);
 }

@@ -8,6 +8,7 @@
 #include "Download.hpp"
 #include "Install.hpp"
 #include "Logging.hpp"
+#include "Uninstall.hpp"
 #include "Utils.hpp"
 
 enum class exec_mode
@@ -147,6 +148,11 @@ int main(int argc, char** argv)
 		case exec_mode::install:
 			check_root_privileges();
 			birb::install(o.packages, path_set, config);
+			break;
+
+		case exec_mode::uninstall:
+			check_root_privileges();
+			birb::uninstall(o.packages, path_set);
 			break;
 
 		default:
