@@ -144,6 +144,8 @@ namespace birb
 
 		if (xorg_is_running)
 			set_win_title("done!");
+
+		log("Done!");
 	}
 
 	void install_package(const std::string& pkg_name, const std::unordered_set<pkg_flag>& pkg_flags,
