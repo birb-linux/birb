@@ -22,6 +22,7 @@ struct path_settings
 struct birb_config
 {
 	bool enable_lto{true};
+	bool enable_tests{false};
 	bool enable_32bit_packages{true};
 	u16 build_jobs{4};
 	std::string birb_remote{"https://github.com/birb-linux/birb"};

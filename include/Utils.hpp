@@ -13,6 +13,11 @@ namespace birb
 
 	void exec_shell_cmd(const std::string& cmd);
 
+	// read the return value gotten from a shell script that gets
+	// saved to /tmp/birb_ret
+	__attribute__((warn_unused_result))
+	u8 shell_return_value();
+
 	// TODO: deprecate and replace with clipp
 	__attribute__((warn_unused_result))
 	bool argcmp(char* arg, int argc, const std::string& option, int required_arg_count);

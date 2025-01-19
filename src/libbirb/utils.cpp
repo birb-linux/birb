@@ -1,3 +1,4 @@
+#include <cstdlib>
 #ifdef BIRB_TEST
 #define DOCTEST_CONFIG_IMPLEMENT
 #include <doctest/doctest.h>
@@ -32,6 +33,17 @@ namespace birb
 
 		fputs(cmd.c_str(), bash_pipe);
 		pclose(bash_pipe);
+	}
+
+	u8 shell_return_value()
+	{
+		std::ifstream file("/tmp/birb_ret");
+		if (!file.is_open())
+			error("Could not open /tmp/birb_ret");
+
+		std::string ret_str;
+		file >> ret_str;
+		return std::atoi(ret_str.c_str());
 	}
 
 	bool argcmp(char* arg, int argc, const std::string& option, int required_arg_count)

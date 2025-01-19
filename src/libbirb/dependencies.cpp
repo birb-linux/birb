@@ -18,8 +18,7 @@ namespace birb
 
 		for (const std::string& pkg_name : packages)
 		{
-			const std::vector<std::string> deps = get_dependencies(pkg_name, repos, 512);
-			full_package_list.insert(full_package_list.end(), deps.begin(), deps.end());
+			full_package_list.push_back(pkg_name);
 
 			// if the package is a font, add fontconfig as a dependency before the package
 			const std::optional<pkg_source> repo = locate_package(pkg_name);
@@ -29,7 +28,8 @@ namespace birb
 			if (flags.contains(pkg_flag::font))
 				full_package_list.emplace_back("fontconfig");
 
-			full_package_list.push_back(pkg_name);
+			const std::vector<std::string> deps = get_dependencies(pkg_name, repos, 512);
+			full_package_list.insert(full_package_list.end(), deps.begin(), deps.end());
 		}
 
 		// deduplicate the list

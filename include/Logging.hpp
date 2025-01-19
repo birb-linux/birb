@@ -5,6 +5,12 @@
 namespace birb
 {
 	template<typename... Args>
+	void info(Args... args)
+	{
+		(std::cout << ... << args) << '\n';
+	}
+
+	template<typename... Args>
 	void log(Args... args)
 	{
 		std::cout << "\033[32m=> \033[0m";
