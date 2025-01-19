@@ -1,3 +1,4 @@
+#include <cassert>
 #include <clipp.h>
 #include <cstdlib>
 #include <filesystem>
@@ -5,6 +6,7 @@
 #include <unistd.h>
 #include <vector>
 
+#include "Database.hpp"
 #include "Download.hpp"
 #include "Install.hpp"
 #include "Logging.hpp"
@@ -154,6 +156,15 @@ int main(int argc, char** argv)
 			check_root_privileges();
 			birb::uninstall(o.packages, path_set);
 			break;
+
+		case exec_mode::list_installed:
+		{
+			const std::vector<std::string> installed_packages = birb::get_installed_packages();
+			for (const std::string& pkg_name : installed_packages)
+				std::cout << pkg_name << '\n';
+
+			break;
+		}
 
 		default:
 			std::cout << "option not implemented yet\n";
