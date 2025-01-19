@@ -7,13 +7,13 @@ SRC_DIR=./src
 LDFLAGS=-L$(BUILD_DIR) -l:libbirb.a
 
 .PHONY: all
-all: birb birb_dep_solver birb_pkg_search birb_db
+all: birb birb_dep_solver birb_db
 
 #### Backend ####
 %.o: $(SRC_DIR)/libbirb/%.cpp
 	$(CXX) $(CXXFLAGS) -c $< -o $@
 
-libbirb.a: database.o dependencies.o utils.o install.o package_info.o cli.o symlink.o download.o uninstall.o
+libbirb.a: database.o dependencies.o utils.o install.o package_info.o cli.o symlink.o download.o uninstall.o pkg_search.o
 	gcc-ar -rcs $@ $^
 
 #### Testing ####
@@ -28,10 +28,6 @@ birb: $(SRC_DIR)/birb.cpp libbirb.a
 
 # Dependency solver
 birb_dep_solver: $(SRC_DIR)/dep_solver.cpp libbirb.a
-	$(CXX) $(CXXFLAGS) $(FRONTEND_CXXFLAGS) -o $@ $^
-
-# Package search tool
-birb_pkg_search: $(SRC_DIR)/pkg_search.cpp libbirb.a
 	$(CXX) $(CXXFLAGS) $(FRONTEND_CXXFLAGS) -o $@ $^
 
 # Database tool

@@ -10,6 +10,7 @@
 #include "Download.hpp"
 #include "Install.hpp"
 #include "Logging.hpp"
+#include "PkgSearch.hpp"
 #include "Uninstall.hpp"
 #include "Utils.hpp"
 
@@ -73,7 +74,7 @@ int main(int argc, char** argv)
 				(clipp::option("--relink").set(o.mode, exec_mode::relink) & clipp::values("package(s)").set(o.packages))
 				% "re-create symlinks to the package fakeroots",
 
-				(clipp::option("-s", "--search").set(o.mode, exec_mode::search) & clipp::value("package").set(o.packages))
+				(clipp::option("-s", "--search").set(o.mode, exec_mode::search) & clipp::values("package(s)").set(o.packages))
 				% "search for packages by name",
 
 				(clipp::option("--sync").set(o.mode, exec_mode::sync_repos) & clipp::option("--force").set(o.force))
@@ -157,6 +158,10 @@ int main(int argc, char** argv)
 		case exec_mode::uninstall:
 			check_root_privileges();
 			birb::uninstall(o.packages, path_set);
+			break;
+
+		case exec_mode::search:
+			birb::pkg_search(o.packages);
 			break;
 
 		case exec_mode::list_installed:
