@@ -21,6 +21,8 @@ namespace birb
 {
 	void install(const std::vector<std::string>& packages, const path_settings& paths, const birb_config& config)
 	{
+		assert(!packages.empty());
+
 		// validate the packages and quit if something seems to be wrong
 		for (const std::string& pkg_name : packages)
 		{
@@ -29,6 +31,7 @@ namespace birb
 		}
 
 		const std::vector<std::string> required_packages = birb::resolve_dependencies(packages);
+		assert(!required_packages.empty());
 
 		// figure out which packages have already been installed
 		// and what needs to be installed
@@ -73,6 +76,8 @@ namespace birb
 			const std::optional<pkg_source> repo = locate_package(pkg_name);
 			if (!repo.has_value() || !repo.value().is_valid())
 				error("Package [", pkg_name, "] does not exists");
+
+			assert(repo.value().path.empty());
 
 			if (read_pkg_variable(pkg_name, "NAME", repo.value().path).empty())
 				error("Package [", pkg_name, "] does not define a name");
@@ -156,6 +161,7 @@ namespace birb
 		//
 		// also this makes using torsocks a bit easier if needed
 
+		assert(!paths.repo_dir.empty());
 		const std::string seed_file_path = std::format("{}/{}/seed.sh", paths.repo_dir, pkg_name);
 
 		const std::string download_script = std::format(R"~~(
@@ -209,6 +215,7 @@ echo -n "fail" > /tmp/birb_integrity_check
 
 		std::string integrity_check_result;
 		integrity_file >> integrity_check_result;
+		assert(!integrity_check_result.empty());
 
 		if (integrity_check_result != "ok")
 			error("File integrity check failed. Not continuing with the installation");
@@ -350,6 +357,7 @@ echo -n "fail" > /tmp/birb_integrity_check
 
 	void prepare_fakeroot(const std::string& pkg_name, const path_settings& paths)
 	{
+		assert(!pkg_name.empty());
 
 		constexpr static std::array dir_paths = {
 			"/usr/lib/bfd-plugins",
@@ -383,7 +391,10 @@ echo -n "fail" > /tmp/birb_integrity_check
 			"/sbin",
 		};
 
+		assert(!paths.fakeroot.empty());
 		const std::string& fakeroot_path = paths.fakeroot + "/" + pkg_name;
+		assert(!fakeroot_path.empty());
+		assert(fakeroot_path != "/");
 
 		info("Creating a fakeroot directory");
 		for (const std::string dir_path : dir_paths)
