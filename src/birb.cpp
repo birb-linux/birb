@@ -12,7 +12,7 @@
 #include "Download.hpp"
 #include "Install.hpp"
 #include "Logging.hpp"
-#include "PkgSearch.hpp"
+#include "PackageSearch.hpp"
 #include "Uninstall.hpp"
 #include "Utils.hpp"
 

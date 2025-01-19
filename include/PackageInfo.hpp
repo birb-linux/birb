@@ -38,4 +38,13 @@ namespace birb
 
 	__attribute__((warn_unused_result))
 	std::unordered_set<pkg_flag> get_pkg_flags(const std::string& pkg_name, const pkg_source& repo);
+
+	// find and cache all metapackages
+	void find_meta_packages();
+
+	__attribute__((warn_unused_result))
+	bool is_meta_package(const std::string& pkg_name);
+
+	__attribute__((warn_unused_result))
+	const std::vector<std::string>& expand_meta_package(const std::string& meta_pkg_name);
 }

@@ -62,7 +62,7 @@ namespace birb
 			return deps;
 
 		/* Perform string splitting only if this isn't a meta package */
-		if (!meta_packages.contains(pkg))
+		if (!is_meta_package(pkg))
 		{
 			/* Read data from the package file */
 			std::string dep_line = birb::read_pkg_variable(pkg, pkg_variable::deps, repo.path);
@@ -79,10 +79,11 @@ namespace birb
 				const std::string dep = dep_line.substr(0, pos);
 
 				/* Check if the dependency is a meta package and should be expanded */
-				if (meta_packages.contains(dep))
+				if (is_meta_package(dep))
 				{
-					/* Expand the meta package */
-					deps.insert(deps.end(), meta_packages[dep].begin(), meta_packages[dep].end());
+					// expand the meta package
+					const std::vector<std::string>& expanded_meta_package = expand_meta_package(dep);
+					deps.insert(deps.end(), expanded_meta_package.begin(), expanded_meta_package.end());
 				}
 				else
 				{
@@ -99,7 +100,7 @@ namespace birb
 		}
 		else
 		{
-			deps = meta_packages[pkg];
+			deps = expand_meta_package(pkg);
 		}
 
 
@@ -163,7 +164,7 @@ namespace birb
 		for (int i = dependencies.size() - 1; i >= 0; --i)
 		{
 			/* Skip meta-packages */
-			if (meta_packages.contains(dependencies[i]))
+			if (is_meta_package(dependencies[i]))
 				continue;
 
 			/* Check if the package is already in the result list */

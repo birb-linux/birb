@@ -1,6 +1,6 @@
 #include "Database.hpp"
 #include "Logging.hpp"
-#include "PkgSearch.hpp"
+#include "PackageSearch.hpp"
 #include "Utils.hpp"
 
 #include <algorithm>
