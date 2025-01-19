@@ -7,6 +7,7 @@
 #include <vector>
 
 #include "Database.hpp"
+#include "Distclean.hpp"
 #include "Download.hpp"
 #include "Install.hpp"
 #include "Logging.hpp"
@@ -158,6 +159,11 @@ int main(int argc, char** argv)
 		case exec_mode::uninstall:
 			check_root_privileges();
 			birb::uninstall(o.packages, path_set);
+			break;
+
+		case exec_mode::distclean:
+			check_root_privileges();
+			birb::distclean(path_set);
 			break;
 
 		case exec_mode::search:
