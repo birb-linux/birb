@@ -5,6 +5,7 @@
 #include <unistd.h>
 #include <vector>
 
+#include "Download.hpp"
 #include "Install.hpp"
 #include "Logging.hpp"
 #include "Utils.hpp"
@@ -103,13 +104,6 @@ int main(int argc, char** argv)
 		return 0;
 	}
 
-	// check if we are running as the root user
-	if (!birb::root_check() && !o.pretend)
-	{
-		birb::error("This command needs to be run with root privileges (￢_￢;) (use the --pretend flag to get around this error if necessary)");
-		return 1;
-	}
-
 	path_settings path_set;
 	birb_config config;
 
@@ -133,9 +127,25 @@ int main(int argc, char** argv)
 	if (!std::filesystem::exists(path_set.birb_repo_list))
 		birb::error(path_set.birb_repo_list, " is missing. Check the TROUBLESHOOTING section in 'man birb' for instructions on how to fix this issue");
 
+	const auto check_root_privileges = [&o]()
+	{
+		// check if we are running as the root user
+		if (!birb::root_check() && !o.pretend)
+		{
+			birb::error("This command needs to be run with root privileges (￢_￢;) (use the --pretend flag to get around this error if necessary)");
+			exit(1);
+		}
+	};
+
 	switch (o.mode)
 	{
+		case exec_mode::download:
+			check_root_privileges();
+			birb::download(o.packages, path_set);
+			break;
+
 		case exec_mode::install:
+			check_root_privileges();
 			birb::install(o.packages, path_set, config);
 			break;
 
