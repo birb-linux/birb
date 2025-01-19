@@ -50,6 +50,9 @@ int main(int argc, char** argv)
 	opts o;
 
 	auto cli = (
+			clipp::option("--pretend").set(o.pretend)
+			% "act as if we were running with root privileges",
+
 			clipp::one_of(
 				clipp::option("-h", "--help").set(o.mode, exec_mode::help)
 				% "display this help page and exit",
@@ -91,10 +94,7 @@ int main(int argc, char** argv)
 
 				clipp::option("--upgrade").set(o.mode, exec_mode::upgrade)
 				% "update the birb package manager"
-			) | clipp::values("packages", o.packages).set(o.mode, exec_mode::install) % "install a list of packages",
-
-			clipp::option("--pretend").set(o.pretend)
-			% "act as if we were running with root privileges"
+			) | clipp::values("packages", o.packages).set(o.mode, exec_mode::install) % "install a list of packages"
 		);
 
 	if (!clipp::parse(argc, argv, cli) || o.mode == exec_mode::help)
