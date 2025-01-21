@@ -13,6 +13,7 @@
 #include "Install.hpp"
 #include "Logging.hpp"
 #include "PackageSearch.hpp"
+#include "Symlink.hpp"
 #include "Uninstall.hpp"
 #include "Utils.hpp"
 
@@ -170,6 +171,11 @@ int main(int argc, char** argv)
 		case exec_mode::distclean:
 			check_root_privileges();
 			birb::distclean(path_set);
+			break;
+
+		case exec_mode::relink:
+			check_root_privileges();
+			birb::relink_package(o.packages, path_set);
 			break;
 
 		case exec_mode::search:
