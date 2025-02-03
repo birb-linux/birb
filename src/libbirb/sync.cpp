@@ -6,6 +6,7 @@
 #include <filesystem>
 #include <format>
 #include <fstream>
+#include <unistd.h>
 
 namespace birb
 {
@@ -34,7 +35,8 @@ namespace birb
 			}
 			else
 			{
-				exec_shell_cmd(std::format("cd {} && git fetch ; git pull", repo.path));
+				chdir(repo.path.c_str());
+				exec_shell_cmd("git fetch ; git pull");
 			}
 
 			// cache the package list
