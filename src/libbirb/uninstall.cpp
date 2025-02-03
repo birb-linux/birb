@@ -77,7 +77,7 @@ namespace birb
 		std::vector<std::string> db_file = birb::read_birb_db();
 
 		// read in the nest file
-		std::vector<std::string> nest_file = birb::read_file(paths.nest);
+		std::vector<std::string> nest_file = birb::read_file(paths.nest());
 
 		// start uninstalling the packages
 		for (const std::string& pkg_name : packages)
@@ -121,7 +121,7 @@ namespace birb
 		std::ostream_iterator<std::string> output_iterator(db_ofstream, "\n");
 		std::copy(db_file.begin(), db_file.end(), output_iterator);
 
-		std::ofstream nest_ofstream(paths.nest);
+		std::ofstream nest_ofstream(paths.nest());
 		std::ostream_iterator<std::string> nest_iterator(nest_ofstream, "\n");
 		std::copy(nest_file.begin(), nest_file.end(), nest_iterator);
 	}

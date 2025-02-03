@@ -183,7 +183,7 @@ namespace birb
 		std::unordered_set<std::string> result;
 
 		// read in the list of packages installed by the user
-		const std::vector<std::string> nest = birb::read_file(paths.nest);
+		const std::vector<std::string> nest = birb::read_file(paths.nest());
 
 		// get the list of all installed applications
 		const std::vector<std::string> installed_packages = birb::get_installed_packages();

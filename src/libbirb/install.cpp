@@ -126,7 +126,7 @@ namespace birb
 			// if the package is not a dependency, add it into the nest file
 			if (std::find(packages.begin(), packages.end(), pkg_name) != packages.end())
 			{
-				std::ofstream nest_file(paths.nest, std::ios::app);
+				std::ofstream nest_file(paths.nest(), std::ios::app);
 				if (!nest_file.is_open())
 					error("Can't open the nest file for writing");
 
