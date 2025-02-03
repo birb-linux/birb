@@ -27,7 +27,7 @@ namespace birb
 		{
 			log("Syncing ", repo.name);
 
-			if (std::filesystem::exists(repo.path))
+			if (!std::filesystem::exists(repo.path))
 			{
 				warning("The repo ", repo.name, " was missing. Cloning it...");
 				exec_shell_cmd(std::format("git clone {} {}", repo.url, repo.path));
