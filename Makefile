@@ -7,7 +7,7 @@ SRC_DIR=./src
 LDFLAGS=-L$(BUILD_DIR) -l:libbirb.a
 
 .PHONY: all
-all: birb birb_db
+all: birb
 
 #### Backend ####
 %.o: $(SRC_DIR)/libbirb/%.cpp
@@ -60,6 +60,6 @@ install:
 
 clean:
 	rm -rf *.o *.a *.gcda
-	rm -f birb_db birb_dep_solver birb_pkg_search birb_test
+	rm -f birb_test
 
 .PHONY: check_cpp check_sh valgrind clean install install-lib
