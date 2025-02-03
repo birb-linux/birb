@@ -156,11 +156,7 @@ namespace birb
 
 		/* Read in the package database, if it exists */
 		if (std::filesystem::exists(paths.database()) && std::filesystem::is_regular_file(paths.database()))
-		{
 			db_file = read_file(paths.database());
-
-			assert(db_file.empty() == false);
-		}
 
 		return db_file;
 	}
