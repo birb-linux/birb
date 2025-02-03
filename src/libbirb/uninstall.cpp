@@ -108,12 +108,12 @@ namespace birb
 				), db_file.end());
 
 			// remove the package from the nest file (if it is there)
-			nest_file.erase(std::remove_if(db_file.begin(), db_file.end(),
+			nest_file.erase(std::remove_if(nest_file.begin(), nest_file.end(),
 					[&pkg_name](const std::string& entry)
 					{
-						return birb::split_string(entry, ";")[0] == pkg_name;
+						return entry == pkg_name;
 					}
-				), db_file.end());
+				), nest_file.end());
 
 			log(pkg_name, " uninstalled");
 		}
