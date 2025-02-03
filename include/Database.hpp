@@ -32,26 +32,34 @@ enum class pkg_variable
 
 namespace birb
 {
+	__attribute__((warn_unused_result))
 	std::vector<pkg_source> get_pkg_sources(const path_settings& paths);
 
 	/* Get the package source repositories in the same ';' separated
 	 * format as they are in the configuration file at /etc/birb-sources.conf */
+	__attribute__((warn_unused_result))
 	std::vector<std::string> get_pkg_source_list(const path_settings& paths);
 
 	/* Check if a package exists and if it does, return the source it was found from */
+	__attribute__((warn_unused_result))
 	pkg_source locate_pkg_repo(const std::string& pkg_name, const std::vector<pkg_source>& package_sources);
 
+	__attribute__((warn_unused_result))
 	std::string read_pkg_variable(const std::string& pkg_name, const pkg_variable var, const std::string& repo_path);
 
 	/* Returns the raw birb_db file if it exists */
+	__attribute__((warn_unused_result))
 	std::vector<std::string> read_birb_db(const path_settings& paths);
 
+	__attribute__((warn_unused_result))
 	std::vector<std::string> find_db_entry(const std::vector<std::string>& db_file, const std::string& paths);
 
 	/* Get the list of installed package names with the birb_db file */
+	__attribute__((warn_unused_result))
 	std::vector<std::string> get_installed_packages(const path_settings& paths);
 
 	/* Get versions for all packages taking the repository order into account */
+	__attribute__((warn_unused_result))
 	std::unordered_map<std::string, std::string> get_repo_versions(const path_settings& paths);
 
 	/* Caching */
