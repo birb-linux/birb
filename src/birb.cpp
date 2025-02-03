@@ -14,6 +14,7 @@
 #include "Logging.hpp"
 #include "PackageSearch.hpp"
 #include "Symlink.hpp"
+#include "Sync.hpp"
 #include "Uninstall.hpp"
 #include "Utils.hpp"
 
@@ -183,6 +184,11 @@ int main(int argc, char** argv)
 
 		case exec_mode::search:
 			birb::pkg_search(o.packages, path_set);
+			break;
+
+		case exec_mode::sync_repos:
+			check_root_privileges();
+			birb::sync_repositories(path_set);
 			break;
 
 		case exec_mode::list_installed:

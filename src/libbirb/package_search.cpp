@@ -4,6 +4,7 @@
 #include "Utils.hpp"
 
 #include <algorithm>
+#include <filesystem>
 #include <iostream>
 #include <string>
 #include <vector>
@@ -12,6 +13,9 @@ namespace birb
 {
 	void pkg_search(const std::vector<std::string>& packages, const path_settings& paths)
 	{
+		if (!std::filesystem::exists(paths.package_list()))
+			error("Could not find the package list. Run 'birb --sync' to sync the repositories and update package cache.");
+
 		// read in the list of all existing packages
 		const std::vector<std::string> pkg_list = birb::read_file(paths.package_list());
 		if (pkg_list.empty())
