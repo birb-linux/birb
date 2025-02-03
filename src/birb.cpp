@@ -123,6 +123,9 @@ int main(int argc, char** argv)
 	{
 		birb::log("LFS variable is defined (we are probably installing)");
 		path_set.repo_dir.insert(0, env_lfs);
+		path_set.db_dir.insert(0, env_lfs);
+		path_set.build_dir.insert(0, env_lfs);
+		path_set.fakeroot_backup.insert(0, env_lfs);
 		path_set.distfiles.insert(0, env_lfs);
 		path_set.fakeroot.insert(0, env_lfs);
 		path_set.birb_cfg.insert(0, env_lfs);
