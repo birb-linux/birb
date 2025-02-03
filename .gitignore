@@ -1,4 +1,5 @@
 build/
+birb
 birb_db
 birb_dep_solver
 birb_pkg_search

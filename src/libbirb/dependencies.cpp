@@ -1,4 +1,8 @@
+#include "Database.hpp"
 #include "Dependencies.hpp"
+#include "Logging.hpp"
+#include "PackageInfo.hpp"
+
 #include "Utils.hpp"
 #include <algorithm>
 #include <cassert>
@@ -8,6 +12,33 @@
 
 namespace birb
 {
+	std::vector<std::string> resolve_dependencies(const std::vector<std::string>& packages)
+	{
+		std::vector<std::string> full_package_list;
+		const std::vector<pkg_source> repos = get_pkg_sources();
+
+		for (const std::string& pkg_name : packages)
+		{
+			full_package_list.push_back(pkg_name);
+
+			// if the package is a font, add fontconfig as a dependency before the package
+			const std::optional<pkg_source> repo = locate_package(pkg_name);
+			assert(repo.has_value());
+			std::unordered_set<pkg_flag> flags = get_pkg_flags(pkg_name, repo.value());
+
+			if (flags.contains(pkg_flag::font))
+				full_package_list.emplace_back("fontconfig");
+
+			const std::vector<std::string> deps = get_dependencies(pkg_name, repos, 512);
+			full_package_list.insert(full_package_list.end(), deps.begin(), deps.end());
+		}
+
+		// deduplicate the list
+		full_package_list = deduplicated_dep_list(full_package_list);
+
+		return full_package_list;
+	}
+
 	std::vector<std::string> get_dependencies(const std::string& pkg, const std::vector<pkg_source>& repos, int depth)
 	{
 		assert(pkg.empty() == false);
@@ -31,10 +62,10 @@ namespace birb
 			return deps;
 
 		/* Perform string splitting only if this isn't a meta package */
-		if (!meta_packages.contains(pkg))
+		if (!is_meta_package(pkg))
 		{
 			/* Read data from the package file */
-			std::string dep_line = birb::read_pkg_variable(pkg, "DEPS", repo.path);
+			std::string dep_line = birb::read_pkg_variable(pkg, pkg_variable::deps, repo.path);
 
 			/* Return empty dependency list if the dep_line is empty
 			 * The line could be empty for example when the package doesn't exist or is invalid etc. */
@@ -48,10 +79,11 @@ namespace birb
 				const std::string dep = dep_line.substr(0, pos);
 
 				/* Check if the dependency is a meta package and should be expanded */
-				if (meta_packages.contains(dep))
+				if (is_meta_package(dep))
 				{
-					/* Expand the meta package */
-					deps.insert(deps.end(), meta_packages[dep].begin(), meta_packages[dep].end());
+					// expand the meta package
+					const std::vector<std::string>& expanded_meta_package = expand_meta_package(dep);
+					deps.insert(deps.end(), expanded_meta_package.begin(), expanded_meta_package.end());
 				}
 				else
 				{
@@ -68,7 +100,7 @@ namespace birb
 		}
 		else
 		{
-			deps = meta_packages[pkg];
+			deps = expand_meta_package(pkg);
 		}
 
 
@@ -132,7 +164,7 @@ namespace birb
 		for (int i = dependencies.size() - 1; i >= 0; --i)
 		{
 			/* Skip meta-packages */
-			if (meta_packages.contains(dependencies[i]))
+			if (is_meta_package(dependencies[i]))
 				continue;
 
 			/* Check if the package is already in the result list */
@@ -146,35 +178,39 @@ namespace birb
 		return result;
 	}
 
-	void orphan_finder(const std::vector<pkg_source>& repos)
+	std::vector<std::string> find_orphan_packages(const std::vector<pkg_source>& repos, const path_settings& paths)
 	{
 		std::unordered_set<std::string> result;
 
-		/* Read in the list of packages installed by the user */
-		const std::vector<std::string> nest = birb::read_file("/var/lib/birb/nest");
+		// read in the list of packages installed by the user
+		const std::vector<std::string> nest = birb::read_file(paths.nest);
 
-		/* Get the list of all installed applications */
+		// get the list of all installed applications
 		const std::vector<std::string> installed_packages = birb::get_installed_packages();
 
-		/* Orphan candidates are packages that are installed but aren't in the nest */
+		// orphan candidates are packages that are installed but aren't in the nest
 		std::vector<std::string> orphan_candidates;
+
+		// we'll reserve the memory instead of constructing a big array
+		// to avoid empty objects
 		orphan_candidates.reserve(installed_packages.size() - nest.size());
 
-		/* Find all orphan candidates */
-		for (size_t i = 0; i < installed_packages.size(); ++i)
+		// find all orphan candidates
+		for (const std::string& pkg_name : installed_packages)
 		{
-			if (std::find(nest.begin(), nest.end(), installed_packages[i]) == nest.end())
-				orphan_candidates.push_back(installed_packages[i]);
+			assert(!pkg_name.empty());
+			if (std::find(nest.begin(), nest.end(), pkg_name) == nest.end())
+				orphan_candidates.push_back(pkg_name);
 		}
-		std::cout << "Found " << orphan_candidates.size() << " orphan candidates\n";
+
+		info("Found ", orphan_candidates.size(), " orphan candidates");
 
 		/* Call it quits if there are no packages that could be orphans */
 		if (orphan_candidates.size() == 0)
-			return;
+			return{};
 
-		std::cout << "Starting the orphan scan\n";
+		info("Starting the orphan scan");
 
-		pkg_source repo;
 		std::string flags_var;
 		std::vector<std::string> flags;
 		std::vector<std::string> reverse_deps;
@@ -187,6 +223,7 @@ namespace birb
 			bool clean_run = true;
 			for (size_t i = 0; i < orphan_candidates.size(); ++i)
 			{
+				assert(!orphan_candidates.at(i).empty());
 				std::cout << "\rScanning... [Pass: " << pass + 1 << "] [" << i + 1 << "/" << orphan_candidates.size() << "]" << std::flush;
 
 				/* Skip packages that are already in the result list */
@@ -194,19 +231,15 @@ namespace birb
 					continue;
 
 				/* Skip the package if it doesn't have a fakeroot */
-				if (!std::filesystem::exists("/var/db/fakeroot/" + orphan_candidates[i]))
+				if (!std::filesystem::exists(paths.fakeroot + "/" + orphan_candidates[i]))
 					continue;
 
 				/* Check if the package is "important" and should be skipped */
-				repo      = birb::locate_pkg_repo(orphan_candidates[i], repos);
-				flags_var = birb::read_pkg_variable(orphan_candidates[i], "FLAGS", repo.path);
+				const pkg_source repo = birb::locate_pkg_repo(orphan_candidates[i], repos);
+				const std::unordered_set<pkg_flag> flags = get_pkg_flags(orphan_candidates[i], repo);
 
-				if (!flags_var.empty())
-				{
-					flags = birb::split_string(flags_var, " ");
-					if (std::find(flags.begin(), flags.end(), "important") !=  flags.end())
-						continue;
-				}
+				if (flags.contains(pkg_flag::important))
+					continue;
 
 				/* Check if the package has any reverse dependencies */
 				if (birb::reverse_dependency_cache.contains(orphan_candidates[i]))
@@ -242,18 +275,6 @@ namespace birb
 		}
 		std::cout << "\n";
 
-		/* Reverse the result set */
-		std::vector<std::string> orphans(result.size());
-		int i = orphans.size() - 1;
-		for (std::string p : result)
-		{
-			orphans[i] = p;
-			--i;
-		}
-
-		for (std::string o : orphans)
-			std::cerr << o << " ";
-
-		std::cout << "\n";
+		return std::vector<std::string>(result.begin(), result.end());
 	}
 }

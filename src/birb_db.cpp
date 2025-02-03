@@ -3,6 +3,7 @@
 /**********************************************************/
 
 #include "Database.hpp"
+#include "Logging.hpp"
 #include "Utils.hpp"
 
 #include <algorithm>
@@ -96,7 +97,8 @@ int main(int argc, char** argv)
 
 	if (birb::argcmp(argv[1], argc, "--remove", 1))
 	{
-		birb::root_check();
+		if (birb::root_check())
+			birb::error("This command requires root privileges");
 
 		/* Remove the given package from the database */
 		db_file.erase(std::remove_if(db_file.begin(), db_file.end(),
@@ -111,7 +113,8 @@ int main(int argc, char** argv)
 
 	if (birb::argcmp(argv[1], argc, "--reset", 0))
 	{
-		birb::root_check();
+		if (birb::root_check())
+			birb::error("This command requires root privileges");
 
 		std::cout 	<< "WARNING: Packages that don't have fakeroots won't be counted!\n"
 					<< "Do you still want to continue? (y/n): ";
@@ -141,7 +144,8 @@ int main(int argc, char** argv)
 
 	if (birb::argcmp(argv[1], argc, "--update", 2))
 	{
-		birb::root_check();
+		if (birb::root_check())
+			birb::error("This command requires root privileges");
 
 		/* Make sure that the package name doesn't use the delimiter char */
 		if (std::string(argv[2]).find(";") != std::string::npos)
