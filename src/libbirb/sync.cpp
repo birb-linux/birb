@@ -35,7 +35,8 @@ namespace birb
 			}
 			else
 			{
-				chdir(repo.path.c_str());
+				std::filesystem::current_path(repo.path);
+				info("Repo path: ", std::filesystem::current_path());
 				exec_shell_cmd("git fetch ; git pull");
 			}
 
