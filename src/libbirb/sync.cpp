@@ -52,6 +52,10 @@ namespace birb
 				if (p.filename() == "birb")
 					continue;
 
+				// skip hidden directories since those can't be packages
+				if (p.filename().string().at(0) == '.')
+					continue;
+
 				package_name_list.emplace_back(p.filename());
 			}
 		}
