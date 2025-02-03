@@ -16,22 +16,12 @@ all: birb birb_db
 libbirb.a: database.o dependencies.o utils.o install.o package_info.o cli.o symlink.o download.o uninstall.o package_search.o distclean.o depclean.o
 	gcc-ar -rcs $@ $^
 
-#### Testing ####
+# Testing
 birb_test: libbirb.a
 	$(CXX) $(CXXFLAGS) $(SRC_DIR)/birb_test.cpp -o $@ $^
 
-#### Frontend ####
-
 # Package manager
 birb: $(SRC_DIR)/birb.cpp libbirb.a
-	$(CXX) $(CXXFLAGS) $(FRONTEND_CXXFLAGS) -o $@ $^
-
-# Dependency solver
-birb_dep_solver: $(SRC_DIR)/dep_solver.cpp libbirb.a
-	$(CXX) $(CXXFLAGS) $(FRONTEND_CXXFLAGS) -o $@ $^
-
-# Database tool
-birb_db: $(SRC_DIR)/birb_db.cpp libbirb.a
 	$(CXX) $(CXXFLAGS) $(FRONTEND_CXXFLAGS) -o $@ $^
 
 check: check_sh check_cpp
