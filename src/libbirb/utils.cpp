@@ -126,7 +126,7 @@ namespace birb
 
 		if (!file.is_open())
 		{
-			std::cout << "File [" << file_path << " can't be opened!\n";
+			std::cout << "File [" << file_path << "] can't be opened!\n";
 			exit(2);
 		}
 
