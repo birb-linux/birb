@@ -65,8 +65,8 @@ install:
 	mkdir -p $(DESTDIR)/usr/include/birb
 	cp ./include/*.hpp $(DESTDIR)/usr/include/birb/
 	cp ./birb.1 $(DESTDIR)/usr/share/man/man1/birb.1
-	[ -f /etc/birb.conf ] || cp ./birb.conf $(DESTDIR)/etc/birb.conf
-	[ -f /etc/birb-sources.conf ] || cp ./birb-sources.conf $(DESTDIR)/etc/birb-sources.conf
+	[ -f $(DESTDIR)/etc/birb.conf ] || cp ./birb.conf $(DESTDIR)/etc/birb.conf
+	[ -f $(DESTDIR)/etc/birb-sources.conf ] || cp ./birb-sources.conf $(DESTDIR)/etc/birb-sources.conf
 
 clean:
 	rm -rf *.o *.a *.gcda
