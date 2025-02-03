@@ -55,18 +55,18 @@ valgrind:
 	valgrind --error-exitcode=31 ./birb_pkg_search vim firefox
 
 install-lib:
-	mkdir -p /usr/lib/birb
-	cp ./birb_funcs /usr/lib/birb/
+	mkdir -p $(DESTDIR)/usr/lib/birb
+	cp ./birb_funcs $(DESTDIR)/usr/lib/birb/
 
 install:
-	cp ./birb {birb_dep_solver,birb_pkg_search,birb_db} /usr/bin/
-	mkdir -p /usr/lib/birb
-	cp ./birb_funcs ./libbirb.a /usr/lib/birb/
-	mkdir -p /usr/include/birb
-	cp ./include/*.hpp /usr/include/birb/
-	cp ./birb.1 /usr/share/man/man1/birb.1
-	[ -f /etc/birb.conf ] || cp ./birb.conf /etc/birb.conf
-	[ -f /etc/birb-sources.conf ] || cp ./birb-sources.conf /etc/birb-sources.conf
+	cp ./birb {birb_dep_solver,birb_pkg_search,birb_db} $(DESTDIR)/usr/bin/
+	mkdir -p $(DESTDIR)/usr/lib/birb
+	cp ./birb_funcs ./libbirb.a $(DESTDIR)/usr/lib/birb/
+	mkdir -p $(DESTDIR)/usr/include/birb
+	cp ./include/*.hpp $(DESTDIR)/usr/include/birb/
+	cp ./birb.1 $(DESTDIR)/usr/share/man/man1/birb.1
+	[ -f /etc/birb.conf ] || cp ./birb.conf $(DESTDIR)/etc/birb.conf
+	[ -f /etc/birb-sources.conf ] || cp ./birb-sources.conf $(DESTDIR)/etc/birb-sources.conf
 
 clean:
 	rm -rf *.o *.a *.gcda
