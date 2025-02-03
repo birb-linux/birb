@@ -70,8 +70,11 @@ namespace birb
 			info(fakeroot, " -> ", root);
 
 			// make sure that the required target directories exist
+			assert(!root.parent_path().empty());
 			std::filesystem::create_directories(root.parent_path());
 
+			assert(!fakeroot.empty());
+			assert(!root.empty());
 			std::filesystem::create_symlink(fakeroot, root);
 		}
 	}

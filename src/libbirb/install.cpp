@@ -152,12 +152,11 @@ namespace birb
 			const std::string version_str = read_pkg_variable(pkg_name, pkg_variable::version, repo.value().path);
 
 			// if no results were found, add a new entry
+			// otherwise updated an existing one
 			if (db_entry == db_file.end())
 				db_file.emplace_back(pkg_name + ";" + version_str);
-
-			// if a result was found, update it
-			if (db_entry != db_file.end())
-				*db_entry = pkg_name + ";" + version_str;
+			else
+				db_file.at(std::distance(db_file.begin(), db_entry)) = pkg_name + ";" + version_str;
 		}
 
 		// write the updated package database to disk
