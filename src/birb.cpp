@@ -117,22 +117,6 @@ int main(int argc, char** argv)
 	path_settings path_set;
 	birb_config config;
 
-	// override certain paths if we are installing BirbOS
-	// we know that this is the case if the LFS env variable is set
-	const char* const env_lfs = getenv("LFS");
-	if (env_lfs)
-	{
-		birb::log("LFS variable is defined (we are probably installing)");
-		path_set.repo_dir.insert(0, env_lfs);
-		path_set.db_dir.insert(0, env_lfs);
-		path_set.build_dir.insert(0, env_lfs);
-		path_set.fakeroot_backup.insert(0, env_lfs);
-		path_set.distfiles.insert(0, env_lfs);
-		path_set.fakeroot.insert(0, env_lfs);
-		path_set.birb_cfg.insert(0, env_lfs);
-		path_set.birb_repo_list.insert(0, env_lfs);
-	}
-
 	// verify that the configuration files exist
 	if (!std::filesystem::exists(path_set.birb_cfg))
 		birb::warning(path_set.birb_cfg, " is missing, please reinstall birb with 'birb --upgrade");

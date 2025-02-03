@@ -2,10 +2,33 @@
 
 #include <string>
 
+#include "Logging.hpp"
 #include "Types.hpp"
 
 struct path_settings
 {
+	path_settings()
+	{
+		// override certain paths if we are installing BirbOS
+		// we know that this is the case if the LFS env variable is set
+		const char* const env_lfs = getenv("LFS");
+		if (env_lfs)
+		{
+			birb::log("LFS variable is defined (we are probably installing)");
+			repo_dir.insert(0, env_lfs);
+			db_dir.insert(0, env_lfs);
+			build_dir.insert(0, env_lfs);
+			fakeroot_backup.insert(0, env_lfs);
+			distfiles.insert(0, env_lfs);
+			fakeroot.insert(0, env_lfs);
+			birb_cfg.insert(0, env_lfs);
+			birb_repo_list.insert(0, env_lfs);
+
+			lfs_var_set = true;
+			lfs_path = env_lfs;
+		}
+	}
+
 	std::string repo_dir{"/var/db/pkg"};
 	std::string db_dir{"/var/lib/birb"};
 	std::string build_dir{"/var/tmp/birb"};
@@ -19,6 +42,9 @@ struct path_settings
 	std::string package_list() const { return db_dir + "/packages"; }
 	std::string database() const { return db_dir + "/birb_db"; }
 	std::string birb_dist() const { return distfiles + "/birb"; }
+
+	bool lfs_var_set{false};
+	std::string lfs_path;
 };
 
 struct birb_config

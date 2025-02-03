@@ -28,20 +28,25 @@ namespace birb
 		{
 			log("Syncing ", repo.name);
 
-			if (!std::filesystem::exists(repo.path))
+			// if the LFS variable is set, append its path to the repo names
+			std::string repo_path = repo.path;
+			if (paths.lfs_var_set)
+				repo_path.insert(0, paths.lfs_path);
+
+			if (!std::filesystem::exists(repo_path))
 			{
 				warning("The repo ", repo.name, " was missing. Cloning it...");
-				exec_shell_cmd(std::format("git clone {} {}", repo.url, repo.path));
+				exec_shell_cmd(std::format("git clone {} {}", repo.url, repo_path));
 			}
 			else
 			{
-				std::filesystem::current_path(repo.path);
+				std::filesystem::current_path(repo_path);
 				info("Repo path: ", std::filesystem::current_path());
 				exec_shell_cmd("git fetch ; git pull");
 			}
 
 			// cache the package list
-			for (std::filesystem::path p : std::filesystem::directory_iterator(repo.path))
+			for (std::filesystem::path p : std::filesystem::directory_iterator(repo_path))
 			{
 				// skip the birb source code
 				if (p.filename() == "birb")
