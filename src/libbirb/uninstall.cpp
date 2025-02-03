@@ -107,7 +107,7 @@ namespace birb
 					}
 				), db_file.end());
 
-			// remove ethe package from the nest file (if it is there)
+			// remove the package from the nest file (if it is there)
 			nest_file.erase(std::remove_if(db_file.begin(), db_file.end(),
 					[&pkg_name](const std::string& entry)
 					{
