@@ -114,6 +114,8 @@ namespace birb
 						return birb::split_string(entry, ";")[0] == pkg_name;
 					}
 				), db_file.end());
+
+			log(pkg_name, " uninstalled");
 		}
 
 		// write the nest file and the database to disk
