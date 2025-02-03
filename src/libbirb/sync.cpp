@@ -48,6 +48,10 @@ namespace birb
 			// cache the package list
 			for (std::filesystem::path p : std::filesystem::directory_iterator(repo_path))
 			{
+				// skip files
+				if (!std::filesystem::is_directory(p))
+					continue;
+
 				// skip the birb source code
 				if (p.filename() == "birb")
 					continue;
