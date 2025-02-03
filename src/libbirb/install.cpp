@@ -196,6 +196,9 @@ namespace birb
 		const std::string PYTHON_DIST = "usr/python_dist";
 		const std::string build_dir_path = std::format("{}/birb_package_build-{}", paths.build_dir, pkg_name);
 
+		// make sure that the birb build directory exists
+		std::filesystem::create_directories(paths.build_dir);
+
 		assert(!build_dir_path.empty());
 		assert(build_dir_path != "/birb_package_build-");
 
