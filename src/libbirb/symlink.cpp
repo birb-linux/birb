@@ -19,7 +19,7 @@ namespace birb
 		// fakeroot and root paths gathered from the first try run
 		// that checks for conflicts
 		// <fakeroot,root>
-		std::vector<std::pair<std::string, std::string>> file_paths;
+		std::vector<std::pair<std::filesystem::path, std::filesystem::path>> file_paths;
 
 		std::vector<std::string> conflicting_files;
 
@@ -40,7 +40,7 @@ namespace birb
 			if (std::filesystem::exists(path_str))
 				conflicting_files.emplace_back(path_str);
 
-			file_paths.emplace_back(std::make_pair(p.string(), path_str));
+			file_paths.emplace_back(std::make_pair(p, path_str));
 		}
 
 		if (!conflicting_files.empty() && !force_install)
@@ -68,6 +68,10 @@ namespace birb
 		for (const auto& [fakeroot, root] : file_paths)
 		{
 			info(fakeroot, " -> ", root);
+
+			// make sure that the required target directories exist
+			std::filesystem::create_directories(root.parent_path());
+
 			std::filesystem::create_symlink(fakeroot, root);
 		}
 	}
