@@ -67,8 +67,6 @@ namespace birb
 		log("Creating symlinks");
 		for (const auto& [fakeroot, root] : file_paths)
 		{
-			info(fakeroot, " -> ", root);
-
 			// make sure that the required target directories exist
 			assert(!root.parent_path().empty());
 			std::filesystem::create_directories(root.parent_path());
@@ -153,8 +151,6 @@ namespace birb
 
 			// remove the fakeroot path portion from the file path
 			const std::string path_str = p.string().erase(0, pkg_fakeroot_path.size());
-			info(path_str);
-
 			std::filesystem::remove(path_str);
 		}
 	}
