@@ -53,6 +53,10 @@ namespace birb
 			assert(s.url.empty()  == false);
 			assert(s.path.empty() == false);
 
+			// handle the LFS path
+			if (paths.lfs_var_set)
+				s.path.insert(0, paths.lfs_path);
+
 			sources.push_back(s);
 		}
 
