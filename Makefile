@@ -59,7 +59,7 @@ install-lib:
 	cp ./birb_funcs $(DESTDIR)/usr/lib/birb/
 
 install:
-	cp ./birb {birb_dep_solver,birb_pkg_search,birb_db} $(DESTDIR)/usr/bin/
+	cp ./birb $(DESTDIR)/usr/bin/
 	mkdir -p $(DESTDIR)/usr/lib/birb
 	cp ./birb_funcs ./libbirb.a $(DESTDIR)/usr/lib/birb/
 	mkdir -p $(DESTDIR)/usr/include/birb
