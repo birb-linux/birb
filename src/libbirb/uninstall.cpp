@@ -115,7 +115,7 @@ namespace birb
 					}
 				), nest_file.end());
 
-			log(pkg_name, " uninstalled");
+			log("[", pkg_name, "] uninstalled");
 		}
 
 		// write the nest file and the database to disk
