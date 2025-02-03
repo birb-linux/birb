@@ -130,7 +130,7 @@ namespace birb
 				if (!nest_file.is_open())
 					error("Can't open the nest file for writing");
 
-				nest_file << pkg_name;
+				nest_file << pkg_name << '\n';
 			}
 
 			// update the version information in the database
