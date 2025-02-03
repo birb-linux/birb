@@ -80,8 +80,8 @@ namespace birb
 		for (const std::string& pkg_name : packages)
 		{
 			assert(!pkg_name.empty());
-			if (!validate_package(pkg_name))
-				error("The package with name [", pkg_name, "] does not exist");
+			if (validate_package(pkg_name) != package_validation_error::noerr)
+				exit(1);
 
 			log("Restoring symlinks for package [", pkg_name, "]");
 

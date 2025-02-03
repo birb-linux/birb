@@ -50,8 +50,8 @@ namespace birb
 		// validate the packages and quit if something seems to be wrong
 		for (const std::string& pkg_name : packages)
 		{
-			if (!validate_package(pkg_name))
-				error("Package [", pkg_name, "] does not exist");
+			if (validate_package(pkg_name) != package_validation_error::noerr)
+				exit(1);
 		}
 
 		const std::vector<std::string> required_packages = birb::resolve_dependencies(packages);

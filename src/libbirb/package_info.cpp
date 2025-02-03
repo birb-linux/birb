@@ -13,13 +13,34 @@ static std::optional<std::unordered_map<std::string, std::vector<std::string>>> 
 
 namespace birb
 {
-	bool validate_package(const std::string& pkg_name)
+	package_validation_error validate_package(const std::string& pkg_name)
 	{
-		std::optional<pkg_source> repo = locate_package(pkg_name);
+		const std::optional<pkg_source> repo = locate_package(pkg_name);
 		if (!repo.has_value())
-			return false;
+		{
+			error("Package [", pkg_name, "] does not exist");
+			return package_validation_error::missing_package;
+		}
 
-		return is_valid_package_name(pkg_name) && locate_package(pkg_name).value().is_valid() && !pkg_name.empty();
+		if (!is_valid_package_name(pkg_name))
+		{
+			error("Package [", pkg_name, "] has an invalid name");
+			return package_validation_error::invalid_name;
+		}
+
+		if (!locate_package(pkg_name).value().is_valid())
+		{
+			error("Came across an invalid repository when validating package [", pkg_name, "]");
+			return package_validation_error::invalid_repo;
+		}
+
+		if (pkg_name.empty())
+		{
+			error("Empty package name string erro");
+			return package_validation_error::empty_name;
+		}
+
+		return package_validation_error::noerr;
 	}
 
 	bool is_valid_package_name(const std::string& pkg_name)

@@ -13,6 +13,15 @@ namespace birb
 		x86, x86_test, test, important, python, wip, font, proprietary
 	};
 
+	enum class [[nodiscard]] package_validation_error
+	{
+		noerr,
+		invalid_name,
+		missing_package,
+		invalid_repo,
+		empty_name
+	};
+
 	const static inline std::unordered_map<std::string, pkg_flag> pkg_flag_string_mappings = {
 		{ "32bit", pkg_flag::x86 },
 		{ "test32", pkg_flag::x86_test },
@@ -25,8 +34,7 @@ namespace birb
 	};
 
 	// check if the package is valid in all regards
-	__attribute__((warn_unused_result))
-	bool validate_package(const std::string& pkg_name);
+	package_validation_error validate_package(const std::string& pkg_name);
 
 	// check if the package name only contains allowed characters
 	__attribute__((warn_unused_result))
