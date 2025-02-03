@@ -8,22 +8,20 @@
 #include <string>
 #include <vector>
 
-constexpr char PACKAGE_LIST_PATH[] = "/var/lib/birb/packages";
-
 namespace birb
 {
-	void pkg_search(const std::vector<std::string>& packages)
+	void pkg_search(const std::vector<std::string>& packages, const path_settings& paths)
 	{
 		// read in the list of all existing packages
-		const std::vector<std::string> pkg_list = birb::read_file(PACKAGE_LIST_PATH);
+		const std::vector<std::string> pkg_list = birb::read_file(paths.package_list());
 		if (pkg_list.empty())
 			error("Empty package cache");
 
 		// read in the list of installed packages
-		const std::vector<std::string> installed_packages = birb::get_installed_packages();
+		const std::vector<std::string> installed_packages = birb::get_installed_packages(paths);
 
 		// get the list of repositories
-		const std::vector<pkg_source> pkg_sources = birb::get_pkg_sources();
+		const std::vector<pkg_source> pkg_sources = birb::get_pkg_sources(paths);
 		if (pkg_sources.empty())
 			error("No valid package repositories were found\n");
 

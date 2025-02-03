@@ -13,9 +13,9 @@ static std::optional<std::unordered_map<std::string, std::vector<std::string>>> 
 
 namespace birb
 {
-	package_validation_error validate_package(const std::string& pkg_name)
+	package_validation_error validate_package(const std::string& pkg_name, const path_settings& paths)
 	{
-		const std::optional<pkg_source> repo = locate_package(pkg_name);
+		const std::optional<pkg_source> repo = locate_package(pkg_name, paths);
 		if (!repo.has_value())
 		{
 			error("Package [", pkg_name, "] does not exist");
@@ -28,7 +28,7 @@ namespace birb
 			return package_validation_error::invalid_name;
 		}
 
-		if (!locate_package(pkg_name).value().is_valid())
+		if (!locate_package(pkg_name, paths).value().is_valid())
 		{
 			error("Came across an invalid repository when validating package [", pkg_name, "]");
 			return package_validation_error::invalid_repo;
@@ -48,13 +48,13 @@ namespace birb
 		return std::regex_match(pkg_name, package_name_regex);
 	}
 
-	std::optional<pkg_source> locate_package(const std::string& package_name)
+	std::optional<pkg_source> locate_package(const std::string& pkg_name, const path_settings& paths)
 	{
 		// load the repo list if it hasn't been loaded get
 		if (!repo_list.has_value())
-			repo_list = birb::get_pkg_sources();
+			repo_list = birb::get_pkg_sources(paths);
 
-		const pkg_source repo = birb::locate_pkg_repo(package_name, repo_list.value());
+		const pkg_source repo = birb::locate_pkg_repo(pkg_name, repo_list.value());
 
 		// package was found, return the repository
 		if (repo.is_valid())
@@ -91,11 +91,11 @@ namespace birb
 		return flags;
 	}
 
-	void find_meta_packages()
+	void find_meta_packages(const path_settings& paths)
 	{
 		// load the repo list if it hasn't been loaded yet
 		if (!repo_list.has_value())
-			repo_list = birb::get_pkg_sources();
+			repo_list = birb::get_pkg_sources(paths);
 
 		assert(repo_list.has_value());
 
@@ -133,21 +133,21 @@ namespace birb
 		}
 	}
 
-	bool is_meta_package(const std::string& pkg_name)
+	bool is_meta_package(const std::string& pkg_name, const path_settings& paths)
 	{
 		// load metapackages if they haven't been loaded yet
 		if (!meta_packages.has_value())
-			find_meta_packages();
+			find_meta_packages(paths);
 
 		assert(meta_packages.has_value());
 		return meta_packages.value().contains(pkg_name);
 	}
 
-	const std::vector<std::string>& expand_meta_package(const std::string& meta_pkg_name)
+	const std::vector<std::string>& expand_meta_package(const std::string& meta_pkg_name, const path_settings& paths)
 	{
 		// load metapackages if they haven't been loaded yet
 		if (!meta_packages.has_value())
-			find_meta_packages();
+			find_meta_packages(paths);
 
 		assert(meta_packages.has_value());
 

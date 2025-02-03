@@ -19,7 +19,7 @@ namespace birb
 		if (xorg_running)
 			set_win_title("finding orphan packages");
 
-		const std::vector<pkg_source> repos = get_pkg_sources();
+		const std::vector<pkg_source> repos = get_pkg_sources(paths);
 		const std::vector<std::string> orphan_packages = find_orphan_packages(repos, paths);
 
 		if (orphan_packages.empty())

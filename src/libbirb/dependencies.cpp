@@ -12,34 +12,34 @@
 
 namespace birb
 {
-	std::vector<std::string> resolve_dependencies(const std::vector<std::string>& packages)
+	std::vector<std::string> resolve_dependencies(const std::vector<std::string>& packages, const path_settings& paths)
 	{
 		std::vector<std::string> full_package_list;
-		const std::vector<pkg_source> repos = get_pkg_sources();
+		const std::vector<pkg_source> repos = get_pkg_sources(paths);
 
 		for (const std::string& pkg_name : packages)
 		{
 			full_package_list.push_back(pkg_name);
 
 			// if the package is a font, add fontconfig as a dependency before the package
-			const std::optional<pkg_source> repo = locate_package(pkg_name);
+			const std::optional<pkg_source> repo = locate_package(pkg_name, paths);
 			assert(repo.has_value());
 			std::unordered_set<pkg_flag> flags = get_pkg_flags(pkg_name, repo.value());
 
 			if (flags.contains(pkg_flag::font))
 				full_package_list.emplace_back("fontconfig");
 
-			const std::vector<std::string> deps = get_dependencies(pkg_name, repos, 512);
+			const std::vector<std::string> deps = get_dependencies(pkg_name, repos, 512, paths);
 			full_package_list.insert(full_package_list.end(), deps.begin(), deps.end());
 		}
 
 		// deduplicate the list
-		full_package_list = deduplicated_dep_list(full_package_list);
+		full_package_list = deduplicated_dep_list(full_package_list, paths);
 
 		return full_package_list;
 	}
 
-	std::vector<std::string> get_dependencies(const std::string& pkg, const std::vector<pkg_source>& repos, int depth)
+	std::vector<std::string> get_dependencies(const std::string& pkg, const std::vector<pkg_source>& repos, int depth, const path_settings& paths)
 	{
 		assert(pkg.empty() == false);
 		assert(repos.size() > 0);
@@ -62,7 +62,7 @@ namespace birb
 			return deps;
 
 		/* Perform string splitting only if this isn't a meta package */
-		if (!is_meta_package(pkg))
+		if (!is_meta_package(pkg, paths))
 		{
 			/* Read data from the package file */
 			std::string dep_line = birb::read_pkg_variable(pkg, pkg_variable::deps, repo.path);
@@ -79,10 +79,10 @@ namespace birb
 				const std::string dep = dep_line.substr(0, pos);
 
 				/* Check if the dependency is a meta package and should be expanded */
-				if (is_meta_package(dep))
+				if (is_meta_package(dep, paths))
 				{
 					// expand the meta package
-					const std::vector<std::string>& expanded_meta_package = expand_meta_package(dep);
+					const std::vector<std::string>& expanded_meta_package = expand_meta_package(dep, paths);
 					deps.insert(deps.end(), expanded_meta_package.begin(), expanded_meta_package.end());
 				}
 				else
@@ -100,7 +100,7 @@ namespace birb
 		}
 		else
 		{
-			deps = expand_meta_package(pkg);
+			deps = expand_meta_package(pkg, paths);
 		}
 
 
@@ -108,7 +108,7 @@ namespace birb
 		const size_t deps_size = deps.size();
 		for (size_t i = 0; i < deps_size; ++i)
 		{
-			const std::vector<std::string> sub_deps = get_dependencies(deps[i], repos, depth - 1);
+			const std::vector<std::string> sub_deps = get_dependencies(deps[i], repos, depth - 1, paths);
 			deps.insert(deps.end(), sub_deps.begin(), sub_deps.end());
 		}
 
@@ -124,17 +124,17 @@ namespace birb
 		return deps;
 	}
 
-	std::vector<std::string> get_reverse_dependencies(const std::string& pkg_name, const std::vector<pkg_source>& repos)
+	std::vector<std::string> get_reverse_dependencies(const std::string& pkg_name, const std::vector<pkg_source>& repos, const path_settings& paths)
 	{
 		std::vector<std::string> dependencies;
 
 		/* Get list of installed packages */
-		const std::vector<std::string> installed_packages = birb::get_installed_packages();
+		const std::vector<std::string> installed_packages = birb::get_installed_packages(paths);
 
 		/* Get the reverse dependencies for the package with no recursion */
 		for (size_t i = 0; i < installed_packages.size(); ++i)
 		{
-			const std::vector<std::string> temp_deps = get_dependencies(installed_packages[i], repos, 0);
+			const std::vector<std::string> temp_deps = get_dependencies(installed_packages[i], repos, 0, paths);
 
 			/* Check if the package had this package we are inspecting in
 			 * its dependency list */
@@ -145,7 +145,7 @@ namespace birb
 		return dependencies;
 	}
 
-	std::vector<std::string> deduplicated_dep_list(const std::vector<std::string>& dependencies)
+	std::vector<std::string> deduplicated_dep_list(const std::vector<std::string>& dependencies, const path_settings& paths)
 	{
 		std::vector<std::string> result;
 
@@ -164,7 +164,7 @@ namespace birb
 		for (int i = dependencies.size() - 1; i >= 0; --i)
 		{
 			/* Skip meta-packages */
-			if (is_meta_package(dependencies[i]))
+			if (is_meta_package(dependencies[i], paths))
 				continue;
 
 			/* Check if the package is already in the result list */
@@ -186,7 +186,7 @@ namespace birb
 		const std::vector<std::string> nest = birb::read_file(paths.nest());
 
 		// get the list of all installed applications
-		const std::vector<std::string> installed_packages = birb::get_installed_packages();
+		const std::vector<std::string> installed_packages = birb::get_installed_packages(paths);
 
 		// orphan candidates are packages that are installed but aren't in the nest
 		std::vector<std::string> orphan_candidates;
@@ -248,7 +248,7 @@ namespace birb
 				}
 				else
 				{
-					reverse_deps = birb::get_reverse_dependencies(orphan_candidates[i], repos);
+					reverse_deps = birb::get_reverse_dependencies(orphan_candidates[i], repos, paths);
 					birb::reverse_dependency_cache[orphan_candidates[i]] = reverse_deps;
 				}
 				clean_reverse_deps.clear();

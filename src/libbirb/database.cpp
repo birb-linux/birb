@@ -1,4 +1,5 @@
 #include "Database.hpp"
+#include "Config.hpp"
 #include "Utils.hpp"
 #include <cassert>
 #include <filesystem>
@@ -36,10 +37,10 @@ bool pkg_source::is_valid() const
 
 namespace birb
 {
-	std::vector<pkg_source> get_pkg_sources()
+	std::vector<pkg_source> get_pkg_sources(const path_settings& paths)
 	{
 		/* Read the birb-sources.conf file line by line */
-		const std::vector<std::string> repository_lines = read_file(PKG_SOURCE_CONFIG_PATH);
+		const std::vector<std::string> repository_lines = read_file(paths.birb_repo_list);
 
 		std::vector<pkg_source> sources;
 		for (size_t i = 0; i < repository_lines.size(); ++i)
@@ -58,9 +59,9 @@ namespace birb
 		return sources;
 	}
 
-	std::vector<std::string> get_pkg_source_list()
+	std::vector<std::string> get_pkg_source_list(const path_settings& paths)
 	{
-		return read_file(PKG_SOURCE_CONFIG_PATH);
+		return read_file(paths.birb_repo_list);
 	}
 
 	pkg_source locate_pkg_repo(const std::string& pkg_name, const std::vector<pkg_source>& package_sources)
@@ -145,14 +146,14 @@ namespace birb
 		return var_line;
 	}
 
-	std::vector<std::string> read_birb_db()
+	std::vector<std::string> read_birb_db(const path_settings& paths)
 	{
 		std::vector<std::string> db_file;
 
 		/* Read in the package database, if it exists */
-		if (std::filesystem::exists(BIRB_DB_PATH) && std::filesystem::is_regular_file(BIRB_DB_PATH))
+		if (std::filesystem::exists(paths.database()) && std::filesystem::is_regular_file(paths.database()))
 		{
-			db_file = read_file(BIRB_DB_PATH);
+			db_file = read_file(paths.database());
 
 			assert(db_file.empty() == false);
 		}
@@ -177,13 +178,13 @@ namespace birb
 		return std::vector<std::string>(0);
 	}
 
-	std::vector<std::string> get_installed_packages()
+	std::vector<std::string> get_installed_packages(const path_settings& paths)
 	{
 		/* If the result is already cached, return that instead */
 		if (!installed_packages_cache.empty())
 			return installed_packages_cache;
 
-		const std::vector<std::string> birb_db = read_birb_db();
+		const std::vector<std::string> birb_db = read_birb_db(paths);
 
 		/* Split the strings to get package names */
 		std::vector<std::string> pkg_names;
@@ -197,22 +198,22 @@ namespace birb
 		return pkg_names;
 	}
 
-	std::unordered_map<std::string, std::string> get_repo_versions()
+	std::unordered_map<std::string, std::string> get_repo_versions(const path_settings& paths)
 	{
 		/* Repository list */
-		const std::vector<pkg_source> pkg_sources = birb::get_pkg_sources();
+		const std::vector<pkg_source> pkg_sources = birb::get_pkg_sources(paths);
 		assert(pkg_sources.size() > 0 && "Package sources couldn't be found");
 
 		std::unordered_map<std::string, std::string> pkgs;
 
 		/* Get list of all packages in the fakeroot */
-		for (auto& p : std::filesystem::directory_iterator(BIRB_FAKEROOT_PATH))
+		for (auto& p : std::filesystem::directory_iterator(paths.fakeroot))
 		{
 			if (p.is_directory())
 			{
 				/* Iterate through the package source repositories and get the version
 				 * from the first repository that has the package in it */
-				pkgs[p.path().filename().string()] = birb::read_pkg_variable(p.path().filename().string(), pkg_variable::version, BIRB_PKG_PATH);
+				pkgs[p.path().filename().string()] = birb::read_pkg_variable(p.path().filename().string(), pkg_variable::version, paths.repo_dir);
 			}
 		}
 

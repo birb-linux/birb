@@ -50,17 +50,17 @@ namespace birb
 		// validate the packages and quit if something seems to be wrong
 		for (const std::string& pkg_name : packages)
 		{
-			if (validate_package(pkg_name) != package_validation_error::noerr)
+			if (validate_package(pkg_name, paths) != package_validation_error::noerr)
 				exit(1);
 		}
 
-		const std::vector<std::string> required_packages = birb::resolve_dependencies(packages);
+		const std::vector<std::string> required_packages = birb::resolve_dependencies(packages, paths);
 		assert(!required_packages.empty());
 
 		// figure out which packages have already been installed
 		// and what needs to be installed
 
-		const std::vector<std::string> installed_packages_vec = get_installed_packages();
+		const std::vector<std::string> installed_packages_vec = get_installed_packages(paths);
 		const std::unordered_set<std::string> installed_packages(installed_packages_vec.begin(), installed_packages_vec.end());
 
 		std::vector<std::string> packages_to_install;
@@ -85,7 +85,7 @@ namespace birb
 			return;
 
 		// read in the package database
-		std::vector<std::string> db_file = birb::read_birb_db();
+		std::vector<std::string> db_file = birb::read_birb_db(paths);
 
 		const bool xorg_is_running = is_process_running("Xorg");
 
@@ -97,7 +97,7 @@ namespace birb
 			if (!is_valid_package_name(pkg_name))
 				error("Invalid package name: [", pkg_name, "]");
 
-			const std::optional<pkg_source> repo = locate_package(pkg_name);
+			const std::optional<pkg_source> repo = locate_package(pkg_name, paths);
 			if (!repo.has_value() || !repo.value().is_valid())
 				error("Package [", pkg_name, "] does not exists");
 
@@ -161,7 +161,7 @@ namespace birb
 		}
 
 		// write the updated package database to disk
-		std::ofstream db_ofstream(BIRB_DB_PATH);
+		std::ofstream db_ofstream(paths.database());
 		std::ostream_iterator<std::string> output_iterator(db_ofstream, "\n");
 		std::copy(db_file.begin(), db_file.end(), output_iterator);
 
@@ -177,7 +177,7 @@ namespace birb
 		log("Starting the compiling process");
 
 		// figure out which repository the package is in
-		const std::optional<pkg_source> repo = locate_package(pkg_name);
+		const std::optional<pkg_source> repo = locate_package(pkg_name, paths);
 		assert(repo.has_value());
 
 		if (pkg_flags.contains(pkg_flag::wip))

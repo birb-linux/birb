@@ -182,12 +182,12 @@ int main(int argc, char** argv)
 			break;
 
 		case exec_mode::search:
-			birb::pkg_search(o.packages);
+			birb::pkg_search(o.packages, path_set);
 			break;
 
 		case exec_mode::list_installed:
 		{
-			const std::vector<std::string> installed_packages = birb::get_installed_packages();
+			const std::vector<std::string> installed_packages = birb::get_installed_packages(path_set);
 			for (const std::string& pkg_name : installed_packages)
 				std::cout << pkg_name << '\n';
 

@@ -17,7 +17,7 @@ namespace birb
 		// validate the packages and quit if something seems to be wrong
 		for (const std::string& pkg_name : packages)
 		{
-			if (validate_package(pkg_name) != package_validation_error::noerr)
+			if (validate_package(pkg_name, paths) != package_validation_error::noerr)
 				exit(1);
 		}
 

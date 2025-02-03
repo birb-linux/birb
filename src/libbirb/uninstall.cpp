@@ -21,12 +21,12 @@ namespace birb
 		// validate package names
 		for (const std::string& pkg_name : packages)
 		{
-			if (validate_package(pkg_name) != package_validation_error::noerr)
+			if (validate_package(pkg_name, paths) != package_validation_error::noerr)
 				exit(1);
 		}
 
 		// figure out if the packages we are trying to delete are even installed
-		std::vector<std::string> installed_packages = get_installed_packages();
+		std::vector<std::string> installed_packages = get_installed_packages(paths);
 		for (const std::string& pkg_name : packages)
 		{
 			if (std::find(installed_packages.begin(), installed_packages.end(), pkg_name) == installed_packages.end())
@@ -36,7 +36,7 @@ namespace birb
 		// check package flags
 		for (const std::string& pkg_name : packages)
 		{
-			const std::optional<pkg_source> repo = locate_package(pkg_name);
+			const std::optional<pkg_source> repo = locate_package(pkg_name, paths);
 			const std::unordered_set<pkg_flag> flags = get_pkg_flags(pkg_name, repo.value());
 
 			if (flags.contains(pkg_flag::important))
@@ -49,10 +49,10 @@ namespace birb
 
 		// check reverse dependencies
 		log("Checking reverse dependencies");
-		const std::vector<pkg_source> repos = get_pkg_sources();
+		const std::vector<pkg_source> repos = get_pkg_sources(paths);
 		for (const std::string& pkg_name : packages)
 		{
-			const std::vector<std::string> reverse_deps = get_reverse_dependencies(pkg_name, repos);
+			const std::vector<std::string> reverse_deps = get_reverse_dependencies(pkg_name, repos, paths);
 
 			// if the reverse dependency list is not empty, the package
 			// probably shouldn't be uninstalled
@@ -74,7 +74,7 @@ namespace birb
 		const bool xorg_running = is_process_running("Xorg");
 
 		// read in the package database
-		std::vector<std::string> db_file = birb::read_birb_db();
+		std::vector<std::string> db_file = birb::read_birb_db(paths);
 
 		// read in the nest file
 		std::vector<std::string> nest_file = birb::read_file(paths.nest());
@@ -86,7 +86,7 @@ namespace birb
 			if (xorg_running)
 				set_win_title(std::format("uninstalling {}", pkg_name));
 
-			const std::optional<pkg_source> repo = locate_package(pkg_name);
+			const std::optional<pkg_source> repo = locate_package(pkg_name, paths);
 			const std::unordered_set<pkg_flag> flags = get_pkg_flags(pkg_name, repo.value());
 
 			// python packages need to be uninstalled with pip
@@ -117,7 +117,7 @@ namespace birb
 		}
 
 		// write the nest file and the database to disk
-		std::ofstream db_ofstream(BIRB_DB_PATH);
+		std::ofstream db_ofstream(paths.database());
 		std::ostream_iterator<std::string> output_iterator(db_ofstream, "\n");
 		std::copy(db_file.begin(), db_file.end(), output_iterator);
 
